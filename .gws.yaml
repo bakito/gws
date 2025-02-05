@@ -1,0 +1,33 @@
+contexts:
+  ws-1:
+    host: localhost
+    port: 63830
+    user: user
+    privateKeyFile: C:/workspace/cygwin64/home/foo/.ssh/id_rsa
+    gcloud:
+      project: gcws-project
+      region: europe-west6
+      cluster: gcws-cluster
+      config: gcws-config
+      name: ws-1
+    dirs:
+      - path: /home/user/.ssh
+        permissions: '700'
+    files:
+      - sourcePath: C:/workspace/cygwin64/home/foo/.ssh/id_ed25519
+        path: /home/user/.ssh/id_ed25519
+        permissions: '0400'
+      - sourcePath: C:/workspace/cygwin64/home/foo/.ssh/id_ed25519.pub
+        path: /home/user/.ssh/id_ed25519.pub
+        permissions: '0700'
+  ws-2:
+    host: localhost
+    port: 63830
+    user: user
+    privateKeyFile: C:/workspace/cygwin64/home/foo/.ssh/id_rsa
+    gcloud:
+      project: gcws-project
+      region: europe-west6
+      cluster: gcws-cluster
+      config: gcws-config
+      name: ws-2

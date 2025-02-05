@@ -1,0 +1,43 @@
+name: Go
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - name: Test
+        run: make test
+
+      - name: Send coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
