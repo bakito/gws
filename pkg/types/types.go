@@ -9,20 +9,21 @@ type Config struct {
 	Contexts map[string]Context
 }
 
-func (c Config) Get(name string) (string, Context, error) {
+func (c Config) Get(name string) (string, *Context, error) {
 	if len(c.Contexts) == 1 {
 		for k := range maps.Keys(c.Contexts) {
-			return k, c.Contexts[k], nil
+			ctx := c.Contexts[k]
+			return k, &ctx, nil
 		}
 	}
 	if name == "" {
-		return "", Context{}, fmt.Errorf("context name must be defined")
+		return "", nil, fmt.Errorf("context name must be defined")
 	}
 	if ctx, ok := c.Contexts[name]; ok {
-		return name, ctx, nil
+		return name, &ctx, nil
 	}
 
-	return "", Context{}, fmt.Errorf("context with name %q not defined", name)
+	return "", nil, fmt.Errorf("context with name %q not defined", name)
 }
 
 type Context struct {

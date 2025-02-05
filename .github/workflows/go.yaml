@@ -2,9 +2,9 @@ name: Go
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -34,10 +34,13 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
-      - name: Test
-        run: make test
+      - name: Test Release
+        run: make test-release
 
-      - name: Send coverage
-        uses: shogo82148/actions-goveralls@v1
-        with:
-          path-to-profile: coverage.out
+      #- name: Test
+      #  run: make test
+
+      # - name: Send coverage
+      #   uses: shogo82148/actions-goveralls@v1
+      #   with:
+      #     path-to-profile: coverage.out
