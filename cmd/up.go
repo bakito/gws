@@ -17,12 +17,13 @@ var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Upload files and dirs",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		selectedContext, ssh, err := readConfig()
+		cfg, err := readConfig()
 		if err != nil {
 			return err
 		}
-		slog.Info("Running context", "name", selectedContext)
+		slog.Info("Running context", "name", cfg.CurrentContext)
 
+		ssh := cfg.CurrentContext()
 		cl, err := client.New(ssh.HostAddr(), ssh.User, ssh.PrivateKeyFile)
 		if err != nil {
 			return err

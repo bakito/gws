@@ -10,11 +10,11 @@ var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stop a workstation",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, ssh, err := readConfig()
+		cfg, err := readConfig()
 		if err != nil {
 			return err
 		}
-		gcloud.StopWorkstation(*ssh)
+		gcloud.StopWorkstation(cfg)
 		return nil
 	},
 }

@@ -12,7 +12,8 @@ import (
 	"github.com/bakito/gws/pkg/types"
 )
 
-func StartWorkstation(sshContext types.Context) {
+func StartWorkstation(cfg *types.Config) {
+	sshContext := cfg.CurrentContext()
 	if sshContext.GCloud == nil {
 		slog.Info("No gcloud config found")
 		return
@@ -79,7 +80,8 @@ func StartWorkstation(sshContext types.Context) {
 	}
 }
 
-func StopWorkstation(sshContext types.Context) {
+func StopWorkstation(cfg *types.Config) {
+	sshContext := cfg.CurrentContext()
 	if sshContext.GCloud == nil {
 		slog.Info("No gcloud config found")
 		return

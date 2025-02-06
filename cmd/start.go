@@ -10,11 +10,11 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a workstation",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, ssh, err := readConfig()
+		cfg, err := readConfig()
 		if err != nil {
 			return err
 		}
-		gcloud.StartWorkstation(*ssh)
+		gcloud.StartWorkstation(cfg)
 		return nil
 	},
 }
