@@ -33,8 +33,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().StringVar(&flagContext, "ctx", "", "The context to be used")
-	rootCmd.Flags().StringVarP(&flagConfig, "config", "c", configFileName, "The config file to be used")
+	rootCmd.PersistentFlags().StringVar(&flagContext, "ctx", "", "The context to be used")
+	rootCmd.PersistentFlags().StringVarP(&flagConfig, "config", "c", configFileName, "The config file to be used")
 }
 
 func readConfig() (string, *types.Context, error) {
