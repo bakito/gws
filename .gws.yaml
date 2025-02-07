@@ -32,3 +32,18 @@ contexts:
       config: gcws-config
       name: ws-2
 currentContext: ws-1
+filePatches:
+  - id: gcloud-ssh-putty
+    file: testdata/patch/ssh.py
+    oldBlock:
+      - "    if platforms.OperatingSystem.IsWindows():"
+      - "      suite = Suite.PUTTY"
+      - "      bin_path = _SdkHelperBin()"
+      - "    else:"
+      - "      suite = Suite.OPENSSH"
+      - "      bin_path = None"
+      - "    return Environment(suite, bin_path)"
+    newBlock:
+      - "    suite = Suite.OPENSSH"
+      - "    bin_path = None"
+      - "    return Environment(suite, bin_path)"

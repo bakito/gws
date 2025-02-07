@@ -18,6 +18,7 @@ type Config struct {
 	CurrentContextName string              `yaml:"currentContext"`
 	currentContext     *Context            `yaml:"-"`
 	FilePath           string              `yaml:"-"`
+	FilePatches        []FilePatch         `yaml:"filePatches,omitempty"`
 }
 
 func (c *Config) CurrentContext() *Context {
