@@ -1,63 +1,47 @@
-package main
+package patch
 
 import (
 	"bufio"
 	"fmt"
+	"github.com/bakito/gws/pkg/types"
 	"os"
 	"strings"
 )
 
-const (
-	oldSection = `    if platforms.OperatingSystem.IsWindows():
-      suite = Suite.PUTTY
-      bin_path = _SdkHelperBin()
-    else:
-      suite = Suite.OPENSSH
-      bin_path = None
-    return Environment(suite, bin_path)`
-	newSection = `    suite = Suite.OPENSSH
-    bin_path = None
-    return Environment(suite, bin_path)`
-)
-
-func main() {
-	// Set the path to your ssh.py file
-	file := `ssh.py`
+func Patch(filePatch *types.FilePatch) error {
 
 	// Backup the original file
-	err := backupFile(file, file+".bak")
+	backupFileName := filePatch.File + ".bak"
+	err := backupFile(filePatch.File, backupFileName)
 	if err != nil {
-		fmt.Println("Error creating backup:", err)
-		return
+		return err
 	}
 
 	// Read the content of the file
-	lines, err := readLines(file)
+	lines, err := readLines(filePatch.File)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return
+		return err
 	}
 
 	// Process the lines, replacing the block if found
-	processedLines := processMultilineBlock(lines, oldSection, newSection)
+	processedLines := processMultilineBlock(lines, filePatch.OldBlock, filePatch.NewBlock)
 
 	// Write the processed lines to a temporary file
-	tempFile := file + ".tmp"
+	tempFile := filePatch.File + ".tmp"
 	err = writeLines(tempFile, processedLines)
 	if err != nil {
-		fmt.Println("Error writing to temporary file:", err)
-		return
+		return err
 	}
 
 	// Replace the original file with the temporary file
-	err = replaceFile(file, tempFile)
+	err = replaceFile(filePatch.File, tempFile)
 	if err != nil {
-		fmt.Println("Error replacing original file:", err)
-		return
+		return err
 	}
 
-	fmt.Println("Backup created:", backupFile)
+	fmt.Println("Backup created:", backupFileName)
 	fmt.Println("Replacement complete.")
+	return nil
 }
 
 // backupFile creates a backup of the original file
@@ -108,17 +92,16 @@ func writeLines(filename string, lines []string) error {
 }
 
 // processMultilineBlock processes the lines and replaces the old block with the new one
-func processMultilineBlock(lines []string, oldBlock string, newBlock string) []string {
-	oldBlockLines := splitLines(oldBlock)
+func processMultilineBlock(lines []string, oldBlock []string, newBlock []string) []string {
 
 	var result []string
 	inBlockIndex := 0
 
 	for _, line := range lines {
-		if inBlockIndex >= len(oldBlockLines) {
-			result = append(result, splitLines(newBlock)...)
+		if inBlockIndex >= len(oldBlock) {
+			result = append(result, newBlock...)
 			inBlockIndex = 0
-		} else if line == oldBlockLines[inBlockIndex] {
+		} else if line == oldBlock[inBlockIndex] {
 			inBlockIndex++
 			continue
 		} else {

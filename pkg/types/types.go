@@ -38,3 +38,9 @@ type File struct {
 	Path        string `yaml:"path"`
 	Permissions string `yaml:"permissions"`
 }
+
+type FilePatch struct {
+	File     string   `yaml:"file"`
+	OldBlock []string `yaml:"oldBlock"`
+	NewBlock []string `yaml:"newBlock"`
+}
