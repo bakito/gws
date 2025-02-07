@@ -61,13 +61,13 @@ func (c *Config) Load(fileName string) error {
 	if c.CurrentContextName == "" {
 		if len(c.Contexts) == 1 {
 			for k := range maps.Keys(c.Contexts) {
-				if err = c.SwitchContext(k); err != nil {
-					return err
-				}
+				c.CurrentContextName = k
 			}
 		}
 	}
-
+	if err = c.SwitchContext(c.CurrentContextName); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -78,7 +78,6 @@ func (c *Config) SwitchContext(newContext string) error {
 
 	if c.CurrentContextName != newContext {
 		c.CurrentContextName = newContext
-		c.currentContext = c.Contexts[newContext]
 
 		var buf bytes.Buffer
 		encoder := yaml.NewEncoder(&buf)
@@ -92,6 +91,7 @@ func (c *Config) SwitchContext(newContext string) error {
 			return err
 		}
 	}
+	c.currentContext = c.Contexts[newContext]
 
 	return nil
 }
