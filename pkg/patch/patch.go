@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -64,11 +63,11 @@ func main() {
 // backupFile creates a backup of the original file
 func backupFile(original, backup string) error {
 	// Copy the original file to backup
-	input, err := ioutil.ReadFile(original)
+	input, err := os.ReadFile(original)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(backup, input, 0644)
+	err = os.WriteFile(backup, input, 0644)
 	if err != nil {
 		return err
 	}
@@ -110,26 +109,20 @@ func writeLines(filename string, lines []string) error {
 
 // processMultilineBlock processes the lines and replaces the old block with the new one
 func processMultilineBlock(lines []string, oldBlock string, newBlock string) []string {
+	oldBlockLines := splitLines(oldBlock)
+
 	var result []string
-	inBlock := false
+	inBlockIndex := 0
 
 	for _, line := range lines {
-		// Check if the start of the block is found
-		if line == oldBlockStart {
-			inBlock = true
-			// Skip the old block and add the new block
-			result = append(result, newBlock...)
+		if inBlockIndex >= len(oldBlockLines) {
+			result = append(result, splitLines(newBlock)...)
+			inBlockIndex = 0
+		} else if line == oldBlockLines[inBlockIndex] {
+			inBlockIndex++
 			continue
-		}
-
-		// If inside the block, we check for the end of the block
-		if inBlock {
-			// When we encounter the end of the block, stop replacing
-			if line == oldBlockEnd {
-				inBlock = false
-			}
-			// Skip this line since it's part of the old block
-			continue
+		} else {
+			inBlockIndex = 0
 		}
 
 		// If not in the block, add the original line to the result
@@ -148,7 +141,7 @@ func replaceFile(original, tempFile string) error {
 	return nil
 }
 
-func lines(multiLineString string) []string {
+func splitLines(multiLineString string) []string {
 	var l []string
 	scanner := bufio.NewScanner(strings.NewReader(multiLineString))
 	for scanner.Scan() {
