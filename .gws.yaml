@@ -33,7 +33,7 @@ contexts:
       name: ws-2
 currentContext: ws-1
 filePatches:
-  - file: pkg/patch/ssh.py
+  - file: testdata/ssh.py
     oldBlock:
       - "    if platforms.OperatingSystem.IsWindows():"
       - "      suite = Suite.PUTTY"
