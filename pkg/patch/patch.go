@@ -3,20 +3,14 @@ package patch
 import (
 	"bufio"
 	"fmt"
-	"github.com/bakito/gws/pkg/types"
+	"log/slog"
 	"os"
-	"strings"
+
+	"github.com/bakito/gws/pkg/types"
 )
 
-func Patch(filePatch *types.FilePatch) error {
-
-	// Backup the original file
-	backupFileName := filePatch.File + ".bak"
-	err := backupFile(filePatch.File, backupFileName)
-	if err != nil {
-		return err
-	}
-
+func Patch(filePatch types.FilePatch) error {
+	slog.Info("Patching file", "id", filePatch.GetID())
 	// Read the content of the file
 	lines, err := readLines(filePatch.File)
 	if err != nil {
@@ -24,23 +18,35 @@ func Patch(filePatch *types.FilePatch) error {
 	}
 
 	// Process the lines, replacing the block if found
-	processedLines := processMultilineBlock(lines, filePatch.OldBlock, filePatch.NewBlock)
+	processedLines, changed := processMultilineBlock(lines, filePatch.OldBlock, filePatch.NewBlock)
 
-	// Write the processed lines to a temporary file
-	tempFile := filePatch.File + ".tmp"
-	err = writeLines(tempFile, processedLines)
-	if err != nil {
-		return err
+	if changed {
+		// Write the processed lines to a temporary file
+		tempFile := filePatch.File + ".tmp"
+		err = writeLines(tempFile, processedLines)
+		if err != nil {
+			return err
+		}
+
+		// Backup the original file
+		backupFileName := filePatch.File + ".bak"
+		fmt.Println("Backup created:", backupFileName)
+		slog.Info("Original file back-upped", "id", filePatch.GetID(), "backup", backupFileName)
+		err = backupFile(filePatch.File, backupFileName)
+		if err != nil {
+			return err
+		}
+
+		// Replace the original file with the temporary file
+		err = replaceFile(filePatch.File, tempFile)
+		if err != nil {
+			return err
+		}
+
+		slog.Info("Successfully patched", "id", filePatch.GetID())
+	} else {
+		slog.Info("No patching required", "id", filePatch.GetID())
 	}
-
-	// Replace the original file with the temporary file
-	err = replaceFile(filePatch.File, tempFile)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Backup created:", backupFileName)
-	fmt.Println("Replacement complete.")
 	return nil
 }
 
@@ -51,7 +57,7 @@ func backupFile(original, backup string) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(backup, input, 0644)
+	err = os.WriteFile(backup, input, 0o600)
 	if err != nil {
 		return err
 	}
@@ -92,15 +98,16 @@ func writeLines(filename string, lines []string) error {
 }
 
 // processMultilineBlock processes the lines and replaces the old block with the new one
-func processMultilineBlock(lines []string, oldBlock []string, newBlock []string) []string {
-
+func processMultilineBlock(lines []string, oldBlock []string, newBlock []string) ([]string, bool) {
 	var result []string
 	inBlockIndex := 0
+	changed := false
 
 	for _, line := range lines {
 		if inBlockIndex >= len(oldBlock) {
 			result = append(result, newBlock...)
 			inBlockIndex = 0
+			changed = true
 		} else if line == oldBlock[inBlockIndex] {
 			inBlockIndex++
 			continue
@@ -112,7 +119,7 @@ func processMultilineBlock(lines []string, oldBlock []string, newBlock []string)
 		result = append(result, line)
 	}
 
-	return result
+	return result, changed
 }
 
 // replaceFile replaces the original file with the temporary file
@@ -122,13 +129,4 @@ func replaceFile(original, tempFile string) error {
 		return err
 	}
 	return nil
-}
-
-func splitLines(multiLineString string) []string {
-	var l []string
-	scanner := bufio.NewScanner(strings.NewReader(multiLineString))
-	for scanner.Scan() {
-		l = append(l, scanner.Text())
-	}
-	return l
 }

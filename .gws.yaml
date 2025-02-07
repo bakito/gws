@@ -33,7 +33,8 @@ contexts:
       name: ws-2
 currentContext: ws-1
 filePatches:
-  - file: testdata/ssh.py
+  - id: gcloud-ssh-putty
+    file: testdata/patch/ssh.py
     oldBlock:
       - "    if platforms.OperatingSystem.IsWindows():"
       - "      suite = Suite.PUTTY"
