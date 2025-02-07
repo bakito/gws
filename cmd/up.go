@@ -21,7 +21,7 @@ var upCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		slog.Info("Running context", "name", cfg.CurrentContext)
+		slog.Info("Running context", "name", cfg.CurrentContextName)
 
 		ssh := cfg.CurrentContext()
 		cl, err := client.New(ssh.HostAddr(), ssh.User, ssh.PrivateKeyFile)
