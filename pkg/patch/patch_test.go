@@ -66,6 +66,23 @@ var _ = Describe("Patch", func() {
 			Ω(patched).Should(Equal(expected))
 		})
 
+		It("should create a valid patched file with env variables in path", func() {
+			Ω(copy(sshFile, testFile)).ShouldNot(HaveOccurred())
+			expected, err := os.ReadFile(sshFileExpected)
+			Ω(err).ShouldNot(HaveOccurred())
+
+			_ = os.Setenv("GWS_TEST_DIR", tempDir)
+			sshPatch.File = filepath.Join("${GWS_TEST_DIR}", "ssh.py")
+			Ω(patch.Patch(sshPatch)).ShouldNot(HaveOccurred())
+			_ = os.Unsetenv("GWS_TEST_DIR")
+
+			patched, err := os.ReadFile(testFile)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(bakFile).Should(BeAnExistingFile())
+
+			Ω(patched).Should(Equal(expected))
+		})
+
 		It("should not change the file", func() {
 			Ω(copy(sshFileExpected, testFile)).ShouldNot(HaveOccurred())
 			expected, err := os.ReadFile(sshFileExpected)

@@ -124,7 +124,7 @@ func processMultilineBlock(lines []string, oldBlock []string, newBlock []string)
 
 // replaceFile replaces the original file with the temporary file
 func replaceFile(original, tempFile string) error {
-	err := os.Rename(tempFile, original)
+	err := os.Rename(os.ExpandEnv(tempFile), os.ExpandEnv(original))
 	if err != nil {
 		return err
 	}
