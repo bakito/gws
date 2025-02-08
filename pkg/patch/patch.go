@@ -53,11 +53,11 @@ func Patch(filePatch types.FilePatch) error {
 // backupFile creates a backup of the original file
 func backupFile(original, backup string) error {
 	// Copy the original file to backup
-	input, err := os.ReadFile(original)
+	input, err := os.ReadFile(os.ExpandEnv(original))
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(backup, input, 0o600)
+	err = os.WriteFile(os.ExpandEnv(backup), input, 0o600)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func backupFile(original, backup string) error {
 
 // readLines reads a file and returns the lines as a slice of strings
 func readLines(filename string) ([]string, error) {
-	file, err := os.Open(filename)
+	file, err := os.Open(os.ExpandEnv(filename))
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func readLines(filename string) ([]string, error) {
 
 // writeLines writes a slice of strings to a file
 func writeLines(filename string, lines []string) error {
-	file, err := os.Create(filename)
+	file, err := os.Create(ps.ExpandEnv(filename))
 	if err != nil {
 		return err
 	}
