@@ -15,8 +15,8 @@ var patchCmd = &cobra.Command{
 			return err
 		}
 
-		for _, filePatch := range cfg.FilePatches {
-			if err := patch.Patch(filePatch); err != nil {
+		for id, filePatch := range cfg.FilePatches {
+			if err := patch.Patch(id, filePatch); err != nil {
 				return err
 			}
 		}

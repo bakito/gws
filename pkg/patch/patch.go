@@ -9,8 +9,8 @@ import (
 	"github.com/bakito/gws/pkg/types"
 )
 
-func Patch(filePatch types.FilePatch) error {
-	slog.Info("Patching file", "id", filePatch.GetID())
+func Patch(id string, filePatch types.FilePatch) error {
+	slog.Info("Patching file", "id", id)
 	// Read the content of the file
 	lines, err := readLines(filePatch.File)
 	if err != nil {
@@ -31,7 +31,7 @@ func Patch(filePatch types.FilePatch) error {
 		// Backup the original file
 		backupFileName := filePatch.File + ".bak"
 		fmt.Println("Backup created:", backupFileName)
-		slog.Info("Original file back-upped", "id", filePatch.GetID(), "backup", backupFileName)
+		slog.Info("Original file back-upped", "id", id, "backup", backupFileName)
 		err = backupFile(filePatch.File, backupFileName)
 		if err != nil {
 			return err
@@ -43,9 +43,9 @@ func Patch(filePatch types.FilePatch) error {
 			return err
 		}
 
-		slog.Info("Successfully patched", "id", filePatch.GetID())
+		slog.Info("Successfully patched", "id", id)
 	} else {
-		slog.Info("No patching required", "id", filePatch.GetID())
+		slog.Info("No patching required", "id", id)
 	}
 	return nil
 }
@@ -117,6 +117,11 @@ func processMultilineBlock(lines []string, oldBlock []string, newBlock []string)
 
 		// If not in the block, add the original line to the result
 		result = append(result, line)
+	}
+
+	if inBlockIndex >= len(oldBlock) {
+		result = append(result, newBlock...)
+		changed = true
 	}
 
 	return result, changed

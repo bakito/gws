@@ -57,7 +57,7 @@ var _ = Describe("Patch", func() {
 			expected, err := os.ReadFile(sshFileExpected)
 			Ω(err).ShouldNot(HaveOccurred())
 
-			Ω(patch.Patch(sshPatch)).ShouldNot(HaveOccurred())
+			Ω(patch.Patch("ssh-test", sshPatch)).ShouldNot(HaveOccurred())
 
 			patched, err := os.ReadFile(testFile)
 			Ω(err).ShouldNot(HaveOccurred())
@@ -73,7 +73,7 @@ var _ = Describe("Patch", func() {
 
 			_ = os.Setenv("GWS_TEST_DIR", tempDir)
 			sshPatch.File = filepath.Join("${GWS_TEST_DIR}", "ssh.py")
-			Ω(patch.Patch(sshPatch)).ShouldNot(HaveOccurred())
+			Ω(patch.Patch("ssh-test", sshPatch)).ShouldNot(HaveOccurred())
 			_ = os.Unsetenv("GWS_TEST_DIR")
 
 			patched, err := os.ReadFile(testFile)
@@ -88,7 +88,7 @@ var _ = Describe("Patch", func() {
 			expected, err := os.ReadFile(sshFileExpected)
 			Ω(err).ShouldNot(HaveOccurred())
 
-			Ω(patch.Patch(sshPatch)).ShouldNot(HaveOccurred())
+			Ω(patch.Patch("ssh-test", sshPatch)).ShouldNot(HaveOccurred())
 
 			patched, err := os.ReadFile(testFile)
 			Ω(err).ShouldNot(HaveOccurred())
