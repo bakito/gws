@@ -40,15 +40,7 @@ type File struct {
 }
 
 type FilePatch struct {
-	ID       string   `yaml:"id"`
 	File     string   `yaml:"file"`
 	OldBlock []string `yaml:"oldBlock"`
 	NewBlock []string `yaml:"newBlock"`
-}
-
-func (f FilePatch) GetID() string {
-	if f.ID != "" {
-		return f.ID
-	}
-	return f.File
 }

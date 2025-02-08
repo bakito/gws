@@ -14,11 +14,11 @@ import (
 const ConfigFileName = ".gws.yaml"
 
 type Config struct {
-	Contexts           map[string]*Context `yaml:"contexts"`
-	CurrentContextName string              `yaml:"currentContext"`
-	currentContext     *Context            `yaml:"-"`
-	FilePath           string              `yaml:"-"`
-	FilePatches        []FilePatch         `yaml:"filePatches,omitempty"`
+	Contexts           map[string]*Context  `yaml:"contexts"`
+	CurrentContextName string               `yaml:"currentContext"`
+	currentContext     *Context             `yaml:"-"`
+	FilePath           string               `yaml:"-"`
+	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
 }
 
 func (c *Config) CurrentContext() *Context {

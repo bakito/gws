@@ -9,8 +9,8 @@ import (
 	"github.com/bakito/gws/pkg/types"
 )
 
-func Patch(filePatch types.FilePatch) error {
-	slog.Info("Patching file", "id", filePatch.GetID())
+func Patch(id string, filePatch types.FilePatch) error {
+	slog.Info("Patching file", "id", id)
 	// Read the content of the file
 	lines, err := readLines(filePatch.File)
 	if err != nil {
@@ -31,7 +31,7 @@ func Patch(filePatch types.FilePatch) error {
 		// Backup the original file
 		backupFileName := filePatch.File + ".bak"
 		fmt.Println("Backup created:", backupFileName)
-		slog.Info("Original file back-upped", "id", filePatch.GetID(), "backup", backupFileName)
+		slog.Info("Original file back-upped", "id", id, "backup", backupFileName)
 		err = backupFile(filePatch.File, backupFileName)
 		if err != nil {
 			return err
@@ -43,9 +43,9 @@ func Patch(filePatch types.FilePatch) error {
 			return err
 		}
 
-		slog.Info("Successfully patched", "id", filePatch.GetID())
+		slog.Info("Successfully patched", "id", id)
 	} else {
-		slog.Info("No patching required", "id", filePatch.GetID())
+		slog.Info("No patching required", "id", id)
 	}
 	return nil
 }
@@ -53,11 +53,11 @@ func Patch(filePatch types.FilePatch) error {
 // backupFile creates a backup of the original file
 func backupFile(original, backup string) error {
 	// Copy the original file to backup
-	input, err := os.ReadFile(original)
+	input, err := os.ReadFile(os.ExpandEnv(original))
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(backup, input, 0o600)
+	err = os.WriteFile(os.ExpandEnv(backup), input, 0o600)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func backupFile(original, backup string) error {
 
 // readLines reads a file and returns the lines as a slice of strings
 func readLines(filename string) ([]string, error) {
-	file, err := os.Open(filename)
+	file, err := os.Open(os.ExpandEnv(filename))
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func readLines(filename string) ([]string, error) {
 
 // writeLines writes a slice of strings to a file
 func writeLines(filename string, lines []string) error {
-	file, err := os.Create(filename)
+	file, err := os.Create(os.ExpandEnv(filename))
 	if err != nil {
 		return err
 	}
@@ -119,12 +119,17 @@ func processMultilineBlock(lines []string, oldBlock []string, newBlock []string)
 		result = append(result, line)
 	}
 
+	if inBlockIndex >= len(oldBlock) {
+		result = append(result, newBlock...)
+		changed = true
+	}
+
 	return result, changed
 }
 
 // replaceFile replaces the original file with the temporary file
 func replaceFile(original, tempFile string) error {
-	err := os.Rename(tempFile, original)
+	err := os.Rename(os.ExpandEnv(tempFile), os.ExpandEnv(original))
 	if err != nil {
 		return err
 	}
