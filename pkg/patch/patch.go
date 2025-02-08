@@ -82,7 +82,7 @@ func readLines(filename string) ([]string, error) {
 
 // writeLines writes a slice of strings to a file
 func writeLines(filename string, lines []string) error {
-	file, err := os.Create(ps.ExpandEnv(filename))
+	file, err := os.Create(os.ExpandEnv(filename))
 	if err != nil {
 		return err
 	}
