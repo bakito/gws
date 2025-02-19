@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"maps"
+	"slices"
+
 	"github.com/bakito/gws/pkg/types"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
-	"maps"
-	"slices"
 )
 
 // ctxCmd represents the ctx command
@@ -27,6 +28,7 @@ var ctxCmd = &cobra.Command{
 		}
 
 		if selected != "" {
+			cmd.Printf("Switching to context %q", selected)
 			return cfg.SwitchContext(selected)
 		}
 

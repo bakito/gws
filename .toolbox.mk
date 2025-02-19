@@ -10,7 +10,6 @@ $(TB_LOCALBIN):
 
 ## Tool Binaries
 TB_DEEPCOPY_GEN ?= $(TB_LOCALBIN)/deepcopy-gen
-TB_GINKGO ?= $(TB_LOCALBIN)/ginkgo
 TB_GOFUMPT ?= $(TB_LOCALBIN)/gofumpt
 TB_GOLANGCI_LINT ?= $(TB_LOCALBIN)/golangci-lint
 TB_GOLINES ?= $(TB_LOCALBIN)/golines
@@ -39,10 +38,6 @@ TB_SEMVER_VERSION ?= v1.1.3
 tb.deepcopy-gen: $(TB_DEEPCOPY_GEN) ## Download deepcopy-gen locally if necessary.
 $(TB_DEEPCOPY_GEN): $(TB_LOCALBIN)
 	test -s $(TB_LOCALBIN)/deepcopy-gen || GOBIN=$(TB_LOCALBIN) go install k8s.io/code-generator/cmd/deepcopy-gen@$(TB_DEEPCOPY_GEN_VERSION)
-.PHONY: tb.ginkgo
-tb.ginkgo: $(TB_GINKGO) ## Download ginkgo locally if necessary.
-$(TB_GINKGO): $(TB_LOCALBIN)
-	test -s $(TB_LOCALBIN)/ginkgo || GOBIN=$(TB_LOCALBIN) go install github.com/onsi/ginkgo/v2/ginkgo
 .PHONY: tb.gofumpt
 tb.gofumpt: $(TB_GOFUMPT) ## Download gofumpt locally if necessary.
 $(TB_GOFUMPT): $(TB_LOCALBIN)
@@ -73,7 +68,6 @@ $(TB_SEMVER): $(TB_LOCALBIN)
 tb.reset:
 	@rm -f \
 		$(TB_LOCALBIN)/deepcopy-gen \
-		$(TB_LOCALBIN)/ginkgo \
 		$(TB_LOCALBIN)/gofumpt \
 		$(TB_LOCALBIN)/golangci-lint \
 		$(TB_LOCALBIN)/golines \
