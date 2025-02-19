@@ -33,8 +33,16 @@ contexts:
       name: ws-2
 currentContext: ws-1
 filePatches:
+  gcloud-cacerts:
+    file: '%USERPROFILE%\AppData\Local\Google\Cloud SDK\google-cloud-sdk\lib\third_party\certifi\cacert.pem'
+    append: |
+      # my custom.cer
+      -----BEGIN CERTIFICATE-----
+      
+      -----END CERTIFICATE-----
+
   gcloud-ssh-putty:
-    file: testdata/patch/ssh.py
+    file: '%USERPROFILE%\AppData\Local\Google\Cloud SDK\google-cloud-sdk\lib\googlecloudsdk\command_lib\util\ssh\ssh.py'
     oldBlock:
       - '    if platforms.OperatingSystem.IsWindows():'
       - '      suite = Suite.PUTTY'

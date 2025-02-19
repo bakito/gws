@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/bakito/gws/pkg/env"
 	"github.com/bakito/gws/pkg/types"
@@ -18,9 +19,15 @@ func Patch(id string, filePatch types.FilePatch) error {
 		return err
 	}
 
-	// Process the lines, replacing the block if found
-	processedLines, changed := processMultilineBlock(lines, filePatch.OldBlock, filePatch.NewBlock)
+	var processedLines []string
+	var changed bool
 
+	if filePatch.Append != "" {
+		processedLines, changed = appendToFile(lines, filePatch.Append)
+	} else {
+		// Process the lines, replacing the block if found
+		processedLines, changed = processMultilineBlock(lines, filePatch.OldBlock, filePatch.NewBlock)
+	}
 	if changed {
 		// Write the processed lines to a temporary file
 		tempFile := filePatch.File + ".tmp"
@@ -49,6 +56,17 @@ func Patch(id string, filePatch types.FilePatch) error {
 		slog.Info("No patching required", "id", id)
 	}
 	return nil
+}
+
+func appendToFile(lines []string, a string) ([]string, bool) {
+	content := strings.Join(lines, "\n")
+	changed := false
+	if !strings.Contains(content, a) {
+		changed = true
+		content += "\n"
+		content += a
+	}
+	return strings.Split(content, "\n"), changed
 }
 
 // backupFile creates a backup of the original file
