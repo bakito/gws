@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var flagCurrent bool
+
 // ctxCmd represents the ctx command
 var ctxCmd = &cobra.Command{
 	Use:   "ctx",
@@ -19,6 +21,12 @@ var ctxCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		if flagCurrent {
+			cmd.Printf("Current selected context: %q\n", cfg.CurrentContextName)
+			return nil
+		}
+
 		if len(args) == 1 {
 			return cfg.SwitchContext(args[0])
 		}
@@ -34,6 +42,10 @@ var ctxCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func init() {
+	ctxCmd.PersistentFlags().BoolVar(&flagCurrent, "current", false, "Print the current active context")
 }
 
 func selectContext(cfg *types.Config) (string, error) {
