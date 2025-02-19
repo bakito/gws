@@ -6,12 +6,13 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/bakito/gws/pkg/env"
 	"github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
 )
 
 func New(addr string, user string, privateKeyFile string) (*client, error) {
-	privateKey, err := os.ReadFile(os.ExpandEnv(privateKeyFile))
+	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)
 	}
@@ -88,7 +89,7 @@ func (c *client) Execute(command string) (string, error) {
 func (c *client) CopyFile(from string, to string, permissions string) error {
 	slog.Debug("Copy file", "from", from, "to", to, "permissions", permissions)
 	// Open a file
-	f, _ := os.Open(os.ExpandEnv(from))
+	f, _ := os.Open(env.ExpandEnv(from))
 	// Close the file after it has been copied
 	defer f.Close()
 

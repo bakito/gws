@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/bakito/gws/pkg/env"
 	"github.com/bakito/gws/pkg/types"
 )
 
@@ -53,11 +54,11 @@ func Patch(id string, filePatch types.FilePatch) error {
 // backupFile creates a backup of the original file
 func backupFile(original, backup string) error {
 	// Copy the original file to backup
-	input, err := os.ReadFile(os.ExpandEnv(original))
+	input, err := os.ReadFile(env.ExpandEnv(original))
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(os.ExpandEnv(backup), input, 0o600)
+	err = os.WriteFile(env.ExpandEnv(backup), input, 0o600)
 	if err != nil {
 		return err
 	}
@@ -66,7 +67,7 @@ func backupFile(original, backup string) error {
 
 // readLines reads a file and returns the lines as a slice of strings
 func readLines(filename string) ([]string, error) {
-	file, err := os.Open(os.ExpandEnv(filename))
+	file, err := os.Open(env.ExpandEnv(filename))
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func readLines(filename string) ([]string, error) {
 
 // writeLines writes a slice of strings to a file
 func writeLines(filename string, lines []string) error {
-	file, err := os.Create(os.ExpandEnv(filename))
+	file, err := os.Create(env.ExpandEnv(filename))
 	if err != nil {
 		return err
 	}
@@ -129,7 +130,7 @@ func processMultilineBlock(lines []string, oldBlock []string, newBlock []string)
 
 // replaceFile replaces the original file with the temporary file
 func replaceFile(original, tempFile string) error {
-	err := os.Rename(os.ExpandEnv(tempFile), os.ExpandEnv(original))
+	err := os.Rename(env.ExpandEnv(tempFile), env.ExpandEnv(original))
 	if err != nil {
 		return err
 	}
