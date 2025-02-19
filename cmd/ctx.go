@@ -16,6 +16,7 @@ var ctxCmd = &cobra.Command{
 		if len(args) == 1 {
 			return cfg.SwitchContext(args[0])
 		}
+		// TODO print available contexts
 		return nil
 	},
 }
