@@ -31,7 +31,10 @@ func main() {
 
 	// Establish WebSocket connection
 	println(token.AccessToken)
-	conn, resp, err := websocket.DefaultDialer.Dial(wsURL, http.Header{"Authorization": []string{"Bearer " + token.AccessToken}})
+	conn, resp, err := websocket.DefaultDialer.Dial(
+		wsURL,
+		http.Header{"Authorization": []string{"Bearer " + token.AccessToken}},
+	)
 	if err != nil {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {

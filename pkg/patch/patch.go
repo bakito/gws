@@ -22,8 +22,8 @@ func Patch(id string, filePatch types.FilePatch) error {
 	var processedLines []string
 	var changed bool
 
-	if filePatch.Append != "" {
-		processedLines, changed = appendToFile(lines, filePatch.Append, filePatch.Indent)
+	if filePatch.OldBlock == "" {
+		processedLines, changed = appendToFile(lines, filePatch.NewBlock, filePatch.Indent)
 	} else {
 		// Process the lines, replacing the block if found
 		processedLines, changed = processMultilineBlock(lines, filePatch.OldBlock, filePatch.NewBlock, filePatch.Indent)
@@ -66,7 +66,9 @@ func appendToFile(lines []string, toAppend string, indent string) ([]string, boo
 
 	if !strings.Contains(content, toAppend) {
 		changed = true
-		content += "\n"
+		if !strings.HasSuffix(content, "\n") {
+			content += "\n"
+		}
 		content += toAppend
 	}
 	return strings.Split(content, "\n"), changed
@@ -162,10 +164,11 @@ func replaceFile(original, tempFile string) error {
 }
 
 func splitWithIndent(content string, indent string) []string {
-	lines := strings.Split(content, "\n")
+	var lines []string
 
-	for i, val := range lines {
-		lines[i] = indent + val
+	scanner := bufio.NewScanner(strings.NewReader(content))
+	for scanner.Scan() {
+		lines = append(lines, indent+scanner.Text())
 	}
 
 	return lines

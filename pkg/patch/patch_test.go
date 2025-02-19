@@ -112,7 +112,7 @@ return Environment(suite, bin_path)`,
 
 			sshPatch = types.FilePatch{
 				File: testFile,
-				Append: `-----BEGIN CERTIFICATE-----
+				NewBlock: `-----BEGIN CERTIFICATE-----
 xxx
 -----END CERTIFICATE-----`,
 			}

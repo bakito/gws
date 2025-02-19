@@ -41,7 +41,6 @@ type File struct {
 
 type FilePatch struct {
 	File     string `yaml:"file"`
-	Append   string `yaml:"append,omitempty"`
 	Indent   string `yaml:"indent,omitempty"`
 	OldBlock string `yaml:"oldBlock,omitempty"`
 	NewBlock string `yaml:"newBlock,omitempty"`

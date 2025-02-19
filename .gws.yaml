@@ -35,7 +35,7 @@ currentContext: ws-1
 filePatches:
   gcloud-cacerts:
     file: '%USERPROFILE%\AppData\Local\Google\Cloud SDK\google-cloud-sdk\lib\third_party\certifi\cacert.pem'
-    append: |
+    newBlock: |
       # my custom.cer
       -----BEGIN CERTIFICATE-----
       

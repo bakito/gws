@@ -45,7 +45,10 @@ func startTCPTunnel(websocketURL, localPort string, remotePort int) error {
 
 		// Start a goroutine to handle the connection
 		go func() {
-			creds, err := google.FindDefaultCredentials(context.Background(), "https://www.googleapis.com/auth/cloud-platform")
+			creds, err := google.FindDefaultCredentials(
+				context.Background(),
+				"https://www.googleapis.com/auth/cloud-platform",
+			)
 			if err != nil {
 				log.Fatalf("Failed to find default credentials: %v", err)
 			}
