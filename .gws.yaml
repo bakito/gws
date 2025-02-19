@@ -43,15 +43,16 @@ filePatches:
 
   gcloud-ssh-putty:
     file: '%USERPROFILE%\AppData\Local\Google\Cloud SDK\google-cloud-sdk\lib\googlecloudsdk\command_lib\util\ssh\ssh.py'
-    oldBlock:
-      - '    if platforms.OperatingSystem.IsWindows():'
-      - '      suite = Suite.PUTTY'
-      - '      bin_path = _SdkHelperBin()'
-      - '    else:'
-      - '      suite = Suite.OPENSSH'
-      - '      bin_path = None'
-      - '    return Environment(suite, bin_path)'
+    indent: '    '
+    oldBlock: |
+      if platforms.OperatingSystem.IsWindows():
+        suite = Suite.PUTTY
+        bin_path = _SdkHelperBin()
+      else:
+        suite = Suite.OPENSSH
+        bin_path = None
+      return Environment(suite, bin_path)
     newBlock:
-      - '    suite = Suite.OPENSSH'
-      - '    bin_path = None'
-      - '    return Environment(suite, bin_path)'
+      suite = Suite.OPENSSH
+      bin_path = None
+      return Environment(suite, bin_path)

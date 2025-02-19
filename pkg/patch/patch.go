@@ -23,10 +23,10 @@ func Patch(id string, filePatch types.FilePatch) error {
 	var changed bool
 
 	if filePatch.Append != "" {
-		processedLines, changed = appendToFile(lines, filePatch.Append)
+		processedLines, changed = appendToFile(lines, filePatch.Append, filePatch.Indent)
 	} else {
 		// Process the lines, replacing the block if found
-		processedLines, changed = processMultilineBlock(lines, filePatch.OldBlock, filePatch.NewBlock)
+		processedLines, changed = processMultilineBlock(lines, filePatch.OldBlock, filePatch.NewBlock, filePatch.Indent)
 	}
 	if changed {
 		// Write the processed lines to a temporary file
@@ -58,20 +58,23 @@ func Patch(id string, filePatch types.FilePatch) error {
 	return nil
 }
 
-func appendToFile(lines []string, a string) ([]string, bool) {
+func appendToFile(lines []string, toAppend string, indent string) ([]string, bool) {
 	content := strings.Join(lines, "\n")
 	changed := false
-	if !strings.Contains(content, a) {
+
+	toAppend = strings.Join(splitWithIndent(toAppend, indent), "\n")
+
+	if !strings.Contains(content, toAppend) {
 		changed = true
 		content += "\n"
-		content += a
+		content += toAppend
 	}
 	return strings.Split(content, "\n"), changed
 }
 
 // backupFile creates a backup of the original file
 func backupFile(original, backup string) error {
-	// Copy the original file to backup
+	// Copy the original file to back up
 	input, err := os.ReadFile(env.ExpandEnv(original))
 	if err != nil {
 		return err
@@ -117,17 +120,20 @@ func writeLines(filename string, lines []string) error {
 }
 
 // processMultilineBlock processes the lines and replaces the old block with the new one
-func processMultilineBlock(lines []string, oldBlock []string, newBlock []string) ([]string, bool) {
+func processMultilineBlock(lines []string, oldBlock string, newBlock string, indent string) ([]string, bool) {
 	var result []string
 	inBlockIndex := 0
 	changed := false
 
+	oldSlice := splitWithIndent(oldBlock, indent)
+	newSlice := splitWithIndent(newBlock, indent)
+
 	for _, line := range lines {
-		if inBlockIndex >= len(oldBlock) {
-			result = append(result, newBlock...)
+		if inBlockIndex >= len(oldSlice) {
+			result = append(result, newSlice...)
 			inBlockIndex = 0
 			changed = true
-		} else if line == oldBlock[inBlockIndex] {
+		} else if line == oldSlice[inBlockIndex] {
 			inBlockIndex++
 			continue
 		} else {
@@ -138,8 +144,8 @@ func processMultilineBlock(lines []string, oldBlock []string, newBlock []string)
 		result = append(result, line)
 	}
 
-	if inBlockIndex >= len(oldBlock) {
-		result = append(result, newBlock...)
+	if inBlockIndex >= len(oldSlice) {
+		result = append(result, newSlice...)
 		changed = true
 	}
 
@@ -153,4 +159,14 @@ func replaceFile(original, tempFile string) error {
 		return err
 	}
 	return nil
+}
+
+func splitWithIndent(content string, indent string) []string {
+	lines := strings.Split(content, "\n")
+
+	for i, val := range lines {
+		lines[i] = indent + val
+	}
+
+	return lines
 }

@@ -11,45 +11,47 @@ import (
 )
 
 const (
-	sshFile         = "../../testdata/patch/ssh.py"
-	sshFileExpected = sshFile + ".expected"
+	sshFile             = "../../testdata/patch/ssh.py"
+	sshFileExpected     = sshFile + ".expected"
+	cacertsFile         = "../../testdata/patch/cacerts.crt"
+	cacertsFileExpected = cacertsFile + ".expected"
 )
 
 var _ = Describe("Patch", func() {
+	var tempDir string
+	BeforeEach(func() {
+		var err error
+		tempDir, err = os.MkdirTemp("", "gws_patch_test_")
+		Ω(err).ShouldNot(HaveOccurred())
+	})
+	AfterEach(func() {
+		Ω(os.RemoveAll(tempDir)).ShouldNot(HaveOccurred(), tempDir+" should be deleted")
+	})
+
 	Context("ssh.py", func() {
 		var (
-			tempDir  string
 			testFile string
 			bakFile  string
 			sshPatch types.FilePatch
 		)
 		BeforeEach(func() {
-			var err error
-			tempDir, err = os.MkdirTemp("", "gws_patch_test_")
-			Ω(err).ShouldNot(HaveOccurred())
 			testFile = filepath.Join(tempDir, "ssh.py")
 			bakFile = testFile + ".bak"
 
 			sshPatch = types.FilePatch{
-				File: testFile,
-				OldBlock: []string{
-					"    if platforms.OperatingSystem.IsWindows():",
-					"      suite = Suite.PUTTY",
-					"      bin_path = _SdkHelperBin()",
-					"    else:",
-					"      suite = Suite.OPENSSH",
-					"      bin_path = None",
-					"    return Environment(suite, bin_path)",
-				},
-				NewBlock: []string{
-					"    suite = Suite.OPENSSH",
-					"    bin_path = None",
-					"    return Environment(suite, bin_path)",
-				},
+				File:   testFile,
+				Indent: "    ",
+				OldBlock: `if platforms.OperatingSystem.IsWindows():
+  suite = Suite.PUTTY
+  bin_path = _SdkHelperBin()
+else:
+  suite = Suite.OPENSSH
+  bin_path = None
+return Environment(suite, bin_path)`,
+				NewBlock: `suite = Suite.OPENSSH
+bin_path = None
+return Environment(suite, bin_path)`,
 			}
-		})
-		AfterEach(func() {
-			Ω(os.RemoveAll(tempDir)).ShouldNot(HaveOccurred(), tempDir+" should be deleted")
 		})
 
 		It("should create a valid patched file", func() {
@@ -63,7 +65,7 @@ var _ = Describe("Patch", func() {
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(bakFile).Should(BeAnExistingFile())
 
-			Ω(patched).Should(Equal(expected))
+			Ω(string(patched)).Should(Equal(string(expected)))
 		})
 
 		It("should create a valid patched file with env variables in path", func() {
@@ -80,7 +82,7 @@ var _ = Describe("Patch", func() {
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(bakFile).Should(BeAnExistingFile())
 
-			Ω(patched).Should(Equal(expected))
+			Ω(string(patched)).Should(Equal(string(expected)))
 		})
 
 		It("should not change the file", func() {
@@ -94,7 +96,74 @@ var _ = Describe("Patch", func() {
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(bakFile).ShouldNot(BeAnExistingFile())
 
-			Ω(patched).Should(Equal(expected))
+			Ω(string(patched)).Should(Equal(string(expected)))
+		})
+	})
+
+	Context("cacerts.crt", func() {
+		var (
+			testFile string
+			bakFile  string
+			sshPatch types.FilePatch
+		)
+		BeforeEach(func() {
+			testFile = filepath.Join(tempDir, "cacerts.crt")
+			bakFile = testFile + ".bak"
+
+			sshPatch = types.FilePatch{
+				File: testFile,
+				Append: `-----BEGIN CERTIFICATE-----
+xxx
+-----END CERTIFICATE-----`,
+			}
+		})
+		AfterEach(func() {
+			Ω(os.RemoveAll(tempDir)).ShouldNot(HaveOccurred(), tempDir+" should be deleted")
+		})
+
+		It("should create a valid patched file", func() {
+			Ω(copy(cacertsFile, testFile)).ShouldNot(HaveOccurred())
+			expected, err := os.ReadFile(cacertsFileExpected)
+			Ω(err).ShouldNot(HaveOccurred())
+
+			Ω(patch.Patch("cacerts-test", sshPatch)).ShouldNot(HaveOccurred())
+
+			patched, err := os.ReadFile(testFile)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(bakFile).Should(BeAnExistingFile())
+
+			Ω(string(patched)).Should(Equal(string(expected)))
+		})
+
+		It("should create a valid patched file with env variables in path", func() {
+			Ω(copy(cacertsFile, testFile)).ShouldNot(HaveOccurred())
+			expected, err := os.ReadFile(cacertsFileExpected)
+			Ω(err).ShouldNot(HaveOccurred())
+
+			_ = os.Setenv("GWS_TEST_DIR", tempDir)
+			sshPatch.File = filepath.Join("${GWS_TEST_DIR}", "cacerts.crt")
+			Ω(patch.Patch("cacerts-test", sshPatch)).ShouldNot(HaveOccurred())
+			_ = os.Unsetenv("GWS_TEST_DIR")
+
+			patched, err := os.ReadFile(testFile)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(bakFile).Should(BeAnExistingFile())
+
+			Ω(string(patched)).Should(Equal(string(expected)))
+		})
+
+		It("should not change the file", func() {
+			Ω(copy(cacertsFileExpected, testFile)).ShouldNot(HaveOccurred())
+			expected, err := os.ReadFile(cacertsFileExpected)
+			Ω(err).ShouldNot(HaveOccurred())
+
+			Ω(patch.Patch("cacerts-test", sshPatch)).ShouldNot(HaveOccurred())
+
+			patched, err := os.ReadFile(testFile)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(bakFile).ShouldNot(BeAnExistingFile())
+
+			Ω(string(patched)).Should(Equal(string(expected)))
 		})
 	})
 })
