@@ -28,7 +28,7 @@ var ctxCmd = &cobra.Command{
 		}
 
 		if selected != "" {
-			cmd.Printf("Switching to context %q", selected)
+			cmd.Printf("Switching to context %q\n", selected)
 			return cfg.SwitchContext(selected)
 		}
 
@@ -37,7 +37,7 @@ var ctxCmd = &cobra.Command{
 }
 
 func selectContext(cfg *types.Config) (string, error) {
-	m := ctxModel{choices: slices.Sorted(maps.Keys(cfg.Contexts))}
+	m := &ctxModel{choices: slices.Sorted(maps.Keys(cfg.Contexts))}
 	p := tea.NewProgram(m)
 
 	if _, err := p.Run(); err != nil {
@@ -56,11 +56,11 @@ type ctxModel struct {
 	selected string
 }
 
-func (m ctxModel) Init() tea.Cmd {
+func (m *ctxModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m ctxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *ctxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -82,7 +82,7 @@ func (m ctxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m ctxModel) View() string {
+func (m *ctxModel) View() string {
 	s := "Choose an option:\n\n"
 	for i, choice := range m.choices {
 		cursor := " "

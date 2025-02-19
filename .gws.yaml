@@ -36,14 +36,14 @@ filePatches:
   gcloud-ssh-putty:
     file: testdata/patch/ssh.py
     oldBlock:
-      - "    if platforms.OperatingSystem.IsWindows():"
-      - "      suite = Suite.PUTTY"
-      - "      bin_path = _SdkHelperBin()"
-      - "    else:"
-      - "      suite = Suite.OPENSSH"
-      - "      bin_path = None"
-      - "    return Environment(suite, bin_path)"
+      - '    if platforms.OperatingSystem.IsWindows():'
+      - '      suite = Suite.PUTTY'
+      - '      bin_path = _SdkHelperBin()'
+      - '    else:'
+      - '      suite = Suite.OPENSSH'
+      - '      bin_path = None'
+      - '    return Environment(suite, bin_path)'
     newBlock:
-      - "    suite = Suite.OPENSSH"
-      - "    bin_path = None"
-      - "    return Environment(suite, bin_path)"
+      - '    suite = Suite.OPENSSH'
+      - '    bin_path = None'
+      - '    return Environment(suite, bin_path)'
