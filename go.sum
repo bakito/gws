@@ -16,8 +16,8 @@ github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiE
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/bramvdbogaerde/go-scp v1.5.0 h1:a9BinAjTfQh273eh7vd3qUgmBC+bx+3TRDtkZWmIpzM=
 github.com/bramvdbogaerde/go-scp v1.5.0/go.mod h1:on2aH5AxaFb2G0N5Vsdy6B0Ml7k9HuHSwfo1y0QzAbQ=
-github.com/charmbracelet/bubbletea v1.2.5-0.20241207142916-e0515bc22ad1 h1:osd3dk14DEriOrqJBWzeDE9eN2Yd00BkKzFAiLXxkS8=
-github.com/charmbracelet/bubbletea v1.2.5-0.20241207142916-e0515bc22ad1/go.mod h1:Hbk5+oE4a7cDyjfdPi4sHZ42aGTMYcmHnVDhsRswn7A=
+github.com/charmbracelet/bubbletea v1.3.3 h1:WpU6fCY0J2vDWM3zfS3vIDi/ULq3SYphZhkAGGvmEUY=
+github.com/charmbracelet/bubbletea v1.3.3/go.mod h1:dtcUCyCGEX3g9tosuYiut3MXgY/Jsv9nKVdibKKRRXo=
 github.com/charmbracelet/lipgloss v1.0.1-0.20250110214317-ecc1bd014d51 h1:f+0mEkhorXNiBaHb4V9wyd364OH/aF7md7ZngkS+1gU=
 github.com/charmbracelet/lipgloss v1.0.1-0.20250110214317-ecc1bd014d51/go.mod h1:QRGthpgH59/perglqXZC8xPHqDGZ9BB45ChJCFEWEMI=
 github.com/charmbracelet/x/ansi v0.8.0 h1:9GTq3xq9caJW8ZrBTe0LIe2fvfLR/bYXKTx2llXn7xE=
