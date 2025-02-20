@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/bakito/gws/pkg/types"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/spf13/cobra"
 )
 
