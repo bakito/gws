@@ -36,7 +36,7 @@ type Dir struct {
 type File struct {
 	SourcePath  string `yaml:"sourcePath"`
 	Path        string `yaml:"path"`
-	Permissions string `yaml:"permissions,omitempty"`
+	Permissions string `yaml:"permissions"`
 }
 
 type FilePatch struct {

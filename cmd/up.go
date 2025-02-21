@@ -1,11 +1,7 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"fmt"
-	"log"
 	"log/slog"
 
 	"github.com/bakito/gws/pkg/client"
@@ -50,16 +46,17 @@ var upCmd = &cobra.Command{
 		if len(ssh.Files) > 0 {
 			slog.Info("Uploading files")
 			for _, file := range ssh.Files {
-				slog.Info("Uploading file", "from", file.SourcePath, "to", file.Path, "permissions", file.Permissions)
 				if file.Permissions == "0400" {
-					_, err = cl.Execute(fmt.Sprintf("if [ -f %s ]; then chmod u+w %s; fi", file.Path, file.Path))
-					if err != nil {
-						log.Fatal(err)
-					}
-					err = cl.CopyFile(file.SourcePath, file.Path, file.Permissions)
+					slog.Info("Add writable file permission for upload", "file", file.Path, "permissions", file.Permissions)
+					_, err := cl.Execute(fmt.Sprintf("if [ -f %s ]; then chmod u+w %s; fi", file.Path, file.Path))
 					if err != nil {
 						return err
 					}
+				}
+				slog.Info("Uploading file", "from", file.SourcePath, "to", file.Path, "permissions", file.Permissions)
+				err = cl.CopyFile(file.SourcePath, file.Path, file.Permissions)
+				if err != nil {
+					return err
 				}
 			}
 		}
@@ -69,14 +66,4 @@ var upCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(upCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// upCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// upCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
