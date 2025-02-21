@@ -30,13 +30,13 @@ func (c Context) HostAddr() string {
 
 type Dir struct {
 	Path        string `yaml:"path"`
-	Permissions string `yaml:"permissions"`
+	Permissions string `yaml:"permissions,omitempty"`
 }
 
 type File struct {
 	SourcePath  string `yaml:"sourcePath"`
 	Path        string `yaml:"path"`
-	Permissions string `yaml:"permissions"`
+	Permissions string `yaml:"permissions,omitempty"`
 }
 
 type FilePatch struct {
