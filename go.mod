@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	cloud.google.com/go/workstations v1.1.3
 	github.com/bramvdbogaerde/go-scp v1.5.0
-	github.com/charmbracelet/bubbletea v1.3.3
+	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/gorilla/websocket v1.5.3
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
