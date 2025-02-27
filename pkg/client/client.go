@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 
 	"github.com/bakito/gws/pkg/env"
@@ -69,7 +68,7 @@ func (c *client) Close() {
 }
 
 func (c *client) Execute(command string) (string, error) {
-	slog.Debug("Executing ssh", "command", command)
+	fmt.Printf("Executing ssh %q\n", command)
 
 	// Start a new SSH session
 	session, err := c.sshClient.NewSession()
@@ -87,7 +86,7 @@ func (c *client) Execute(command string) (string, error) {
 }
 
 func (c *client) CopyFile(from string, to string, permissions string) error {
-	slog.Debug("Copy file", "from", from, "to", to, "permissions", permissions)
+	fmt.Printf("Copy file form %q to %q with perissions %s\n", from, to, permissions)
 	// Open a file
 	f, _ := os.Open(env.ExpandEnv(from))
 	// Close the file after it has been copied

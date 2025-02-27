@@ -3,7 +3,6 @@ package patch
 import (
 	"bufio"
 	"fmt"
-	"log/slog"
 	"os"
 	"strings"
 
@@ -12,7 +11,7 @@ import (
 )
 
 func Patch(id string, filePatch types.FilePatch) error {
-	slog.Info("Patching file", "id", id)
+	fmt.Printf("Patching file %q\n", id)
 	// Read the content of the file
 	lines, err := readLines(filePatch.File)
 	if err != nil {
@@ -38,8 +37,8 @@ func Patch(id string, filePatch types.FilePatch) error {
 
 		// Backup the original file
 		backupFileName := filePatch.File + ".bak"
-		fmt.Println("Backup created:", backupFileName)
-		slog.Info("Original file back-upped", "id", id, "backup", backupFileName)
+		fmt.Printf("Backup created: %s\n", backupFileName)
+		fmt.Printf("Original file %q back-upped to %s\n", id, backupFileName)
 		err = backupFile(filePatch.File, backupFileName)
 		if err != nil {
 			return err
@@ -51,9 +50,9 @@ func Patch(id string, filePatch types.FilePatch) error {
 			return err
 		}
 
-		slog.Info("Successfully patched", "id", id)
+		fmt.Printf("Successfully patched %q\n", id)
 	} else {
-		slog.Info("No patching required", "id", id)
+		fmt.Printf("No patching required %q\n", id)
 	}
 	return nil
 }

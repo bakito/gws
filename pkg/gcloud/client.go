@@ -3,19 +3,19 @@ package gcloud
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 	"time"
 
 	workstations "cloud.google.com/go/workstations/apiv1"
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
+	"github.com/bakito/gws/pkg/spinner"
 	"github.com/bakito/gws/pkg/types"
 )
 
 func StartWorkstation(cfg *types.Config) {
 	sshContext := cfg.CurrentContext()
 	if sshContext.GCloud == nil {
-		slog.Info("No gcloud config found")
+		fmt.Println("No gcloud config found")
 		return
 	}
 	// https://cloud.google.com/go/docs/reference/cloud.google.com/go/workstations/latest/apiv1
@@ -25,7 +25,8 @@ func StartWorkstation(cfg *types.Config) {
 
 	c, err := workstations.NewClient(ctx)
 	if err != nil {
-		slog.Error("Error creating workstations client", "error", err)
+		fmt.Printf("Error creating workstations client: %v\n", err)
+		os.Exit(1)
 	}
 	defer c.Close()
 
@@ -39,43 +40,46 @@ func StartWorkstation(cfg *types.Config) {
 
 	ws, err := c.GetWorkstation(ctx, &workstationspb.GetWorkstationRequest{Name: wsName})
 	if err != nil {
-		slog.Error("Error getting workstation", "error", err)
+		fmt.Printf("Error getting workstation: %v\n", err)
 		os.Exit(1)
 	}
 
 	if ws.State == workstationspb.Workstation_STATE_STOPPED {
 		op, err := c.StartWorkstation(ctx, &workstationspb.StartWorkstationRequest{Name: wsName})
 		if err != nil {
-			slog.Error("Error starting workstation", "error", err)
+			fmt.Printf("Error starting workstation: %v\n", err)
 			os.Exit(1)
 		}
-		slog.Info("Waiting for workstation to start", "name", sshContext.GCloud.Name)
+		spinny := spinner.Start(fmt.Sprintf(" Waiting for workstation %s to start...", sshContext.GCloud.Name))
+		defer spinny.Stop() // reset the terminal in case of a panic
 		_, err = op.Wait(ctx)
+		spinny.Stop()
 		if err != nil {
-			slog.Error("Error waiting for workstation to start", "error", err)
+			fmt.Printf("Error waiting for workstation to start: %v\n", err)
 			os.Exit(1)
 		}
-		slog.Info("Workstation started", "name", sshContext.GCloud.Name)
+		fmt.Printf("Workstation started %q\n", sshContext.GCloud.Name)
 	} else if ws.State == workstationspb.Workstation_STATE_RUNNING {
-		slog.Info("Workstation running", "name", sshContext.GCloud.Name)
+		fmt.Printf("Workstation running %q\n", sshContext.GCloud.Name)
 	} else if ws.State == workstationspb.Workstation_STATE_STARTING {
-		slog.Info("Workstation is already starting", "name", sshContext.GCloud.Name)
-
+		spinny := spinner.Start(fmt.Sprintf(" Workstation %s is already starting ...", sshContext.GCloud.Name))
+		defer spinny.Stop() // reset the terminal in case of a panic
 		for i := 0; i < 10; i++ {
 			time.Sleep(10 * time.Second)
 			ws, err = c.GetWorkstation(ctx, &workstationspb.GetWorkstationRequest{Name: wsName})
 			if err != nil {
-				slog.Error("Error getting workstation", "error", err)
+				fmt.Printf("Error getting workstation: %v\n", err)
 				os.Exit(1)
 			}
 			if ws.State == workstationspb.Workstation_STATE_RUNNING {
 				break
 			}
 		}
+		spinny.Stop()
 		if ws.State == workstationspb.Workstation_STATE_RUNNING {
-			slog.Info("Workstation started", "name", sshContext.GCloud.Name)
+			fmt.Printf("Workstation started %q\n", sshContext.GCloud.Name)
 		} else {
-			slog.Error("Workstation is in unexpected state", "state", ws.State)
+			fmt.Printf("Workstation is in unexpected state: %s\n", ws.State)
 		}
 	}
 }
@@ -83,7 +87,7 @@ func StartWorkstation(cfg *types.Config) {
 func StopWorkstation(cfg *types.Config) {
 	sshContext := cfg.CurrentContext()
 	if sshContext.GCloud == nil {
-		slog.Info("No gcloud config found")
+		fmt.Println("No gcloud config found")
 		return
 	}
 	// https://cloud.google.com/go/docs/reference/cloud.google.com/go/workstations/latest/apiv1
@@ -93,7 +97,7 @@ func StopWorkstation(cfg *types.Config) {
 
 	c, err := workstations.NewClient(ctx)
 	if err != nil {
-		slog.Error("Error creating workstations client", "error", err)
+		fmt.Printf("Error creating workstations client: %v\n", err)
 	}
 	defer c.Close()
 
@@ -107,23 +111,25 @@ func StopWorkstation(cfg *types.Config) {
 
 	ws, err := c.GetWorkstation(ctx, &workstationspb.GetWorkstationRequest{Name: wsName})
 	if err != nil {
-		slog.Error("Error getting workstation", "error", err)
+		fmt.Printf("Error getting workstation: %v\n", err)
 		os.Exit(1)
 	}
 
 	if ws.State != workstationspb.Workstation_STATE_STOPPED {
 		op, err := c.StopWorkstation(ctx, &workstationspb.StopWorkstationRequest{Name: wsName})
 		if err != nil {
-			slog.Error("Error stopping workstation", "error", err)
+			fmt.Printf("Error stopping workstation: %v\n", err)
 			os.Exit(1)
 		}
-		slog.Info("Waiting for workstation to stop", "name", sshContext.GCloud.Name)
+		spinny := spinner.Start(fmt.Sprintf(" Waiting for workstation %s to stop...", sshContext.GCloud.Name))
+		defer spinny.Stop() // reset the terminal in case of a panic
+
 		_, err = op.Wait(ctx)
 		if err != nil {
-			slog.Error("Error waiting for workstation to stop", "error", err)
+			fmt.Printf("Error waiting for workstation to stop: %v\n", err)
 			os.Exit(1)
 		}
+		spinny.Stop()
 	}
-
-	slog.Info("Workstation stopped", "name", sshContext.GCloud.Name)
+	fmt.Printf("Workstation stopped %q\n", sshContext.GCloud.Name)
 }
