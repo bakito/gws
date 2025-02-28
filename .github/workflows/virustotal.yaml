@@ -3,75 +3,13 @@ name: Scan GitHub Release with VirusTotal
 on:
   release:
     types: [released]
-  push:
-    branches: [vt]
 
 jobs:
   scan_release:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Download Release Assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir assets
-          #gh release download ${{ github.event.release.tag_name }} --dir assets
-          gh release download v0.0.17 --dir assets --pattern "*windows*"
-
-      - name: Extract Archives
-        run: |
-          for file in assets/*; do
-            targetDir="extracted/$(basename ${file})"
-            mkdir -p "${targetDir}"
-            if [[ $file == *.zip ]]; then
-              unzip -o "$file" -d "${targetDir}"
-            elif [[ $file == *.tar.gz ]]; then
-              tar -xzf "$file" -C "${targetDir}"
-            elif [[ $file == *.tar.xz ]]; then
-              tar -xJf "$file" -C "${targetDir}"
-            elif [[ $file == *.rar ]]; then
-              unrar x "$file" "${targetDir}"/
-            fi
-          done
-
-      - name: Upload Extracted Files to VirusTotal
-        id: virustotal_scan
-        env:
-          VT_API_KEY: ${{ secrets.VT_API_KEY }}
-        run: |
-          echo "🦠 VirusTotal Report 🔎:" > vt_results.txt
-          
-          scanFile() {
-            echo "🔎 Scanning ${1}" >&2
-            response=$(curl --silent --fail --request POST \
-                --url https://www.virustotal.com/api/v3/files \
-                --header "x-apikey: $VT_API_KEY" \
-                --form "file=@${1}")
-            scan_id=$(echo ${response} | jq -r '.data.id')
-            echo "${scan_id}"
-          }
-          
-          for file in extracted/*/*.exe; do
-            if [[ -f "$file" ]]; then
-              # scan the whole archive
-              archive_name=$(basename $(dirname "$file"))
-              scan_id_archive=$(scanFile "assets/$archive_name")
-              # scan extracted exe
-              scan_id_exe=$(scanFile $file)
-
-              scan_link_archive="https://www.virustotal.com/gui/file-analysis/$scan_id_archive/detection"
-              scan_link_exe="https://www.virustotal.com/gui/file-analysis/$scan_id_exe/detection"
-              echo "- [${archive_name}]($scan_link_archive) [$(basename $file)]($scan_link_exe)" >> vt_results.txt
-            fi
-          done
-
-      - name: Update GitHub Release with Scan Results
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          #gh release view ${{ github.event.release.tag_name }} --json body -q .body > existing_notes.txt || echo "" > existing_notes.txt
-          gh release view v0.0.17 --json body -q .body > existing_notes.txt || echo "" > existing_notes.txt
-          cat existing_notes.txt vt_results.txt > updated_notes.txt
-          #gh release edit ${{ github.event.release.tag_name }} --notes-file updated_notes.txt
-          gh release edit v0.0.17 --notes-file updated_notes.txt
+      - name: Analyze Build Assets
+        uses: bakito/virustotal-action@main
+        with:
+          release_name: ${{github.event.release.tag_name}}
+          vt_api_key: ${{secrets.VT_API_KEY}}
