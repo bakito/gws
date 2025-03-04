@@ -1,16 +1,18 @@
-package client
+package ssh
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/bakito/gws/pkg/env"
+	"github.com/bakito/gws/pkg/passwd"
 	"github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
 )
 
-func New(addr string, user string, privateKeyFile string) (*client, error) {
+func Client(addr string, user string, privateKeyFile string) (*client, error) {
 	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)
@@ -19,13 +21,16 @@ func New(addr string, user string, privateKeyFile string) (*client, error) {
 	// Parse the private key
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
-		  // Check if the error is due to a missing passphrase
-		if errors.Is(err, ssh.ErrPasswordMissing) {
-			// TODO read password
-			signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte("password"))
+		// Check if the error is due to a missing passphrase
+		if errors.Is(err, &ssh.PassphraseMissingError{}) {
+			pass, err := passwd.Prompt(fmt.Sprintf("Please enter the passphrase for private key (%s):", privateKeyFile))
+			if err != nil {
+				return nil, err
+			}
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, []byte(pass))
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse private key: %w", err)
-			}	
+			}
 		} else {
 			return nil, fmt.Errorf("failed to parse private key: %w", err)
 		}
