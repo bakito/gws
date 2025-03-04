@@ -19,21 +19,9 @@ func Client(addr string, user string, privateKeyFile string) (*client, error) {
 	}
 
 	// Parse the private key
-	signer, err := ssh.ParsePrivateKey(privateKey)
+	signer, err := loadPrivateKey(privateKey, privateKeyFile)
 	if err != nil {
-		// Check if the error is due to a missing passphrase
-		if errors.Is(err, &ssh.PassphraseMissingError{}) {
-			pass, err := passwd.Prompt(fmt.Sprintf("Please enter the passphrase for private key (%s):", privateKeyFile))
-			if err != nil {
-				return nil, err
-			}
-			signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, []byte(pass))
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse private key: %w", err)
-			}
-		} else {
-			return nil, fmt.Errorf("failed to parse private key: %w", err)
-		}
+		return nil, err
 	}
 
 	// Define SSH connection details
@@ -66,6 +54,26 @@ func Client(addr string, user string, privateKeyFile string) (*client, error) {
 		sshClient: sshClient,
 		scpClient: scpClient,
 	}, nil
+}
+
+func loadPrivateKey(privateKey []byte, privateKeyFile string) (ssh.Signer, error) {
+	signer, err := ssh.ParsePrivateKey(privateKey)
+	if err != nil {
+		// Check if the error is due to a missing passphrase
+		if errors.Is(err, &ssh.PassphraseMissingError{}) {
+			pass, err := passwd.Prompt(fmt.Sprintf("Please enter the passphrase for private key (%s):", privateKeyFile))
+			if err != nil {
+				return nil, err
+			}
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, []byte(pass))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse private key: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("failed to parse private key: %w", err)
+		}
+	}
+	return signer, nil
 }
 
 type client struct {
