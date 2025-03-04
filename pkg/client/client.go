@@ -19,7 +19,16 @@ func New(addr string, user string, privateKeyFile string) (*client, error) {
 	// Parse the private key
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse private key: %w", err)
+		  // Check if the error is due to a missing passphrase
+		if errors.Is(err, ssh.ErrPasswordMissing) {
+			// TODO read password
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte("password"))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse private key: %w", err)
+			}	
+		} else {
+			return nil, fmt.Errorf("failed to parse private key: %w", err)
+		}
 	}
 
 	// Define SSH connection details
