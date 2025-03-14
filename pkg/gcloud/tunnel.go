@@ -24,7 +24,7 @@ type tunnel struct {
 }
 
 func TcpTunnel(cfg *types.Config, port int) {
-	_, ctx, c, err, wsName, ws := setup(cfg)
+	_, ctx, c, err, ws := setup(cfg)
 	if err != nil {
 		return
 	}
@@ -33,7 +33,7 @@ func TcpTunnel(cfg *types.Config, port int) {
 	t := &tunnel{
 		headers: http.Header{},
 		wsHost:  ws.GetHost(),
-		wsName:  wsName,
+		wsName:  ws.GetName(),
 		client:  c,
 	}
 	go t.refreshAuthToken(ctx)
