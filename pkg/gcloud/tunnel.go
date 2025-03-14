@@ -16,6 +16,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type tunnel struct {
+	headers http.Header
+	wsName  string
+	wsHost  string
+	client  *workstations.Client
+}
+
 func TcpTunnel(cfg *types.Config, port int) {
 	_, ctx, c, err, wsName, ws := setup(cfg)
 	if err != nil {
@@ -23,25 +30,26 @@ func TcpTunnel(cfg *types.Config, port int) {
 	}
 	defer c.Close()
 
-	headers := http.Header{}
-
-	go refreshAuthToken(ctx, c, wsName, headers)
-	getAuthToken(ctx, c, wsName, headers)
+	t := &tunnel{
+		headers: http.Header{},
+		wsHost:  ws.GetHost(),
+		wsName:  wsName,
+		client:  c,
+	}
+	go t.refreshAuthToken(ctx)
+	t.getAuthToken(ctx)
 
 	wsURL := fmt.Sprintf("wss://%s/_workstation/tcp/%d", ws.Host, 22)
 
-	// Establish WebSocket connection
-	conn, resp, err := websocket.DefaultDialer.Dial(
-		wsURL,
-		headers,
-	)
+	// Establish persistent WebSocket connection
+	conn, resp, err := websocket.DefaultDialer.Dial(wsURL, t.headers)
 	if err != nil {
-		body, err := io.ReadAll(resp.Body)
-		defer resp.Body.Close()
-		if err == nil {
-			println(string(body))
+		if resp != nil {
+			body, _ := io.ReadAll(resp.Body)
+			defer resp.Body.Close()
+			fmt.Println(string(body))
 		}
-		fmt.Printf("Failed to connect to WebSocket %q: %v\n", resp.Status, err)
+		fmt.Printf("Failed to connect to WebSocket %q: %v\n", wsURL, err)
 		os.Exit(1)
 	}
 	defer conn.Close()
@@ -56,7 +64,6 @@ func TcpTunnel(cfg *types.Config, port int) {
 	fmt.Printf("Listening on port %d ...\n", port)
 
 	for {
-		// Accept incoming TCP connections
 		clientConn, err := listener.Accept()
 		if err != nil {
 			fmt.Printf("Failed to accept connection: %v\n", err)
@@ -64,17 +71,19 @@ func TcpTunnel(cfg *types.Config, port int) {
 		}
 		fmt.Println("Accepted TCP connection")
 
-		// Handle the TCP connection with WebSocket forwarding
-		go handleConnection(clientConn, conn)
+		// Handle the connection in a separate goroutine
+		go t.handleConnection(clientConn, conn)
 	}
 }
 
 // handleConnection forwards data between the TCP client and the WebSocket connection
-func handleConnection(clientConn net.Conn, wsConn *websocket.Conn) {
+func (t *tunnel) handleConnection(clientConn net.Conn, wsConn *websocket.Conn) {
 	defer clientConn.Close()
+	errChan := make(chan error, 2)
 
-	// Create a goroutine to send data from TCP client to WebSocket
+	// Goroutine to send data from TCP client to WebSocket
 	go func() {
+		defer func() { errChan <- nil }()
 		for {
 			buf := make([]byte, 1024)
 			n, err := clientConn.Read(buf)
@@ -88,49 +97,57 @@ func handleConnection(clientConn net.Conn, wsConn *websocket.Conn) {
 			// Send TCP data over WebSocket
 			if err := wsConn.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
 				fmt.Printf("Error sending data over WebSocket: %v\n", err)
+				errChan <- err
 				return
 			}
 		}
 	}()
 
-	// Read data from WebSocket and send to the TCP client
-	for {
-		_, msg, err := wsConn.ReadMessage()
-		if err != nil && !errors.Is(err, io.EOF) {
-			fmt.Printf("Error reading from WebSocket: %v\n", err)
-			return
-		}
+	// Goroutine to read data from WebSocket and send to TCP client
+	go func() {
+		defer func() { errChan <- nil }()
+		for {
+			_, msg, err := wsConn.ReadMessage()
+			if err != nil {
+				if !errors.Is(err, io.EOF) {
+					fmt.Printf("Error reading from WebSocket: %v\n", err)
+				}
+				errChan <- err
+				return
+			}
 
-		// Send WebSocket data to the TCP client
-		_, err = clientConn.Write(msg)
-		if err != nil {
-			fmt.Printf("Error writing to TCP connection: %v\n", err)
-			return
+			// Send WebSocket data to the TCP client
+			_, err = clientConn.Write(msg)
+			if err != nil {
+				fmt.Printf("Error writing to TCP connection: %v\n", err)
+				errChan <- err
+				return
+			}
 		}
-	}
+	}()
+
+	<-errChan // Wait for any error
 }
 
-func refreshAuthToken(ctx context.Context, c *workstations.Client, wsName string, headers http.Header) {
+func (t *tunnel) refreshAuthToken(ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Minute)
 	defer ticker.Stop()
 
-	// Start an infinite loop to handle the task periodically
 	for {
 		select {
 		case <-ticker.C:
-			getAuthToken(ctx, c, wsName, headers)
+			t.getAuthToken(ctx)
 		case <-ctx.Done():
-			// Context is done (cancelled), stop the task execution
 			return
 		}
 	}
 }
 
-func getAuthToken(ctx context.Context, c *workstations.Client, wsName string, headers http.Header) {
-	tr, err := c.GenerateAccessToken(ctx, &workstationspb.GenerateAccessTokenRequest{Workstation: wsName})
+func (t *tunnel) getAuthToken(ctx context.Context) {
+	tr, err := t.client.GenerateAccessToken(ctx, &workstationspb.GenerateAccessTokenRequest{Workstation: t.wsName})
 	if err != nil {
 		fmt.Printf("Error generating token: %v\n", err)
 		os.Exit(1)
 	}
-	headers["Authorization"] = []string{"Bearer " + tr.AccessToken}
+	t.headers["Authorization"] = []string{"Bearer " + tr.AccessToken}
 }
