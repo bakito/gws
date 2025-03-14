@@ -39,15 +39,14 @@ func TcpTunnel(cfg *types.Config, port int) {
 		if err == nil {
 			println(string(body))
 		}
-		fmt.Printf("Failed to connect to WebSocket %q: %v", resp.Status, err)
+		fmt.Printf("Failed to connect to WebSocket %q: %v\n", resp.Status, err)
 		os.Exit(1)
 	}
 	defer conn.Close()
 
-	// Start the local TCP server (e.g., on port 22)
 	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
-		fmt.Printf("Failed to start TCP listener: %v", err)
+		fmt.Printf("Failed to start TCP listener: %v\n", err)
 		os.Exit(1)
 	}
 	defer listener.Close()
@@ -58,7 +57,7 @@ func TcpTunnel(cfg *types.Config, port int) {
 		// Accept incoming TCP connections
 		clientConn, err := listener.Accept()
 		if err != nil {
-			fmt.Printf("Failed to accept connection: %v", err)
+			fmt.Printf("Failed to accept connection: %v\n", err)
 			continue
 		}
 		fmt.Println("Accepted TCP connection")
@@ -78,15 +77,15 @@ func handleConnection(clientConn net.Conn, wsConn *websocket.Conn) {
 			buf := make([]byte, 1024)
 			n, err := clientConn.Read(buf)
 			if err != nil {
-				if errors.Is(err, io.EOF) {
-					fmt.Printf("Error reading from TCP connection: %v", err)
+				if !errors.Is(err, io.EOF) {
+					fmt.Printf("Error reading from TCP connection: %v\n", err)
 				}
 				return
 			}
 
 			// Send TCP data over WebSocket
 			if err := wsConn.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
-				fmt.Printf("Error sending data over WebSocket: %v", err)
+				fmt.Printf("Error sending data over WebSocket: %v\n", err)
 				return
 			}
 		}
@@ -95,15 +94,15 @@ func handleConnection(clientConn net.Conn, wsConn *websocket.Conn) {
 	// Read data from WebSocket and send to the TCP client
 	for {
 		_, msg, err := wsConn.ReadMessage()
-		if err != nil {
-			fmt.Printf("Error reading from WebSocket: %v", err)
+		if err != nil && !errors.Is(err, io.EOF) {
+			fmt.Printf("Error reading from WebSocket: %v\n", err)
 			return
 		}
 
 		// Send WebSocket data to the TCP client
 		_, err = clientConn.Write(msg)
 		if err != nil {
-			fmt.Printf("Error writing to TCP connection: %v", err)
+			fmt.Printf("Error writing to TCP connection: %v\n", err)
 			return
 		}
 	}
