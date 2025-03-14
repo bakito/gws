@@ -84,11 +84,8 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 	defer closeIt(clientConn)
 	defer closeIt(wsConn)
 
-	errChan := make(chan error, 2)
-
-	// Goroutine to send data from TCP client to WebSocket
+	// Create a goroutine to send data from TCP client to WebSocket
 	go func() {
-		defer func() { errChan <- nil }()
 		for {
 			buf := make([]byte, 1024)
 			n, err := clientConn.Read(buf)
@@ -102,36 +99,31 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 			// Send TCP data over WebSocket
 			if err := wsConn.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
 				fmt.Printf("Error sending data over WebSocket: %v\n", err)
-				errChan <- err
 				return
 			}
 		}
 	}()
 
-	// Goroutine to read data from WebSocket and send to TCP client
-	go func() {
-		defer func() { errChan <- nil }()
-		for {
-			_, msg, err := wsConn.ReadMessage()
-			if err != nil {
-				if !errors.Is(err, io.EOF) {
-					fmt.Printf("Error reading from WebSocket: %v\n", err)
-				}
-				errChan <- err
-				return
+	// Read data from WebSocket and send to the TCP client
+	for {
+		_, msg, err := wsConn.ReadMessage()
+		var ce *websocket.CloseError
+		if err != nil {
+			if errors.As(err, &ce) {
+				fmt.Println("Connection closed")
+			} else {
+				fmt.Printf("Error reading from WebSocket: %v\n", err)
 			}
-
-			// Send WebSocket data to the TCP client
-			_, err = clientConn.Write(msg)
-			if err != nil {
-				fmt.Printf("Error writing to TCP connection: %v\n", err)
-				errChan <- err
-				return
-			}
+			return
 		}
-	}()
 
-	<-errChan // Wait for any error
+		// Send WebSocket data to the TCP client
+		_, err = clientConn.Write(msg)
+		if err != nil {
+			fmt.Printf("Error writing to TCP connection: %v\n", err)
+			return
+		}
+	}
 }
 
 func (t *tunnel) refreshAuthToken(ctx context.Context) {
@@ -155,6 +147,7 @@ func (t *tunnel) getAuthToken(ctx context.Context) {
 		os.Exit(1)
 	}
 	t.headers["Authorization"] = []string{"Bearer " + tr.AccessToken}
+	fmt.Println("Got new Token")
 }
 
 func closeIt(cl io.Closer) {
