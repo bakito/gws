@@ -1,13 +1,16 @@
 package gcloud
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
+	"time"
 
+	workstations "cloud.google.com/go/workstations/apiv1"
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
 	"github.com/bakito/gws/pkg/types"
 	"github.com/gorilla/websocket"
@@ -20,18 +23,17 @@ func TcpTunnel(cfg *types.Config, port int) {
 	}
 	defer c.Close()
 
-	tr, err := c.GenerateAccessToken(ctx, &workstationspb.GenerateAccessTokenRequest{Workstation: wsName})
-	if err != nil {
-		fmt.Printf("Error generating token: %v\n", err)
-		os.Exit(1)
-	}
+	headers := http.Header{}
+
+	go refreshAuthToken(ctx, c, wsName, headers)
+	getAuthToken(ctx, c, wsName, headers)
 
 	wsURL := fmt.Sprintf("wss://%s/_workstation/tcp/%d", ws.Host, 22)
 
 	// Establish WebSocket connection
 	conn, resp, err := websocket.DefaultDialer.Dial(
 		wsURL,
-		http.Header{"Authorization": []string{"Bearer " + tr.AccessToken}},
+		headers,
 	)
 	if err != nil {
 		body, err := io.ReadAll(resp.Body)
@@ -106,4 +108,29 @@ func handleConnection(clientConn net.Conn, wsConn *websocket.Conn) {
 			return
 		}
 	}
+}
+
+func refreshAuthToken(ctx context.Context, c *workstations.Client, wsName string, headers http.Header) {
+	ticker := time.NewTicker(30 * time.Minute)
+	defer ticker.Stop()
+
+	// Start an infinite loop to handle the task periodically
+	for {
+		select {
+		case <-ticker.C:
+			getAuthToken(ctx, c, wsName, headers)
+		case <-ctx.Done():
+			// Context is done (cancelled), stop the task execution
+			return
+		}
+	}
+}
+
+func getAuthToken(ctx context.Context, c *workstations.Client, wsName string, headers http.Header) {
+	tr, err := c.GenerateAccessToken(ctx, &workstationspb.GenerateAccessTokenRequest{Workstation: wsName})
+	if err != nil {
+		fmt.Printf("Error generating token: %v\n", err)
+		os.Exit(1)
+	}
+	headers["Authorization"] = []string{"Bearer " + tr.AccessToken}
 }
