@@ -25,4 +25,4 @@ fmt: tb.golines tb.gofumpt
 	$(TB_GOLINES) --base-formatter="$(TB_GOFUMPT)" --max-len=120 --write-output .
 
 build-win:
-	GOOS=windows go build -o gws.exe main.go
+	GOOS=windows GOARCH=amd64 go build -o gws.exe .

@@ -20,17 +20,17 @@ TB_SEMVER ?= $(TB_LOCALBIN)/semver
 
 ## Tool Versions
 # renovate: packageName=k8s.io/code-generator/cmd/deepcopy-gen
-TB_DEEPCOPY_GEN_VERSION ?= v0.32.2
+TB_DEEPCOPY_GEN_VERSION ?= v0.32.3
 # renovate: packageName=github.com/onsi/ginkgo/v2/ginkgo
-TB_GINKGO_VERSION ?= v2.22.2
+TB_GINKGO_VERSION ?= v2.23.0
 # renovate: packageName=mvdan.cc/gofumpt
 TB_GOFUMPT_VERSION ?= v0.7.0
 # renovate: packageName=github.com/golangci/golangci-lint/cmd/golangci-lint
-TB_GOLANGCI_LINT_VERSION ?= v1.64.6
+TB_GOLANGCI_LINT_VERSION ?= v1.64.7
 # renovate: packageName=github.com/segmentio/golines
 TB_GOLINES_VERSION ?= v0.12.2
 # renovate: packageName=github.com/goreleaser/goreleaser/v2
-TB_GORELEASER_VERSION ?= v2.7.0
+TB_GORELEASER_VERSION ?= v2.8.1
 # renovate: packageName=github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen
 TB_OAPI_CODEGEN_VERSION ?= v2.4.1
 # renovate: packageName=github.com/bakito/semver
