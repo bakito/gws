@@ -1,9 +1,11 @@
 package gcloud
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	workstations "cloud.google.com/go/workstations/apiv1"
@@ -120,7 +122,31 @@ func StopWorkstation(cfg *types.Config) {
 	fmt.Printf("Workstation stopped %q\n", sshContext.GCloud.Name)
 }
 
+func stringPrompt(label string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprintf(os.Stderr, "%s ", label)
+		s, _ = r.ReadString('\n')
+		if s != "" {
+			break
+		}
+	}
+	return strings.TrimSpace(s)
+}
+
 func DeleteWorkstation(cfg *types.Config) {
+	name := stringPrompt(
+		fmt.Sprintf(
+			"Please confirm the deletion of workstation %q by entering the name again:",
+			cfg.CurrentContext().GCloud.Name,
+		),
+	)
+	if name != cfg.CurrentContext().GCloud.Name {
+		fmt.Println("Aborting ...")
+		return
+	}
+
 	sshContext, ctx, c, err, wsName, _ := setup(cfg)
 	if err != nil {
 		return
