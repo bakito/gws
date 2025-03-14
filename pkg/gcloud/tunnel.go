@@ -28,7 +28,7 @@ func TcpTunnel(cfg *types.Config, port int) {
 	if err != nil {
 		return
 	}
-	defer c.Close()
+	defer closeIt(c)
 
 	t := &tunnel{
 		headers: http.Header{},
@@ -39,27 +39,12 @@ func TcpTunnel(cfg *types.Config, port int) {
 	go t.refreshAuthToken(ctx)
 	t.getAuthToken(ctx)
 
-	wsURL := fmt.Sprintf("wss://%s/_workstation/tcp/%d", ws.Host, 22)
-
-	// Establish persistent WebSocket connection
-	conn, resp, err := websocket.DefaultDialer.Dial(wsURL, t.headers)
-	if err != nil {
-		if resp != nil {
-			body, _ := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			fmt.Println(string(body))
-		}
-		fmt.Printf("Failed to connect to WebSocket %q: %v\n", wsURL, err)
-		os.Exit(1)
-	}
-	defer conn.Close()
-
 	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		fmt.Printf("Failed to start TCP listener: %v\n", err)
 		os.Exit(1)
 	}
-	defer listener.Close()
+	defer closeIt(listener)
 
 	fmt.Printf("Listening on port %d ...\n", port)
 
@@ -72,13 +57,33 @@ func TcpTunnel(cfg *types.Config, port int) {
 		fmt.Println("Accepted TCP connection")
 
 		// Handle the connection in a separate goroutine
-		go t.handleConnection(clientConn, conn)
+		go t.handleConnection(clientConn)
 	}
 }
 
+func (t *tunnel) connectWebsocket() *websocket.Conn {
+	wsURL := fmt.Sprintf("wss://%s/_workstation/tcp/%d", t.wsHost, 22)
+	// Establish persistent WebSocket connection
+	conn, resp, err := websocket.DefaultDialer.Dial(wsURL, t.headers)
+	if err != nil {
+		if resp != nil {
+			body, _ := io.ReadAll(resp.Body)
+			defer closeIt(resp.Body)
+			fmt.Println(string(body))
+		}
+		fmt.Printf("Failed to connect to WebSocket %q: %v\n", wsURL, err)
+		os.Exit(1)
+	}
+	return conn
+}
+
 // handleConnection forwards data between the TCP client and the WebSocket connection
-func (t *tunnel) handleConnection(clientConn net.Conn, wsConn *websocket.Conn) {
-	defer clientConn.Close()
+func (t *tunnel) handleConnection(clientConn net.Conn) {
+	wsConn := t.connectWebsocket()
+
+	defer closeIt(clientConn)
+	defer closeIt(wsConn)
+
 	errChan := make(chan error, 2)
 
 	// Goroutine to send data from TCP client to WebSocket
@@ -150,4 +155,8 @@ func (t *tunnel) getAuthToken(ctx context.Context) {
 		os.Exit(1)
 	}
 	t.headers["Authorization"] = []string{"Bearer " + tr.AccessToken}
+}
+
+func closeIt(cl io.Closer) {
+	_ = cl.Close()
 }
