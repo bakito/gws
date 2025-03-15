@@ -3,3 +3,5 @@ gws.exe
 bin
 dist
 coverage.out
+
+token.json
