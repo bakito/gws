@@ -46,7 +46,7 @@ func TcpTunnel(cfg *types.Config, port int) {
 	}
 	defer closeIt(listener)
 
-	fmt.Printf("Listening on port %d ...\n", port)
+	fmt.Printf("Listening on local ssh port %d ...\n", port)
 
 	for {
 		clientConn, err := listener.Accept()
