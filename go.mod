@@ -25,7 +25,7 @@ require (
 	cloud.google.com/go/iam v1.4.1 // indirect
 	cloud.google.com/go/longrunning v0.6.5 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/lipgloss v1.0.1-0.20250110214317-ecc1bd014d51 // indirect
+	github.com/charmbracelet/lipgloss v1.0.0 // indirect
 	github.com/charmbracelet/x/ansi v0.8.0 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
