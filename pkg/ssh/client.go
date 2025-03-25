@@ -1,33 +1,35 @@
-package client
+package ssh
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/bakito/gws/pkg/env"
+	"github.com/bakito/gws/pkg/passwd"
 	"github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 )
 
-func New(addr string, user string, privateKeyFile string) (*client, error) {
+func Client(addr string, user string, privateKeyFile string) (*client, error) {
 	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)
 	}
 
 	// Parse the private key
-	signer, err := ssh.ParsePrivateKey(privateKey)
+	auth, err := evaluateAuthMethod(privateKey, privateKeyFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse private key: %w", err)
+		return nil, err
 	}
 
 	// Define SSH connection details
 	clientConfig := &ssh.ClientConfig{
-		User: user, // Remote SSH username
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer), // Use the private key for authentication
-		},
+		User:            user,                        // Remote SSH username
+		Auth:            []ssh.AuthMethod{auth},      // Auth method
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // #nosec G106: Insecure, as we always get a new cert with gcloud
 	}
 
@@ -102,4 +104,48 @@ func (c *client) CopyFile(from string, to string, permissions string) error {
 	}
 
 	return nil
+}
+
+func evaluateAuthMethod(privateKey []byte, privateKeyFile string) (ssh.AuthMethod, error) {
+	auth, err := getSSHAgentAuthMethod()
+	if err != nil {
+		return nil, err
+	}
+	if auth != nil {
+		return auth, nil
+	}
+
+	// try private key
+	signer, err := ssh.ParsePrivateKey(privateKey)
+	if err != nil {
+		// Check if the error is due to a missing passphrase
+		if errors.Is(err, &ssh.PassphraseMissingError{}) {
+			pass, err := passwd.Prompt(fmt.Sprintf("Please enter the passphrase for private key (%s):", privateKeyFile))
+			if err != nil {
+				return nil, err
+			}
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, []byte(pass))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse private key: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("failed to parse private key: %w", err)
+		}
+	}
+	return ssh.PublicKeys(signer), nil
+}
+
+func getSSHAgentAuthMethod() (ssh.AuthMethod, error) {
+	sshAuthSock := os.Getenv("SSH_AUTH_SOCK")
+	if sshAuthSock == "" {
+		return nil, nil
+	}
+
+	conn, err := net.Dial("unix", sshAuthSock)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to SSH agent: %w", err)
+	}
+
+	agentClient := agent.NewClient(conn)
+	return ssh.PublicKeysCallback(agentClient.Signers), nil
 }

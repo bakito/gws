@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/bakito/gws/pkg/client"
+	"github.com/bakito/gws/pkg/ssh"
 	"github.com/spf13/cobra"
 )
 
@@ -18,17 +18,17 @@ var upCmd = &cobra.Command{
 		}
 		fmt.Printf("Running context %s\n", cfg.CurrentContextName)
 
-		ssh := cfg.CurrentContext()
-		cl, err := client.New(ssh.HostAddr(), ssh.User, ssh.PrivateKeyFile)
+		sshCtx := cfg.CurrentContext()
+		cl, err := ssh.Client(sshCtx.HostAddr(), sshCtx.User, sshCtx.PrivateKeyFile)
 		if err != nil {
 			return err
 		}
 
 		defer cl.Close()
 
-		if len(ssh.Dirs) > 0 {
+		if len(sshCtx.Dirs) > 0 {
 			fmt.Println("Creating directories")
-			for _, dir := range ssh.Dirs {
+			for _, dir := range sshCtx.Dirs {
 				if dir.Permissions != "" {
 					fmt.Printf("Creating directory %q with permissions %s\n", dir.Path, dir.Permissions)
 					_, err = cl.Execute(fmt.Sprintf("mkdir -p %s; chmod %s /home/user/.ssh", dir.Path, dir.Permissions))
@@ -42,9 +42,9 @@ var upCmd = &cobra.Command{
 			}
 		}
 
-		if len(ssh.Files) > 0 {
+		if len(sshCtx.Files) > 0 {
 			fmt.Println("Uploading files")
-			for _, file := range ssh.Files {
+			for _, file := range sshCtx.Files {
 				if file.Permissions == "0400" {
 					fmt.Printf(
 						"Add writable file permission for upload %q with permissions %s\n",
