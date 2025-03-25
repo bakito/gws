@@ -15,14 +15,14 @@ import (
 )
 
 func StartWorkstation(cfg *types.Config) {
-	sshContext, ctx, c, err, wsName, ws := setup(cfg)
+	sshContext, ctx, c, err, ws := setup(cfg)
 	if err != nil {
 		return
 	}
 	defer c.Close()
 
 	if ws.State == workstationspb.Workstation_STATE_STOPPED {
-		op, err := c.StartWorkstation(ctx, &workstationspb.StartWorkstationRequest{Name: wsName})
+		op, err := c.StartWorkstation(ctx, &workstationspb.StartWorkstationRequest{Name: ws.GetName()})
 		if err != nil {
 			fmt.Printf("Error starting workstation: %v\n", err)
 			os.Exit(1)
@@ -43,7 +43,7 @@ func StartWorkstation(cfg *types.Config) {
 		defer spinny.Stop() // reset the terminal in case of a panic
 		for i := 0; i < 10; i++ {
 			time.Sleep(10 * time.Second)
-			ws, err = c.GetWorkstation(ctx, &workstationspb.GetWorkstationRequest{Name: wsName})
+			ws, err = c.GetWorkstation(ctx, &workstationspb.GetWorkstationRequest{Name: ws.GetName()})
 			if err != nil {
 				fmt.Printf("Error getting workstation: %v\n", err)
 				os.Exit(1)
@@ -63,11 +63,11 @@ func StartWorkstation(cfg *types.Config) {
 
 func setup(
 	cfg *types.Config,
-) (*types.Context, context.Context, *workstations.Client, error, string, *workstationspb.Workstation) {
+) (*types.Context, context.Context, *workstations.Client, error, *workstationspb.Workstation) {
 	sshContext := cfg.CurrentContext()
 	if sshContext.GCloud == nil {
 		fmt.Println("No gcloud config found")
-		return nil, nil, nil, nil, "", nil
+		return nil, nil, nil, nil, nil
 	}
 	// https://cloud.google.com/go/docs/reference/cloud.google.com/go/workstations/latest/apiv1
 
@@ -92,11 +92,11 @@ func setup(
 		fmt.Printf("Error getting workstation: %v\n", err)
 		os.Exit(1)
 	}
-	return sshContext, ctx, c, err, wsName, ws
+	return sshContext, ctx, c, err, ws
 }
 
 func StopWorkstation(cfg *types.Config) {
-	sshContext, ctx, c, err, wsName, ws := setup(cfg)
+	sshContext, ctx, c, err, ws := setup(cfg)
 	if err != nil {
 		return
 	}
@@ -104,7 +104,7 @@ func StopWorkstation(cfg *types.Config) {
 	defer c.Close()
 
 	if ws.State != workstationspb.Workstation_STATE_STOPPED {
-		op, err := c.StopWorkstation(ctx, &workstationspb.StopWorkstationRequest{Name: wsName})
+		op, err := c.StopWorkstation(ctx, &workstationspb.StopWorkstationRequest{Name: ws.GetName()})
 		if err != nil {
 			fmt.Printf("Error stopping workstation: %v\n", err)
 			os.Exit(1)
@@ -147,14 +147,15 @@ func DeleteWorkstation(cfg *types.Config) {
 		return
 	}
 
-	sshContext, ctx, c, err, wsName, _ := setup(cfg)
+	sshContext, ctx, c, err, ws := setup(cfg)
+
 	if err != nil {
 		return
 	}
 
 	defer c.Close()
 
-	op, err := c.DeleteWorkstation(ctx, &workstationspb.DeleteWorkstationRequest{Name: wsName})
+	op, err := c.DeleteWorkstation(ctx, &workstationspb.DeleteWorkstationRequest{Name: ws.GetName()})
 	if err != nil {
 		fmt.Printf("Error deleting workstation: %v\n", err)
 		os.Exit(1)
