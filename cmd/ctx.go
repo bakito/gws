@@ -50,6 +50,8 @@ func init() {
 
 func selectContext(cfg *types.Config) (string, error) {
 	m := &ctxModel{choices: slices.Sorted(maps.Keys(cfg.Contexts))}
+	m.cursor = slices.Index(m.choices, cfg.CurrentContextName)
+
 	p := tea.NewProgram(m)
 
 	if _, err := p.Run(); err != nil {
