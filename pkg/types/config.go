@@ -47,6 +47,9 @@ func (c *Config) Load(fileName string) error {
 		}
 	}
 
+	p, _ := filepath.Abs(file)
+	fmt.Printf("Reading config: %s\n", p)
+
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return err
