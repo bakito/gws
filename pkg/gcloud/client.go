@@ -77,7 +77,7 @@ func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Cl
 	ctx := context.TODO()
 
 	// Default credentials: ${HOME}/.config/gcloud/application_default_credentials.json
-	tokenSource, err := getToken()
+	tokenSource, err := Login()
 	if err != nil {
 		_, _ = fmt.Printf("Error getting OAUTH token: %v\n", err)
 		return nil, nil, nil, nil, err
@@ -104,22 +104,6 @@ func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Cl
 	return sshContext, ctx, c, ws, err
 }
 
-func getToken() (tsrc oauth2.TokenSource, err error) {
-	token := &oauth2.Token{}
-
-	loadExistingToken(token)
-
-	if token.ExpiresIn < 10*60 {
-		token, err = Login()
-		if err != nil {
-			return nil, err
-		}
-	}
-	// Create an OAuth2 token source
-	tokenSource := oauth2.StaticTokenSource(token)
-	return tokenSource, nil
-}
-
 func loadExistingToken(token *oauth2.Token) {
 	_, data, err := types.ReadGWSFile(tokenFileName)
 	if err != nil {
@@ -131,7 +115,6 @@ func loadExistingToken(token *oauth2.Token) {
 		// re-login
 		return
 	}
-
 	token.ExpiresIn = int64(time.Until(token.Expiry).Seconds())
 }
 

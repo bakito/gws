@@ -57,11 +57,28 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 	return codeVerifier, codeChallenge
 }
 
-func Login() (*oauth2.Token, error) {
-	codeVerifier, codeChallenge := generatePKCE()
-
+func Login() (oauth2.TokenSource, error) {
 	oauthConfig := appOauthConfig
 	oauthConfig = defaultOauthConfig
+
+	existingToken := &oauth2.Token{}
+
+	loadExistingToken(existingToken)
+
+	if existingToken.ExpiresIn > 10*60 {
+		return oauth2.StaticTokenSource(existingToken), nil
+	}
+	// Try refreshing the token
+	if existingToken.RefreshToken != "" {
+		tokenSource := oauthConfig.TokenSource(context.Background(), existingToken)
+		token, err := tokenSource.Token()
+		if err == nil {
+			saveToken(token)
+			return oauthConfig.TokenSource(context.Background(), token), nil
+		}
+	}
+
+	codeVerifier, codeChallenge := generatePKCE()
 
 	// Add PKCE to auth URL
 	authURL := oauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline,
@@ -118,7 +135,7 @@ func Login() (*oauth2.Token, error) {
 	token := <-shutdownChan
 	_, _ = fmt.Println("Authenticated...")
 	_ = server.Shutdown(context.Background())
-	return token, nil
+	return oauth2.StaticTokenSource(token), nil
 }
 
 // Save token to file.
