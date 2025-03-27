@@ -9,10 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/phayes/freeport"
 	"golang.org/x/oauth2"
 )
 
@@ -57,6 +60,14 @@ func Login() (oauth2.TokenSource, error) {
 
 	codeVerifier, codeChallenge := generatePKCE()
 
+	port, err := freeport.GetFreePort()
+	if err != nil {
+		return nil, err
+	}
+
+	oauthConfig.RedirectURL = fmt.Sprintf("http://%s/callback", net.JoinHostPort("localhost", strconv.Itoa(port)))
+	println(oauthConfig.RedirectURL)
+
 	// Add PKCE to auth URL
 	authURL := oauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline,
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
@@ -70,7 +81,7 @@ func Login() (oauth2.TokenSource, error) {
 	// Create a channel for shutdown signaling
 	shutdownChan := make(chan *oauth2.Token)
 
-	server := &http.Server{Addr: ":8080", ReadHeaderTimeout: 1 * time.Second}
+	server := &http.Server{Addr: fmt.Sprintf(":%d", port), ReadHeaderTimeout: 1 * time.Second}
 	// Start local server to handle callback
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()

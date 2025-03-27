@@ -28,10 +28,10 @@ build-win:
 	GOOS=windows GOARCH=amd64 go build -o gws.exe .
 
 extract-oauth-vars:
-	docker build -t auth_const.go py
-	docker create --name auth_const auth_const.go true
-	docker cp auth_const:/auth_const.go pkg/gcloud/auth_const.go
-	docker rm auth_const
-	docker rmi auth_const.go
+	docker build -t auth_config.go --no-cache py
+	docker create --name auth_config auth_config.go true
+	docker cp auth_config:/auth_config.go pkg/gcloud/auth_config.go
+	docker rm auth_config
+	docker rmi auth_config.go
 
 

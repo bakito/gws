@@ -16,6 +16,5 @@ var oauthConfig = &oauth2.Config{
 		"https://www.googleapis.com/auth/sqlservice.login",
 		"https://www.googleapis.com/auth/compute",
 	},
-	Endpoint:    google.Endpoint,
-	RedirectURL: "http://localhost:8080/callback",
+	Endpoint: google.Endpoint,
 }

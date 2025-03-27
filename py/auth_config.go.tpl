@@ -13,6 +13,5 @@ var oauthConfig = &oauth2.Config{
 		"{{ . }}",
 {{- end }}
 	},
-	Endpoint:    google.Endpoint,
-	RedirectURL: "http://localhost:8080/callback",
+	Endpoint: google.Endpoint,
 }
