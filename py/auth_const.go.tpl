@@ -7,6 +7,6 @@ const (
 
 var defaultClientScopes = []string{
 {{- range .DefaultClientScopes }}
-    "{{ . }}",
+	"{{ . }}",
 {{- end }}
 }
