@@ -8,8 +8,8 @@ contexts:
       project: prj-bison-7145682111-gcws
       region: europe-west6
       cluster: bison-gcws-nop-wclu-dev
-      config: bison-gcws-nop-wcon-bison-intellij
-      name: wsta-nop-m-brugger-bison-intellij
+      config: bison-gcws-nop-wcon-bison-intellij-t2d
+      name: wsta-nop-m-brugger-bison-intellij-t2d
     dirs:
       - path: /home/user/.ssh
         permissions: "700"

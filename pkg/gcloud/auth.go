@@ -17,6 +17,8 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
+const tokenFileName = ".gws-token.json"
+
 // OAuth2 Config.
 var oauthConfig = &oauth2.Config{
 	ClientID:     clientID,
@@ -97,7 +99,7 @@ func Login() (*oauth2.Token, error) {
 	_, _ = fmt.Println("Waiting for authentication...")
 	// Block until we receive a shutdown signal
 	token := <-shutdownChan
-	_, _ = fmt.Println("Shutting down server...")
+	_, _ = fmt.Println("Authenticated...")
 	_ = server.Shutdown(context.Background())
 	return token, nil
 }
@@ -109,10 +111,8 @@ func saveToken(token *oauth2.Token) {
 		log.Fatalf("Failed to save token: %v", err)
 	}
 
-	err = os.WriteFile("token.json", b, 0o600)
+	err = os.WriteFile(tokenFileName, b, 0o600)
 	if err != nil {
 		log.Fatalf("Failed to save token: %v", err)
 	}
-
-	_, _ = fmt.Println("Token saved to token.json")
 }

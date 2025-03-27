@@ -27,32 +27,11 @@ func (c *Config) CurrentContext() *Context {
 
 func (c *Config) Load(fileName string) error {
 	var file string
-	if fileName != "" {
-		if _, err := os.Stat(fileName); err == nil {
-			file = fileName
-		}
-	}
-
-	if file == "" {
-		userHomeDir, err := os.UserHomeDir()
-		if err != nil {
-			return err
-		}
-
-		homePath := filepath.Join(userHomeDir, ConfigFileName)
-		if _, err := os.Stat(homePath); err != nil {
-			return errors.New("config file not found")
-		}
-		file = homePath
-	}
-
-	p, _ := filepath.Abs(file)
-	_, _ = fmt.Printf("Reading config: %s\n", p)
-
-	data, err := os.ReadFile(file)
+	file, data, err := ReadGWSFile(fileName)
 	if err != nil {
 		return err
 	}
+	_, _ = fmt.Printf("Using config: %s\n", file)
 
 	err = yaml.Unmarshal(data, c)
 	if err != nil {
@@ -69,6 +48,36 @@ func (c *Config) Load(fileName string) error {
 		}
 	}
 	return c.SwitchContext(c.CurrentContextName)
+}
+
+func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) {
+	var file string
+	if fileName != "" {
+		if _, err := os.Stat(fileName); err == nil {
+			file = fileName
+		}
+	}
+
+	if file == "" {
+		userHomeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", nil, err
+		}
+
+		homePath := filepath.Join(userHomeDir, ConfigFileName)
+		if _, err := os.Stat(homePath); err != nil {
+			return "", nil, errors.New("config file not found")
+		}
+		file = homePath
+	}
+
+	abs, err := filepath.Abs(file)
+	if err != nil {
+		return "", nil, err
+	}
+	data, err = os.ReadFile(file)
+
+	return abs, data, nil
 }
 
 func (c *Config) SwitchContext(newContext string) error {

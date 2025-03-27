@@ -6,7 +6,7 @@ import (
 	"github.com/bakito/gws/pkg/gcloud"
 )
 
-var flagLocalPort *int
+var flagLocalPort int
 
 // tunnelCmd represents the tunnel command.
 var tunnelCmd = &cobra.Command{
@@ -21,12 +21,12 @@ var tunnelCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return gcloud.TCPTunnel(cfg, flagLocalPort)
+		return gcloud.TCPTunnel(cfg, &flagLocalPort)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(tunnelCmd)
 	tunnelCmd.PersistentFlags().
-		IntVarP(flagLocalPort, "local-host-port", "p", 0, "The local host port to open (default ist the port from the config)")
+		IntVarP(&flagLocalPort, "local-host-port", "p", 0, "The local host port to open (default ist the port from the config)")
 }

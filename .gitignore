@@ -4,4 +4,4 @@ bin
 dist
 coverage.out
 
-token.json
+.gws-token.json

@@ -3,7 +3,10 @@ package gcloud
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
+	"golang.org/x/oauth2"
+	"google.golang.org/api/option"
 	"os"
 	"strings"
 	"time"
@@ -70,12 +73,17 @@ func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Cl
 		_, _ = fmt.Println("No gcloud config found")
 		return nil, nil, nil, nil, nil
 	}
-	// https://cloud.google.com/go/docs/reference/cloud.google.com/go/workstations/latest/apiv1
-
 	// gcloud auth application-default login
 	ctx := context.TODO()
 
-	c, err := workstations.NewClient(ctx)
+	// Default credentials: ${HOME}/.config/gcloud/application_default_credentials.json
+	tokenSource, err := getToken()
+	if err != nil {
+		_, _ = fmt.Printf("Error getting OAUTH token: %v\n", err)
+		return nil, nil, nil, nil, err
+	}
+
+	c, err := workstations.NewClient(ctx, option.WithTokenSource(tokenSource))
 	if err != nil {
 		_, _ = fmt.Printf("Error creating workstations client: %v\n", err)
 		return nil, nil, nil, nil, err
@@ -94,6 +102,38 @@ func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Cl
 		return nil, nil, nil, nil, err
 	}
 	return sshContext, ctx, c, ws, err
+}
+
+func getToken() (tsrc oauth2.TokenSource, err error) {
+
+	token := &oauth2.Token{}
+
+	loadExistingToken(token)
+
+	if token.ExpiresIn < 10*60 {
+		token, err = Login()
+		if err != nil {
+			return nil, err
+		}
+	}
+	// Create an OAuth2 token source
+	tokenSource := oauth2.StaticTokenSource(token)
+	return tokenSource, nil
+}
+
+func loadExistingToken(token *oauth2.Token) {
+	_, data, err := types.ReadGWSFile(tokenFileName)
+	if err != nil {
+		// re-login
+		return
+	}
+
+	if err := json.Unmarshal(data, token); err != nil {
+		// re-login
+		return
+	}
+
+	token.ExpiresIn = int64(token.Expiry.Sub(time.Now()).Seconds())
 }
 
 func StopWorkstation(cfg *types.Config) error {
