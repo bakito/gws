@@ -5,14 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/oauth2"
-	"google.golang.org/api/option"
 	"os"
 	"strings"
 	"time"
 
 	workstations "cloud.google.com/go/workstations/apiv1"
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
+	"golang.org/x/oauth2"
+	"google.golang.org/api/option"
 
 	"github.com/bakito/gws/pkg/spinner"
 	"github.com/bakito/gws/pkg/types"
@@ -105,7 +105,6 @@ func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Cl
 }
 
 func getToken() (tsrc oauth2.TokenSource, err error) {
-
 	token := &oauth2.Token{}
 
 	loadExistingToken(token)
@@ -133,7 +132,7 @@ func loadExistingToken(token *oauth2.Token) {
 		return
 	}
 
-	token.ExpiresIn = int64(token.Expiry.Sub(time.Now()).Seconds())
+	token.ExpiresIn = int64(time.Until(token.Expiry).Seconds())
 }
 
 func StopWorkstation(cfg *types.Config) error {

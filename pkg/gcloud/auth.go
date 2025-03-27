@@ -20,10 +20,20 @@ import (
 const tokenFileName = ".gws-token.json"
 
 // OAuth2 Config.
-var oauthConfig = &oauth2.Config{
-	ClientID:     clientID,
-	ClientSecret: clientSecret,
-	Scopes:       clientScopes,
+//
+
+var defaultOauthConfig = &oauth2.Config{
+	ClientID:     defaultClientID,
+	ClientSecret: defaultClientSecret,
+	Scopes:       defaultClientScopes,
+	Endpoint:     google.Endpoint,
+	RedirectURL:  "http://localhost:8080/callback",
+}
+
+var appOauthConfig = &oauth2.Config{
+	ClientID:     appClientID,
+	ClientSecret: appClientSecret,
+	Scopes:       appClientScopes,
 	Endpoint:     google.Endpoint,
 	RedirectURL:  "http://localhost:8080/callback",
 }
@@ -50,6 +60,9 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 func Login() (*oauth2.Token, error) {
 	codeVerifier, codeChallenge := generatePKCE()
 
+	oauthConfig := appOauthConfig
+	oauthConfig = defaultOauthConfig
+
 	// Add PKCE to auth URL
 	authURL := oauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline,
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
@@ -74,7 +87,11 @@ func Login() (*oauth2.Token, error) {
 		}
 
 		// Exchange authorization code for token
-		token, err := oauthConfig.Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", codeVerifier))
+
+		token, err := oauthConfig.Exchange(context.Background(), code,
+			oauth2.SetAuthURLParam("code_verifier", codeVerifier),
+			oauth2.SetAuthURLParam("client_secret", oauthConfig.ClientSecret),
+		)
 		if err != nil {
 			http.Error(w, "Failed to get token", http.StatusInternalServerError)
 			log.Fatalf("OAuth Exchange error: %v", err)
