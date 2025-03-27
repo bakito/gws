@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// upCmd represents the up command
+// upCmd represents the up command.
 var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Upload files and dirs",
@@ -16,10 +16,10 @@ var upCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Running context %s\n", cfg.CurrentContextName)
+		_, _ = fmt.Printf("Running context %s\n", cfg.CurrentContextName)
 
 		sshCtx := cfg.CurrentContext()
-		cl, err := ssh.Client(sshCtx.HostAddr(), sshCtx.User, sshCtx.PrivateKeyFile)
+		cl, err := ssh.NewClient(sshCtx.HostAddr(), sshCtx.User, sshCtx.PrivateKeyFile)
 		if err != nil {
 			return err
 		}
@@ -27,14 +27,14 @@ var upCmd = &cobra.Command{
 		defer cl.Close()
 
 		if len(sshCtx.Dirs) > 0 {
-			fmt.Println("Creating directories")
+			_, _ = fmt.Println("Creating directories")
 			for _, dir := range sshCtx.Dirs {
 				if dir.Permissions != "" {
-					fmt.Printf("Creating directory %q with permissions %s\n", dir.Path, dir.Permissions)
+					_, _ = fmt.Printf("Creating directory %q with permissions %s\n", dir.Path, dir.Permissions)
 					_, err = cl.Execute(fmt.Sprintf("mkdir -p %s; chmod %s /home/user/.ssh", dir.Path, dir.Permissions))
 				} else {
-					fmt.Printf("Creating directory %q\n", dir.Path)
-					_, err = cl.Execute(fmt.Sprintf("mkdir -p %s", dir.Path))
+					_, _ = fmt.Printf("Creating directory %q\n", dir.Path)
+					_, err = cl.Execute("mkdir -p " + dir.Path)
 				}
 				if err != nil {
 					return err
@@ -43,10 +43,10 @@ var upCmd = &cobra.Command{
 		}
 
 		if len(sshCtx.Files) > 0 {
-			fmt.Println("Uploading files")
+			_, _ = fmt.Println("Uploading files")
 			for _, file := range sshCtx.Files {
 				if file.Permissions == "0400" {
-					fmt.Printf(
+					_, _ = fmt.Printf(
 						"Add writable file permission for upload %q with permissions %s\n",
 						file.Path,
 						file.Permissions,
@@ -56,7 +56,7 @@ var upCmd = &cobra.Command{
 						return err
 					}
 				}
-				fmt.Printf(
+				_, _ = fmt.Printf(
 					"Uploading file for %q to %q with permissions %s\n",
 					file.SourcePath,
 					file.Path,

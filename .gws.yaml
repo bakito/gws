@@ -1,46 +1,84 @@
 contexts:
-  ws-1:
+  google-cloud-ws:
     host: localhost
     port: 63830
     user: user
-    privateKeyFile: C:/workspace/cygwin64/home/foo/.ssh/id_rsa
+    privateKeyFile: C:/workspace/cygwin64/home/m.brugger/.ssh/id_rsa
     gcloud:
-      project: gcws-project
+      project: prj-bison-7145682111-gcws
       region: europe-west6
-      cluster: gcws-cluster
-      config: gcws-config
-      name: ws-1
+      cluster: bison-gcws-nop-wclu-dev
+      config: bison-gcws-nop-wcon-bison-intellij
+      name: wsta-nop-m-brugger-bison-intellij
     dirs:
       - path: /home/user/.ssh
         permissions: "700"
+      - path: /home/user/.kube
+      - path: /home/user/.config
     files:
-      - sourcePath: C:/workspace/cygwin64/home/foo/.ssh/id_ed25519
+      - sourcePath: C:/workspace/cygwin64/home/m.brugger/.ssh/id_ed25519
         path: /home/user/.ssh/id_ed25519
         permissions: "0400"
-      - sourcePath: C:/workspace/cygwin64/home/foo/.ssh/id_ed25519.pub
+      - sourcePath: C:/workspace/cygwin64/home/m.brugger/.ssh/id_ed25519.pub
         path: /home/user/.ssh/id_ed25519.pub
-        permissions: "0700"
-  ws-2:
+        permissions: "0600"
+      - sourcePath: C:/Users/m.brugger/.kube/config
+        path: /home/user/.kube/config
+        permissions: "0600"
+      - sourcePath: H:/keepass/datenbank.kdbx
+        path: /home/user/.config/datenbank.kdbx
+        permissions: "0400"
+  google-cloud-ws-test:
     host: localhost
-    port: 63830
+    port: 63831
     user: user
-    privateKeyFile: C:/workspace/cygwin64/home/foo/.ssh/id_rsa
+    privateKeyFile: C:/workspace/cygwin64/home/m.brugger/.ssh/id_rsa
     gcloud:
-      project: gcws-project
+      project: prj-bison-7145682111-gcws
       region: europe-west6
-      cluster: gcws-cluster
-      config: gcws-config
-      name: ws-2
-currentContext: ws-1
+      cluster: bison-gcws-nop-wclu-dev
+      config: bison-gcws-nop-wcon-bison-intellij-develop
+      name: wsta-nop-m-brugger-bison-intellij-develop-test
+currentContext: google-cloud-ws
 filePatches:
   gcloud-cacerts:
     file: '%USERPROFILE%\AppData\Local\Google\Cloud SDK\google-cloud-sdk\lib\third_party\certifi\cacert.pem'
     newBlock: |
-      # my custom.cer
+      # fenacoca.v2.cer
       -----BEGIN CERTIFICATE-----
-      
+      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
+      RnH7k/nUFel5qgYS4Q==
       -----END CERTIFICATE-----
-
   gcloud-ssh-putty:
     file: '%USERPROFILE%\AppData\Local\Google\Cloud SDK\google-cloud-sdk\lib\googlecloudsdk\command_lib\util\ssh\ssh.py'
     indent: '    '
@@ -52,7 +90,7 @@ filePatches:
         suite = Suite.OPENSSH
         bin_path = None
       return Environment(suite, bin_path)
-    newBlock:
+    newBlock: |
       suite = Suite.OPENSSH
       bin_path = None
       return Environment(suite, bin_path)

@@ -19,5 +19,5 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create Workstations client: %v", err)
 	}
-	defer client.Close()
+	client.Close()
 }

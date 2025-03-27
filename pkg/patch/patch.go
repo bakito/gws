@@ -11,7 +11,7 @@ import (
 )
 
 func Patch(id string, filePatch types.FilePatch) error {
-	fmt.Printf("Patching file %q\n", id)
+	_, _ = fmt.Printf("Patching file %q\n", id)
 	// Read the content of the file
 	lines, err := readLines(filePatch.File)
 	if err != nil {
@@ -37,8 +37,8 @@ func Patch(id string, filePatch types.FilePatch) error {
 
 		// Backup the original file
 		backupFileName := filePatch.File + ".bak"
-		fmt.Printf("Backup created: %s\n", backupFileName)
-		fmt.Printf("Original file %q back-upped to %s\n", id, backupFileName)
+		_, _ = fmt.Printf("Backup created: %s\n", backupFileName)
+		_, _ = fmt.Printf("Original file %q back-upped to %s\n", id, backupFileName)
 		err = backupFile(filePatch.File, backupFileName)
 		if err != nil {
 			return err
@@ -50,14 +50,14 @@ func Patch(id string, filePatch types.FilePatch) error {
 			return err
 		}
 
-		fmt.Printf("Successfully patched %q\n", id)
+		_, _ = fmt.Printf("Successfully patched %q\n", id)
 	} else {
-		fmt.Printf("No patching required %q\n", id)
+		_, _ = fmt.Printf("No patching required %q\n", id)
 	}
 	return nil
 }
 
-func appendToFile(lines []string, toAppend string, indent string) ([]string, bool) {
+func appendToFile(lines []string, toAppend, indent string) ([]string, bool) {
 	content := strings.Join(lines, "\n")
 	changed := false
 
@@ -73,7 +73,7 @@ func appendToFile(lines []string, toAppend string, indent string) ([]string, boo
 	return strings.Split(content, "\n"), changed
 }
 
-// backupFile creates a backup of the original file
+// backupFile creates a backup of the original file.
 func backupFile(original, backup string) error {
 	// Copy the original file to back up
 	input, err := os.ReadFile(env.ExpandEnv(original))
@@ -87,7 +87,7 @@ func backupFile(original, backup string) error {
 	return nil
 }
 
-// readLines reads a file and returns the lines as a slice of strings
+// readLines reads a file and returns the lines as a slice of strings.
 func readLines(filename string) ([]string, error) {
 	file, err := os.Open(env.ExpandEnv(filename))
 	if err != nil {
@@ -103,7 +103,7 @@ func readLines(filename string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-// writeLines writes a slice of strings to a file
+// writeLines writes a slice of strings to a file.
 func writeLines(filename string, lines []string) error {
 	file, err := os.Create(env.ExpandEnv(filename))
 	if err != nil {
@@ -120,8 +120,8 @@ func writeLines(filename string, lines []string) error {
 	return nil
 }
 
-// processMultilineBlock processes the lines and replaces the old block with the new one
-func processMultilineBlock(lines []string, oldBlock string, newBlock string, indent string) ([]string, bool) {
+// processMultilineBlock processes the lines and replaces the old block with the new one.
+func processMultilineBlock(lines []string, oldBlock, newBlock, indent string) ([]string, bool) {
 	var result []string
 	inBlockIndex := 0
 	changed := false
@@ -130,6 +130,7 @@ func processMultilineBlock(lines []string, oldBlock string, newBlock string, ind
 	newSlice := splitWithIndent(newBlock, indent)
 
 	for _, line := range lines {
+		//nolint:gocritic
 		if inBlockIndex >= len(oldSlice) {
 			result = append(result, newSlice...)
 			inBlockIndex = 0
@@ -153,7 +154,7 @@ func processMultilineBlock(lines []string, oldBlock string, newBlock string, ind
 	return result, changed
 }
 
-// replaceFile replaces the original file with the temporary file
+// replaceFile replaces the original file with the temporary file.
 func replaceFile(original, tempFile string) error {
 	err := os.Rename(env.ExpandEnv(tempFile), env.ExpandEnv(original))
 	if err != nil {
@@ -162,7 +163,7 @@ func replaceFile(original, tempFile string) error {
 	return nil
 }
 
-func splitWithIndent(content string, indent string) []string {
+func splitWithIndent(content, indent string) []string {
 	var lines []string
 
 	scanner := bufio.NewScanner(strings.NewReader(content))

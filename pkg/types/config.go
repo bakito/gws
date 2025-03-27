@@ -16,9 +16,9 @@ const ConfigFileName = ".gws.yaml"
 type Config struct {
 	Contexts           map[string]*Context  `yaml:"contexts"`
 	CurrentContextName string               `yaml:"currentContext"`
-	currentContext     *Context             `yaml:"-"`
 	FilePath           string               `yaml:"-"`
 	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
+	currentContext     *Context
 }
 
 func (c *Config) CurrentContext() *Context {
@@ -40,15 +40,14 @@ func (c *Config) Load(fileName string) error {
 		}
 
 		homePath := filepath.Join(userHomeDir, ConfigFileName)
-		if _, err := os.Stat(homePath); err == nil {
-			file = homePath
-		} else {
+		if _, err := os.Stat(homePath); err != nil {
 			return errors.New("config file not found")
 		}
+		file = homePath
 	}
 
 	p, _ := filepath.Abs(file)
-	fmt.Printf("Reading config: %s\n", p)
+	_, _ = fmt.Printf("Reading config: %s\n", p)
 
 	data, err := os.ReadFile(file)
 	if err != nil {
@@ -69,10 +68,7 @@ func (c *Config) Load(fileName string) error {
 			}
 		}
 	}
-	if err = c.SwitchContext(c.CurrentContextName); err != nil {
-		return err
-	}
-	return nil
+	return c.SwitchContext(c.CurrentContextName)
 }
 
 func (c *Config) SwitchContext(newContext string) error {
@@ -91,7 +87,7 @@ func (c *Config) SwitchContext(newContext string) error {
 		if err != nil {
 			return err
 		}
-		if err = os.WriteFile(c.FilePath, buf.Bytes(), 0o600); err != nil {
+		if err := os.WriteFile(c.FilePath, buf.Bytes(), 0o600); err != nil {
 			return err
 		}
 	}

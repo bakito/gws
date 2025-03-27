@@ -17,7 +17,7 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-// OAuth2 Config
+// OAuth2 Config.
 var oauthConfig = &oauth2.Config{
 	ClientID:     "415121532721-l5h1pcvq0r3va06a7uv6633eco3hbevh.apps.googleusercontent.com",
 	ClientSecret: "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",
@@ -26,21 +26,21 @@ var oauthConfig = &oauth2.Config{
 	Scopes:       []string{"openid", "email", "profile"},
 }
 
-// Generate PKCE Code Verifier and SHA-256 Code Challenge
-func generatePKCE() (string, string) {
+// Generate PKCE Code Verifier and SHA-256 Code Challenge.
+func generatePKCE() (codeVerifier, codeChallenge string) {
 	// Create a random 43-128 character code verifier
 	verifierBytes := make([]byte, 32)
 	_, err := rand.Read(verifierBytes)
 	if err != nil {
 		log.Fatalf("Failed to generate PKCE verifier: %v", err)
 	}
-	codeVerifier := base64.RawURLEncoding.EncodeToString(verifierBytes)
+	codeVerifier = base64.RawURLEncoding.EncodeToString(verifierBytes)
 
 	// Create the SHA-256 hash of the verifier
 	hash := sha256.Sum256([]byte(codeVerifier))
 
 	// Base64 URL encode the hash to create the code challenge
-	codeChallenge := base64.RawURLEncoding.EncodeToString(hash[:])
+	codeChallenge = base64.RawURLEncoding.EncodeToString(hash[:])
 
 	return codeVerifier, codeChallenge
 }
@@ -55,7 +55,7 @@ func Login() (*oauth2.Token, error) {
 	)
 
 	// Open URL in browser
-	fmt.Println("Opening URL:", authURL)
+	_, _ = fmt.Println("Opening URL:", authURL)
 	openBrowser(authURL)
 
 	// Create a channel for shutdown signaling
@@ -94,15 +94,15 @@ func Login() (*oauth2.Token, error) {
 		}
 	}()
 
-	fmt.Println("Waiting for authentication...")
+	_, _ = fmt.Println("Waiting for authentication...")
 	// Block until we receive a shutdown signal
 	token := <-shutdownChan
-	fmt.Println("Shutting down server...")
+	_, _ = fmt.Println("Shutting down server...")
 	_ = server.Shutdown(context.Background())
 	return token, nil
 }
 
-// Save token to file
+// Save token to file.
 func saveToken(token *oauth2.Token) {
 	b, err := json.Marshal(token)
 	if err != nil {
@@ -114,5 +114,5 @@ func saveToken(token *oauth2.Token) {
 		log.Fatalf("Failed to save token: %v", err)
 	}
 
-	fmt.Println("Token saved to token.json")
+	_, _ = fmt.Println("Token saved to token.json")
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// patchCmd represents the patch command
+// patchCmd represents the patch command.
 var patchCmd = &cobra.Command{
 	Use:   "patch",
 	Short: "patch local files",

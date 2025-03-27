@@ -7,7 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"os"
+	"strconv"
 	"time"
 
 	workstations "cloud.google.com/go/workstations/apiv1"
@@ -23,10 +23,10 @@ type tunnel struct {
 	client  *workstations.Client
 }
 
-func TcpTunnel(cfg *types.Config, port int) {
-	_, ctx, c, err, ws := setup(cfg)
+func TCPTunnel(cfg *types.Config, port *int) error {
+	sshContext, ctx, c, ws, err := setup(cfg)
 	if err != nil {
-		return
+		return err
 	}
 	defer closeIt(c)
 
@@ -37,31 +37,36 @@ func TcpTunnel(cfg *types.Config, port int) {
 		client:  c,
 	}
 	go t.refreshAuthToken(ctx)
-	t.getAuthToken(ctx)
+	t.setAuthToken(ctx)
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	p := sshContext.Port
+	if port != nil {
+		p = *port
+	}
+
+	listener, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(p)))
 	if err != nil {
-		fmt.Printf("Failed to start TCP listener: %v\n", err)
-		os.Exit(1)
+		_, _ = fmt.Printf("Failed to start TCP listener: %v\n", err)
+		return err
 	}
 	defer closeIt(listener)
 
-	fmt.Printf("Listening on local ssh port %d ...\n", port)
+	_, _ = fmt.Printf("Listening on local ssh port %d ...\n", p)
 
 	for {
 		clientConn, err := listener.Accept()
 		if err != nil {
-			fmt.Printf("Failed to accept connection: %v\n", err)
+			_, _ = fmt.Printf("Failed to accept connection: %v\n", err)
 			continue
 		}
-		fmt.Println("Accepted TCP connection")
+		_, _ = fmt.Println("Accepted TCP connection")
 
 		// Handle the connection in a separate goroutine
 		go t.handleConnection(clientConn)
 	}
 }
 
-func (t *tunnel) connectWebsocket() *websocket.Conn {
+func (t *tunnel) connectWebsocket() (*websocket.Conn, error) {
 	wsURL := fmt.Sprintf("wss://%s/_workstation/tcp/%d", t.wsHost, 22)
 	// Establish persistent WebSocket connection
 	conn, resp, err := websocket.DefaultDialer.Dial(wsURL, t.headers)
@@ -69,17 +74,20 @@ func (t *tunnel) connectWebsocket() *websocket.Conn {
 		if resp != nil {
 			body, _ := io.ReadAll(resp.Body)
 			defer closeIt(resp.Body)
-			fmt.Println(string(body))
+			_, _ = fmt.Println(string(body))
 		}
-		fmt.Printf("Failed to connect to WebSocket %q: %v\n", wsURL, err)
-		os.Exit(1)
+		_, _ = fmt.Printf("Failed to connect to WebSocket %q: %v\n", wsURL, err)
+		return nil, err
 	}
-	return conn
+	return conn, nil
 }
 
-// handleConnection forwards data between the TCP client and the WebSocket connection
+// handleConnection forwards data between the TCP client and the WebSocket connection.
 func (t *tunnel) handleConnection(clientConn net.Conn) {
-	wsConn := t.connectWebsocket()
+	wsConn, err := t.connectWebsocket()
+	if err != nil {
+		return
+	}
 
 	defer closeIt(clientConn)
 	defer closeIt(wsConn)
@@ -91,14 +99,14 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 			n, err := clientConn.Read(buf)
 			if err != nil {
 				if !errors.Is(err, io.EOF) {
-					fmt.Printf("Error reading from TCP connection: %v\n", err)
+					_, _ = fmt.Printf("Error reading from TCP connection: %v\n", err)
 				}
 				return
 			}
 
 			// Send TCP data over WebSocket
 			if err := wsConn.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
-				fmt.Printf("Error sending data over WebSocket: %v\n", err)
+				_, _ = fmt.Printf("Error sending data over WebSocket: %v\n", err)
 				return
 			}
 		}
@@ -110,9 +118,9 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 		var ce *websocket.CloseError
 		if err != nil {
 			if errors.As(err, &ce) {
-				fmt.Println("Connection closed")
+				_, _ = fmt.Println("Connection closed")
 			} else {
-				fmt.Printf("Error reading from WebSocket: %v\n", err)
+				_, _ = fmt.Printf("Error reading from WebSocket: %v\n", err)
 			}
 			return
 		}
@@ -120,7 +128,7 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 		// Send WebSocket data to the TCP client
 		_, err = clientConn.Write(msg)
 		if err != nil {
-			fmt.Printf("Error writing to TCP connection: %v\n", err)
+			_, _ = fmt.Printf("Error writing to TCP connection: %v\n", err)
 			return
 		}
 	}
@@ -133,21 +141,21 @@ func (t *tunnel) refreshAuthToken(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			t.getAuthToken(ctx)
+			t.setAuthToken(ctx)
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func (t *tunnel) getAuthToken(ctx context.Context) {
+func (t *tunnel) setAuthToken(ctx context.Context) {
 	tr, err := t.client.GenerateAccessToken(ctx, &workstationspb.GenerateAccessTokenRequest{Workstation: t.wsName})
 	if err != nil {
-		fmt.Printf("Error generating token: %v\n", err)
-		os.Exit(1)
+		_, _ = fmt.Printf("Error generating token: %v\n", err)
+		return
 	}
-	t.headers["Authorization"] = []string{"Bearer " + tr.AccessToken}
-	fmt.Println("Got new Token")
+	t.headers["Authorization"] = []string{"Bearer " + tr.GetAccessToken()}
+	_, _ = fmt.Println("Got new Token")
 }
 
 func closeIt(cl io.Closer) {

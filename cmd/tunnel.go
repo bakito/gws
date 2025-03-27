@@ -5,9 +5,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var flagLocalPort int
+var flagLocalPort *int
 
-// tunnelCmd represents the tunnel command
+// tunnelCmd represents the tunnel command.
 var tunnelCmd = &cobra.Command{
 	Use:   "tunnel",
 	Short: "tunnel a workstation",
@@ -20,12 +20,12 @@ var tunnelCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		gcloud.TcpTunnel(cfg, flagLocalPort)
-		return nil
+		return gcloud.TCPTunnel(cfg, flagLocalPort)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(tunnelCmd)
-	tunnelCmd.PersistentFlags().IntVarP(&flagLocalPort, "local-host-port", "p", 22222, "The local host port to open")
+	tunnelCmd.PersistentFlags().
+		IntVarP(flagLocalPort, "local-host-port", "p", 0, "The local host port to open (default ist the port from the config)")
 }

@@ -12,7 +12,7 @@ import (
 
 var flagCurrent bool
 
-// ctxCmd represents the ctx command
+// ctxCmd represents the ctx command.
 var ctxCmd = &cobra.Command{
 	Use:   "ctx",
 	Short: "Set the active context",
@@ -75,9 +75,8 @@ func (m *ctxModel) Init() tea.Cmd {
 }
 
 func (m *ctxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
+	if msgType, ok := msg.(tea.KeyMsg); ok {
+		switch msgType.String() {
 		case "q":
 			return m, tea.Quit
 		case "up":

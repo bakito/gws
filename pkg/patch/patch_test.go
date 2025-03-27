@@ -55,7 +55,7 @@ return Environment(suite, bin_path)`,
 		})
 
 		It("should create a valid patched file", func() {
-			Ω(copy(sshFile, testFile)).ShouldNot(HaveOccurred())
+			Ω(copyFile(sshFile, testFile)).ShouldNot(HaveOccurred())
 			expected, err := os.ReadFile(sshFileExpected)
 			Ω(err).ShouldNot(HaveOccurred())
 
@@ -69,7 +69,7 @@ return Environment(suite, bin_path)`,
 		})
 
 		It("should create a valid patched file with env variables in path", func() {
-			Ω(copy(sshFile, testFile)).ShouldNot(HaveOccurred())
+			Ω(copyFile(sshFile, testFile)).ShouldNot(HaveOccurred())
 			expected, err := os.ReadFile(sshFileExpected)
 			Ω(err).ShouldNot(HaveOccurred())
 
@@ -86,7 +86,7 @@ return Environment(suite, bin_path)`,
 		})
 
 		It("should not change the file", func() {
-			Ω(copy(sshFileExpected, testFile)).ShouldNot(HaveOccurred())
+			Ω(copyFile(sshFileExpected, testFile)).ShouldNot(HaveOccurred())
 			expected, err := os.ReadFile(sshFileExpected)
 			Ω(err).ShouldNot(HaveOccurred())
 
@@ -122,7 +122,7 @@ xxx
 		})
 
 		It("should create a valid patched file", func() {
-			Ω(copy(cacertsFile, testFile)).ShouldNot(HaveOccurred())
+			Ω(copyFile(cacertsFile, testFile)).ShouldNot(HaveOccurred())
 			expected, err := os.ReadFile(cacertsFileExpected)
 			Ω(err).ShouldNot(HaveOccurred())
 
@@ -136,7 +136,7 @@ xxx
 		})
 
 		It("should create a valid patched file with env variables in path", func() {
-			Ω(copy(cacertsFile, testFile)).ShouldNot(HaveOccurred())
+			Ω(copyFile(cacertsFile, testFile)).ShouldNot(HaveOccurred())
 			expected, err := os.ReadFile(cacertsFileExpected)
 			Ω(err).ShouldNot(HaveOccurred())
 
@@ -153,7 +153,7 @@ xxx
 		})
 
 		It("should not change the file", func() {
-			Ω(copy(cacertsFileExpected, testFile)).ShouldNot(HaveOccurred())
+			Ω(copyFile(cacertsFileExpected, testFile)).ShouldNot(HaveOccurred())
 			expected, err := os.ReadFile(cacertsFileExpected)
 			Ω(err).ShouldNot(HaveOccurred())
 
@@ -168,7 +168,7 @@ xxx
 	})
 })
 
-func copy(src string, dst string) error {
+func copyFile(src, dst string) error {
 	data, err := os.ReadFile(src)
 	if err != nil {
 		return err

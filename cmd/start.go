@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// startCmd represents the start command
+// startCmd represents the start command.
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a workstation",
@@ -18,8 +18,7 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		gcloud.StartWorkstation(cfg)
-		return nil
+		return gcloud.StartWorkstation(cfg)
 	},
 }
 

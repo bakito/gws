@@ -25,7 +25,7 @@ TB_DEEPCOPY_GEN_VERSION ?= v0.32.3
 TB_GINKGO_VERSION ?= v2.23.3
 # renovate: packageName=mvdan.cc/gofumpt
 TB_GOFUMPT_VERSION ?= v0.7.0
-# renovate: packageName=github.com/golangci/golangci-lint/cmd/golangci-lint
+# renovate: packageName=github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 TB_GOLANGCI_LINT_VERSION ?= v2.0.2
 # renovate: packageName=github.com/segmentio/golines
 TB_GOLINES_VERSION ?= v0.12.2
@@ -52,7 +52,7 @@ $(TB_GOFUMPT): $(TB_LOCALBIN)
 .PHONY: tb.golangci-lint
 tb.golangci-lint: $(TB_GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
 $(TB_GOLANGCI_LINT): $(TB_LOCALBIN)
-	test -s $(TB_LOCALBIN)/golangci-lint || GOBIN=$(TB_LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(TB_GOLANGCI_LINT_VERSION)
+	test -s $(TB_LOCALBIN)/golangci-lint || GOBIN=$(TB_LOCALBIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(TB_GOLANGCI_LINT_VERSION)
 .PHONY: tb.golines
 tb.golines: $(TB_GOLINES) ## Download golines locally if necessary.
 $(TB_GOLINES): $(TB_LOCALBIN)
@@ -90,7 +90,7 @@ tb.update: tb.reset
 		k8s.io/code-generator/cmd/deepcopy-gen@github.com/kubernetes/code-generator \
 		github.com/onsi/ginkgo/v2/ginkgo \
 		mvdan.cc/gofumpt@github.com/mvdan/gofumpt \
-		github.com/golangci/golangci-lint/cmd/golangci-lint \
+		github.com/golangci/golangci-lint/v2/cmd/golangci-lint \
 		github.com/segmentio/golines \
 		github.com/goreleaser/goreleaser/v2 \
 		github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen \

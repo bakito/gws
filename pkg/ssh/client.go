@@ -14,7 +14,7 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-func Client(addr string, user string, privateKeyFile string) (*client, error) {
+func NewClient(addr, user, privateKeyFile string) (Client, error) {
 	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)
@@ -56,6 +56,12 @@ func Client(addr string, user string, privateKeyFile string) (*client, error) {
 	}, nil
 }
 
+type Client interface {
+	Close()
+	Execute(command string) (output string, err error)
+	CopyFile(from, to, permissions string) (err error)
+}
+
 type client struct {
 	sshClient *ssh.Client
 	scpClient scp.Client
@@ -70,7 +76,7 @@ func (c *client) Close() {
 }
 
 func (c *client) Execute(command string) (string, error) {
-	fmt.Printf("Executing ssh %q\n", command)
+	_, _ = fmt.Printf("Executing ssh %q\n", command)
 
 	// Start a new SSH session
 	session, err := c.sshClient.NewSession()
@@ -87,8 +93,8 @@ func (c *client) Execute(command string) (string, error) {
 	return string(output), nil
 }
 
-func (c *client) CopyFile(from string, to string, permissions string) error {
-	fmt.Printf("Copy file form %q to %q with perissions %s\n", from, to, permissions)
+func (c *client) CopyFile(from, to, permissions string) error {
+	_, _ = fmt.Printf("Copy file form %q to %q with perissions %s\n", from, to, permissions)
 	// Open a file
 	f, _ := os.Open(env.ExpandEnv(from))
 	// Close the file after it has been copied
@@ -119,16 +125,15 @@ func evaluateAuthMethod(privateKey []byte, privateKeyFile string) (ssh.AuthMetho
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
 		// Check if the error is due to a missing passphrase
-		if errors.Is(err, &ssh.PassphraseMissingError{}) {
-			pass, err := passwd.Prompt(fmt.Sprintf("Please enter the passphrase for private key (%s):", privateKeyFile))
-			if err != nil {
-				return nil, err
-			}
-			signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, []byte(pass))
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse private key: %w", err)
-			}
-		} else {
+		if !errors.Is(err, &ssh.PassphraseMissingError{}) {
+			return nil, fmt.Errorf("failed to parse private key: %w", err)
+		}
+		pass, err := passwd.Prompt(fmt.Sprintf("Please enter the passphrase for private key (%s):", privateKeyFile))
+		if err != nil {
+			return nil, err
+		}
+		signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, []byte(pass))
+		if err != nil {
 			return nil, fmt.Errorf("failed to parse private key: %w", err)
 		}
 	}

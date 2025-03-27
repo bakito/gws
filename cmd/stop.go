@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// stopCmd represents the stop command
+// stopCmd represents the stop command.
 var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stop a workstation",
@@ -18,8 +18,7 @@ var stopCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		gcloud.StopWorkstation(cfg)
-		return nil
+		return gcloud.StopWorkstation(cfg)
 	},
 }
 

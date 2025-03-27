@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// restartCmd represents the start command
+// restartCmd represents the start command.
 var restartCmd = &cobra.Command{
 	Use:   "restart",
 	Short: "Restart a workstation",
@@ -18,9 +18,10 @@ var restartCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		gcloud.StopWorkstation(cfg)
-		gcloud.StartWorkstation(cfg)
-		return nil
+		if err := gcloud.StopWorkstation(cfg); err != nil {
+			return err
+		}
+		return gcloud.StartWorkstation(cfg)
 	},
 }
 
