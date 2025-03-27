@@ -14,21 +14,9 @@ import (
 	"time"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 const tokenFileName = ".gws-token.json"
-
-// OAuth2 Config.
-//
-
-var oauthConfig = &oauth2.Config{
-	ClientID:     defaultClientID,
-	ClientSecret: defaultClientSecret,
-	Scopes:       defaultClientScopes,
-	Endpoint:     google.Endpoint,
-	RedirectURL:  "http://localhost:8080/callback",
-}
 
 // Generate PKCE Code Verifier and SHA-256 Code Challenge.
 func generatePKCE() (codeVerifier, codeChallenge string) {

@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	tmpl, err := template.ParseFiles("auth_const.go.tpl")
+	tmpl, err := template.ParseFiles("auth_config.go.tpl")
 	if err != nil {
 		_, _ = fmt.Println("Error parsing template file:", err)
 		return

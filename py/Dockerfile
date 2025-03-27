@@ -10,10 +10,10 @@ RUN apt-get update && \
 FROM golang:1.24-alpine AS builder
 WORKDIR /build
 COPY main.go /build
-COPY auth_const.go.tpl /build
+COPY auth_config.go.tpl /build
 COPY --from=gcloud /usr/lib/google-cloud-sdk/lib/googlecloudsdk/core/config.py /build
 
-RUN go run main.go > auth_const.go
+RUN go run main.go > auth_config.go
 
 FROM scratch
-COPY --from=builder /build/auth_const.go /
+COPY --from=builder /build/auth_config.go /
