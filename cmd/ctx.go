@@ -5,9 +5,10 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/bakito/gws/pkg/types"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+
+	"github.com/bakito/gws/pkg/types"
 )
 
 var flagCurrent bool

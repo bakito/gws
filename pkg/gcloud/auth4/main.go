@@ -5,9 +5,10 @@ import (
 	"log"
 
 	workstations "cloud.google.com/go/workstations/apiv1"
-	"github.com/bakito/gws/pkg/gcloud"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
+
+	"github.com/bakito/gws/pkg/gcloud"
 )
 
 func main() {

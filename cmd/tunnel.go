@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/bakito/gws/pkg/gcloud"
 	"github.com/spf13/cobra"
+
+	"github.com/bakito/gws/pkg/gcloud"
 )
 
 var flagLocalPort *int

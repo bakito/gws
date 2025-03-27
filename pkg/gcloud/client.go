@@ -10,6 +10,7 @@ import (
 
 	workstations "cloud.google.com/go/workstations/apiv1"
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
+
 	"github.com/bakito/gws/pkg/spinner"
 	"github.com/bakito/gws/pkg/types"
 )

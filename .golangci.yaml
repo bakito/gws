@@ -164,8 +164,8 @@ linters:
           disabled: true
     staticcheck:
       checks:
-        - 'all'
-        - '-ST1000'
+       - 'all'
+       - '-ST1000'
   exclusions:
     generated: lax
     presets:
@@ -197,13 +197,13 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/bakito/kubexporter)
+        - prefix(github.com/bakito/gws)
     gofumpt:
-      module-path: github.com/bakito/kubexporter
+      module-path: github.com/bakito/gws
       extra-rules: true
     goimports:
       local-prefixes:
-        - github.com/bakito/kubexporter
+        - github.com/bakito/gws
     golines:
       max-len: 128
       tab-len: 4

@@ -4,10 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bakito/gws/pkg/patch"
-	"github.com/bakito/gws/pkg/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/bakito/gws/pkg/patch"
+	"github.com/bakito/gws/pkg/types"
 )
 
 const (

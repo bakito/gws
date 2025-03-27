@@ -19,8 +19,9 @@ import (
 
 // OAuth2 Config.
 var oauthConfig = &oauth2.Config{
-	ClientID:     "415121532721-l5h1pcvq0r3va06a7uv6633eco3hbevh.apps.googleusercontent.com",
-	ClientSecret: "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",
+	// ClientID and ClientSecret from  /usr/lib64/google-cloud-sdk/lib/googlecloudsdk/core/config.py
+	ClientID:     "32555940559.apps.googleusercontent.com",
+	ClientSecret: "ZmssLNjJy2998hD4CTg2ejr2",
 	Endpoint:     google.Endpoint,
 	RedirectURL:  "http://localhost:8080/callback",
 	Scopes:       []string{"openid", "email", "profile"},

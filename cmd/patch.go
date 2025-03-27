@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/bakito/gws/pkg/patch"
 	"github.com/spf13/cobra"
+
+	"github.com/bakito/gws/pkg/patch"
 )
 
 // patchCmd represents the patch command.

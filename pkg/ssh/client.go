@@ -7,11 +7,12 @@ import (
 	"net"
 	"os"
 
-	"github.com/bakito/gws/pkg/env"
-	"github.com/bakito/gws/pkg/passwd"
 	"github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
+
+	"github.com/bakito/gws/pkg/env"
+	"github.com/bakito/gws/pkg/passwd"
 )
 
 func NewClient(addr, user, privateKeyFile string) (Client, error) {

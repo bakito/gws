@@ -3,8 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/bakito/gws/pkg/ssh"
 	"github.com/spf13/cobra"
+
+	"github.com/bakito/gws/pkg/ssh"
 )
 
 // upCmd represents the up command.
