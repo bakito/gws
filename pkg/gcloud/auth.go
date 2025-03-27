@@ -22,18 +22,10 @@ const tokenFileName = ".gws-token.json"
 // OAuth2 Config.
 //
 
-var defaultOauthConfig = &oauth2.Config{
+var oauthConfig = &oauth2.Config{
 	ClientID:     defaultClientID,
 	ClientSecret: defaultClientSecret,
 	Scopes:       defaultClientScopes,
-	Endpoint:     google.Endpoint,
-	RedirectURL:  "http://localhost:8080/callback",
-}
-
-var appOauthConfig = &oauth2.Config{
-	ClientID:     appClientID,
-	ClientSecret: appClientSecret,
-	Scopes:       appClientScopes,
 	Endpoint:     google.Endpoint,
 	RedirectURL:  "http://localhost:8080/callback",
 }
@@ -58,9 +50,6 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 }
 
 func Login() (oauth2.TokenSource, error) {
-	oauthConfig := appOauthConfig
-	oauthConfig = defaultOauthConfig
-
 	existingToken := &oauth2.Token{}
 
 	loadExistingToken(existingToken)

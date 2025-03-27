@@ -19,14 +19,6 @@ func main() {
 	if err != nil {
 		return
 	}
-	appDefault, err := readPythonFile(
-		"util.py",
-		"DEFAULT_CREDENTIALS_DEFAULT_CLIENT_ID",
-		"DEFAULT_CREDENTIALS_DEFAULT_CLIENT_SECRET",
-	)
-	if err != nil {
-		return
-	}
 	tmpl, err := template.ParseFiles("auth_const.go.tpl")
 	if err != nil {
 		_, _ = fmt.Println("Error parsing template file:", err)
@@ -36,8 +28,6 @@ func main() {
 		"DefaultClientID":     varsDefault["CLOUDSDK_CLIENT_ID"][0],
 		"DefaultClientSecret": varsDefault["CLOUDSDK_CLIENT_NOTSOSECRET"][0],
 		"DefaultClientScopes": varsDefault["CLOUDSDK_SCOPES"],
-		"AppClientID":         appDefault["DEFAULT_CREDENTIALS_DEFAULT_CLIENT_ID"][0],
-		"AppClientSecret":     appDefault["DEFAULT_CREDENTIALS_DEFAULT_CLIENT_SECRET"][0],
 	})
 	if err != nil {
 		_, _ = fmt.Println("Error processing template file:", err)

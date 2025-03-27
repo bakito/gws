@@ -12,7 +12,6 @@ WORKDIR /build
 COPY main.go /build
 COPY auth_const.go.tpl /build
 COPY --from=gcloud /usr/lib/google-cloud-sdk/lib/googlecloudsdk/core/config.py /build
-COPY --from=gcloud /usr/lib/google-cloud-sdk/lib/googlecloudsdk/api_lib/auth/util.py /build
 
 RUN go run main.go > auth_const.go
 
