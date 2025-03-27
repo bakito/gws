@@ -19,19 +19,11 @@ import (
 
 // OAuth2 Config.
 var oauthConfig = &oauth2.Config{
-	// ClientID and ClientSecret and Scope from  /usr/lib64/google-cloud-sdk/lib/googlecloudsdk/core/config.py
-	ClientID:     "32555940559.apps.googleusercontent.com",
-	ClientSecret: "ZmssLNjJy2998hD4CTg2ejr2",
+	ClientID:     clientID,
+	ClientSecret: clientSecret,
+	Scopes:       clientScopes,
 	Endpoint:     google.Endpoint,
 	RedirectURL:  "http://localhost:8080/callback",
-	Scopes: []string{
-		"openid",
-		"https://www.googleapis.com/auth/userinfo.email",
-		"https://www.googleapis.com/auth/cloud-platform",
-		"https://www.googleapis.com/auth/appengine.admin",
-		"https://www.googleapis.com/auth/sqlservice.login",
-		"https://www.googleapis.com/auth/compute",
-	},
 }
 
 // Generate PKCE Code Verifier and SHA-256 Code Challenge.
