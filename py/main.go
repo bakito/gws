@@ -9,20 +9,66 @@ import (
 	"text/template"
 )
 
+// https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?
+// response_type=code&
+// client_id=764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com&
+// redirect_uri=http%3A%2F%2Flocalhost%3A8085%2F&
+// scope=openid%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fsqlservice.login&
+// state=BVgbNPz5bdM4qjVHHimDCjhYV7mICo&
+// access_type=offline&
+// code_challenge=cTczIuODdt8QGYkU3g9VE_XCLnzPLsJlOyDlwjfHb90&
+// code_challenge_method=S256&service=lso&o2v=1&ddm=1&
+// flowName=GeneralOAuthFlow
+
+// flowName=GeneralOAuthFlow.
 func main() {
+	varsDefault, err := readPythonFile(
+		"config.py",
+		"CLOUDSDK_CLIENT_ID",
+		"CLOUDSDK_CLIENT_NOTSOSECRET",
+		"CLOUDSDK_SCOPES",
+	)
+	if err != nil {
+		return
+	}
+	appDefault, err := readPythonFile(
+		"util.py",
+		"DEFAULT_CREDENTIALS_DEFAULT_CLIENT_ID",
+		"DEFAULT_CREDENTIALS_DEFAULT_CLIENT_SECRET",
+	)
+	if err != nil {
+		return
+	}
+	tmpl, err := template.ParseFiles("auth_const.go.tpl")
+	if err != nil {
+		_, _ = fmt.Println("Error parsing template file:", err)
+		return
+	}
+	err = tmpl.Execute(os.Stdout, map[string]any{
+		"DefaultClientID":     varsDefault["CLOUDSDK_CLIENT_ID"][0],
+		"DefaultClientSecret": varsDefault["CLOUDSDK_CLIENT_NOTSOSECRET"][0],
+		"DefaultClientScopes": varsDefault["CLOUDSDK_SCOPES"],
+		"AppClientID":         appDefault["DEFAULT_CREDENTIALS_DEFAULT_CLIENT_ID"][0],
+		"AppClientSecret":     appDefault["DEFAULT_CREDENTIALS_DEFAULT_CLIENT_SECRET"][0],
+	})
+	if err != nil {
+		_, _ = fmt.Println("Error processing template file:", err)
+	}
+}
+
+func readPythonFile(name string, keys ...string) (map[string][]string, error) {
 	// Open the file
-	file, err := os.Open("config.py") // Replace with your actual file name
+	file, err := os.Open(name) // Replace with your actual file name
 	if err != nil {
 		_, _ = fmt.Println("Error opening file:", err)
-		return
+		return nil, err
 	}
 	defer file.Close()
 
 	// Define keys to extract
-	targetKeys := map[string]bool{
-		"CLOUDSDK_CLIENT_ID":          true,
-		"CLOUDSDK_CLIENT_NOTSOSECRET": true,
-		"CLOUDSDK_SCOPES":             true,
+	targetKeys := make(map[string]bool)
+	for _, key := range keys {
+		targetKeys[key] = true
 	}
 
 	// Regex to match key-value pairs
@@ -89,23 +135,9 @@ func main() {
 	}
 	if err := scanner.Err(); err != nil {
 		_, _ = fmt.Println("Error reading file:", err)
-		return
+		return nil, err
 	}
-
-	tmpl, err := template.ParseFiles("auth_const.go.tpl")
-	if err != nil {
-		_, _ = fmt.Println("Error parsing template file:", err)
-		return
-	}
-	err = tmpl.Execute(os.Stdout, map[string]any{
-		"ClientID":     vars["CLOUDSDK_CLIENT_ID"][0],
-		"ClientSecret": vars["CLOUDSDK_CLIENT_NOTSOSECRET"][0],
-		"ClientScopes": vars["CLOUDSDK_SCOPES"],
-	})
-	if err != nil {
-		_, _ = fmt.Println("Error processing template file:", err)
-		return
-	}
+	return vars, nil
 }
 
 // cleanValue removes unwanted characters (' and ,).

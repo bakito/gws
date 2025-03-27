@@ -77,7 +77,7 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 	}
 	data, err = os.ReadFile(file)
 
-	return abs, data, nil
+	return abs, data, err
 }
 
 func (c *Config) SwitchContext(newContext string) error {

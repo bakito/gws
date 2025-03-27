@@ -20,12 +20,22 @@ import (
 const tokenFileName = ".gws-token.json"
 
 // OAuth2 Config.
+//
+
 var oauthConfig = &oauth2.Config{
-	ClientID:     clientID,
-	ClientSecret: clientSecret,
-	Scopes:       clientScopes,
+	ClientID:     defaultClientID,
+	ClientSecret: defaultClientSecret,
+	Scopes:       defaultClientScopes,
 	Endpoint:     google.Endpoint,
 	RedirectURL:  "http://localhost:8080/callback",
+}
+
+//nolint:unused
+var appOauthConfig = &oauth2.Config{
+	ClientID:    appClientID,
+	Scopes:      appClientScopes,
+	Endpoint:    google.Endpoint,
+	RedirectURL: "http://localhost:8080/callback",
 }
 
 // Generate PKCE Code Verifier and SHA-256 Code Challenge.
