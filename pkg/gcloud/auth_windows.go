@@ -3,8 +3,10 @@
 
 package gcloud
 
-import "os/exec"
+import (
+	"os/exec"
+)
 
 func openBrowser(authURL string) {
-	_ = exec.Command("cmd", "/c", "start", authURL).Start()
+	_ = exec.Command("cmd", "/C", "start", "", authURL).Start()
 }
