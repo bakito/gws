@@ -104,18 +104,19 @@ func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Cl
 	return sshContext, ctx, c, ws, err
 }
 
-func loadExistingToken(token *oauth2.Token) {
-	_, data, err := types.ReadGWSFile(tokenFileName)
+func loadExistingToken(token *oauth2.Token) string {
+	file, data, err := types.ReadGWSFile(tokenFileName)
 	if err != nil {
 		// re-login
-		return
+		return ""
 	}
 
 	if err := json.Unmarshal(data, token); err != nil {
 		// re-login
-		return
+		return ""
 	}
 	token.ExpiresIn = int64(time.Until(token.Expiry).Seconds())
+	return file
 }
 
 func StopWorkstation(cfg *types.Config) error {
