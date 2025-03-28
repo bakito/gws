@@ -28,7 +28,7 @@ var oauthConfig = &oauth2.Config{
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/cloud-platform",
 		"https://www.googleapis.com/auth/appengine.admin",
-		"https://www.googleapis.com/auth/sqlservice.login",
+		//	"https://www.googleapis.com/auth/sqlservice.login",
 		"https://www.googleapis.com/auth/compute",
 	},
 	Endpoint: google.Endpoint,
@@ -54,7 +54,7 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 }
 
 func Login(cfg *types.Config) (oauth2.TokenSource, error) {
-	existingToken := &oauth2.Token{}
+	existingToken := cfg.Token
 
 	if existingToken.ExpiresIn > 10*60 {
 		return oauth2.StaticTokenSource(existingToken), nil
