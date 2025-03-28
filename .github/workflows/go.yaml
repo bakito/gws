@@ -42,6 +42,19 @@ jobs:
 
       - name: Test
         run: make test
-        
+
       - name: Test Release
         run: make test-release
+
+  extract-oauth-vars:
+    name: extract-oauth-vars
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+
+      - name: Extract
+        run: make extract-oauth-vars
+
+      - name: Build
+        run: make build-win
