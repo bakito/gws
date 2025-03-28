@@ -5,3 +5,6 @@ dist
 coverage.out
 
 .gws-token.json
+
+# generated file
+pkg/gcloud/auth_config.go

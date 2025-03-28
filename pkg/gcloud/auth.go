@@ -17,9 +17,24 @@ import (
 
 	"github.com/phayes/freeport"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 const tokenFileName = ".gws-token.json"
+
+var oauthConfig = &oauth2.Config{
+	ClientID:     clientID,
+	ClientSecret: clientSecret,
+	Scopes: []string{
+		"openid",
+		"https://www.googleapis.com/auth/userinfo.email",
+		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/appengine.admin",
+		"https://www.googleapis.com/auth/sqlservice.login",
+		"https://www.googleapis.com/auth/compute",
+	},
+	Endpoint: google.Endpoint,
+}
 
 // Generate PKCE Code Verifier and SHA-256 Code Challenge.
 func generatePKCE() (codeVerifier, codeChallenge string) {

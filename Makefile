@@ -34,4 +34,5 @@ extract-oauth-vars:
 	docker rm auth_config
 	docker rmi auth_config.go
 
-
+dummy-oauth-vars:
+	cd py && 	go run main.go > ../pkg/gcloud/auth_config.go
