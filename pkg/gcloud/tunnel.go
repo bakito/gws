@@ -156,7 +156,7 @@ func (t *tunnel) setAuthToken(ctx context.Context) {
 		return
 	}
 	t.headers["Authorization"] = []string{"Bearer " + tr.GetAccessToken()}
-	_, _ = fmt.Println("Got new Token")
+	_, _ = fmt.Println("🎫 Got new Token")
 }
 
 func closeIt(cl io.Closer) {
