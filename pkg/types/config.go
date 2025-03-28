@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 )
 
@@ -19,6 +20,7 @@ type Config struct {
 	FilePath           string               `yaml:"-"`
 	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
 	currentContext     *Context
+	Token              *oauth2.Token `yaml:"token"`
 }
 
 func (c *Config) CurrentContext() *Context {
@@ -88,19 +90,28 @@ func (c *Config) SwitchContext(newContext string) error {
 	if c.CurrentContextName != newContext {
 		c.CurrentContextName = newContext
 
-		var buf bytes.Buffer
-		encoder := yaml.NewEncoder(&buf)
-		encoder.SetIndent(2)
-
-		err := encoder.Encode(c)
-		if err != nil {
-			return err
-		}
-		if err := os.WriteFile(c.FilePath, buf.Bytes(), 0o600); err != nil {
+		if err := c.save(); err != nil {
 			return err
 		}
 	}
 	c.currentContext = c.Contexts[newContext]
 
 	return nil
+}
+
+func (c *Config) save() error {
+	var buf bytes.Buffer
+	encoder := yaml.NewEncoder(&buf)
+	encoder.SetIndent(2)
+
+	err := encoder.Encode(c)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(c.FilePath, buf.Bytes(), 0o600)
+}
+
+func (c *Config) SetToken(token *oauth2.Token) error {
+	c.Token = token
+	return c.save()
 }

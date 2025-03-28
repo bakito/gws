@@ -5,23 +5,20 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/phayes/freeport"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-)
 
-const tokenFileName = ".gws-token.json"
+	"github.com/bakito/gws/pkg/types"
+)
 
 var oauthConfig = &oauth2.Config{
 	ClientID:     clientID,
@@ -56,10 +53,8 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 	return codeVerifier, codeChallenge
 }
 
-func Login() (oauth2.TokenSource, error) {
+func Login(cfg *types.Config) (oauth2.TokenSource, error) {
 	existingToken := &oauth2.Token{}
-
-	tokenFile := loadExistingToken(existingToken)
 
 	if existingToken.ExpiresIn > 10*60 {
 		return oauth2.StaticTokenSource(existingToken), nil
@@ -69,7 +64,7 @@ func Login() (oauth2.TokenSource, error) {
 		tokenSource := oauthConfig.TokenSource(context.Background(), existingToken)
 		token, err := tokenSource.Token()
 		if err == nil {
-			saveToken(tokenFile, token)
+			_ = cfg.SetToken(token)
 			return oauthConfig.TokenSource(context.Background(), token), nil
 		}
 	}
@@ -119,7 +114,7 @@ func Login() (oauth2.TokenSource, error) {
 		}
 
 		// Save token
-		saveToken(tokenFile, token)
+		_ = cfg.SetToken(token)
 
 		_, _ = fmt.Fprint(w, "Authentication successful! You can close this window.")
 		// Signal shutdown using a channel
@@ -140,25 +135,4 @@ func Login() (oauth2.TokenSource, error) {
 	_, _ = fmt.Println("Authenticated...")
 	_ = server.Shutdown(context.Background())
 	return oauth2.StaticTokenSource(token), nil
-}
-
-// Save token to file.
-func saveToken(file string, token *oauth2.Token) {
-	b, err := json.Marshal(token)
-	if err != nil {
-		log.Fatalf("Failed to save token: %v", err)
-	}
-
-	if file == "" {
-		userHomeDir, err := os.UserHomeDir()
-		if err != nil {
-			log.Fatalf("Failed to save token: %v", err)
-		}
-		file = filepath.Join(userHomeDir, tokenFileName)
-	}
-
-	err = os.WriteFile(file, b, 0o600)
-	if err != nil {
-		log.Fatalf("Failed to save token: %v", err)
-	}
 }

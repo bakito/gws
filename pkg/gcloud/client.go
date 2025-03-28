@@ -3,7 +3,6 @@ package gcloud
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -11,7 +10,6 @@ import (
 
 	workstations "cloud.google.com/go/workstations/apiv1"
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
-	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 
 	"github.com/bakito/gws/pkg/spinner"
@@ -77,7 +75,7 @@ func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Cl
 	ctx := context.TODO()
 
 	// Default credentials: ${HOME}/.config/gcloud/application_default_credentials.json
-	tokenSource, err := Login()
+	tokenSource, err := Login(cfg)
 	if err != nil {
 		_, _ = fmt.Printf("Error getting OAUTH token: %v\n", err)
 		return nil, nil, nil, nil, err
@@ -102,21 +100,6 @@ func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Cl
 		return nil, nil, nil, nil, err
 	}
 	return sshContext, ctx, c, ws, err
-}
-
-func loadExistingToken(token *oauth2.Token) string {
-	file, data, err := types.ReadGWSFile(tokenFileName)
-	if err != nil {
-		// re-login
-		return ""
-	}
-
-	if err := json.Unmarshal(data, token); err != nil {
-		// re-login
-		return ""
-	}
-	token.ExpiresIn = int64(time.Until(token.Expiry).Seconds())
-	return file
 }
 
 func StopWorkstation(cfg *types.Config) error {
