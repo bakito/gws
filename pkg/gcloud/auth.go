@@ -57,14 +57,14 @@ func Login(cfg *types.Config) (oauth2.TokenSource, error) {
 	existingToken := cfg.Token
 
 	if existingToken.ExpiresIn > 10*60 {
-		return oauth2.StaticTokenSource(existingToken), nil
+		return oauth2.StaticTokenSource(&existingToken), nil
 	}
 	// Try refreshing the token
 	if existingToken.RefreshToken != "" {
-		tokenSource := oauthConfig.TokenSource(context.Background(), existingToken)
+		tokenSource := oauthConfig.TokenSource(context.Background(), &existingToken)
 		token, err := tokenSource.Token()
 		if err == nil {
-			_ = cfg.SetToken(token)
+			_ = cfg.SetToken(*token)
 			return oauthConfig.TokenSource(context.Background(), token), nil
 		}
 	}
@@ -114,7 +114,7 @@ func Login(cfg *types.Config) (oauth2.TokenSource, error) {
 		}
 
 		// Save token
-		_ = cfg.SetToken(token)
+		_ = cfg.SetToken(*token)
 
 		_, _ = fmt.Fprint(w, "Authentication successful! You can close this window.")
 		// Signal shutdown using a channel

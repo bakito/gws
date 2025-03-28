@@ -20,7 +20,7 @@ type Config struct {
 	FilePath           string               `yaml:"-"`
 	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
 	currentContext     *Context
-	Token              *oauth2.Token `yaml:"token"`
+	Token              oauth2.Token `yaml:"token"`
 }
 
 func (c *Config) CurrentContext() *Context {
@@ -111,7 +111,7 @@ func (c *Config) save() error {
 	return os.WriteFile(c.FilePath, buf.Bytes(), 0o600)
 }
 
-func (c *Config) SetToken(token *oauth2.Token) error {
+func (c *Config) SetToken(token oauth2.Token) error {
 	c.Token = token
 	return c.save()
 }
