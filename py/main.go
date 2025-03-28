@@ -82,6 +82,13 @@ func readPythonFile(name string, keys ...string) (map[string]string, error) {
 		_, _ = fmt.Println("Error reading file:", err)
 		return nil, err
 	}
+
+	for _, key := range keys {
+		if _, ok := vars[key]; !ok {
+			return nil, fmt.Errorf("key %q was not found", key)
+		}
+	}
+
 	return vars, nil
 }
 
