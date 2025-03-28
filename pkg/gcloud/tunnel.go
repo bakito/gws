@@ -60,7 +60,7 @@ func TCPTunnel(cfg *types.Config, port int) error {
 			_, _ = fmt.Printf("Failed to accept connection: %v\n", err)
 			continue
 		}
-		_, _ = fmt.Println("Accepted TCP connection")
+		_, _ = fmt.Println("🤝 Accepted TCP connection")
 
 		// Handle the connection in a separate goroutine
 		go t.handleConnection(clientConn)
@@ -119,7 +119,7 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 		var ce *websocket.CloseError
 		if err != nil {
 			if errors.As(err, &ce) {
-				_, _ = fmt.Println("Connection closed")
+				_, _ = fmt.Println("👋 Connection closed")
 			} else {
 				_, _ = fmt.Printf("Error reading from WebSocket: %v\n", err)
 			}
