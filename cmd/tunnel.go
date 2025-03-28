@@ -21,7 +21,7 @@ var tunnelCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return gcloud.TCPTunnel(cfg, &flagLocalPort)
+		return gcloud.TCPTunnel(cfg, flagLocalPort)
 	},
 }
 

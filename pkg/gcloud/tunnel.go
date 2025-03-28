@@ -24,7 +24,7 @@ type tunnel struct {
 	client  *workstations.Client
 }
 
-func TCPTunnel(cfg *types.Config, port *int) error {
+func TCPTunnel(cfg *types.Config, port int) error {
 	sshContext, ctx, c, ws, err := setup(cfg)
 	if err != nil {
 		return err
@@ -41,8 +41,8 @@ func TCPTunnel(cfg *types.Config, port *int) error {
 	t.setAuthToken(ctx)
 
 	p := sshContext.Port
-	if port != nil {
-		p = *port
+	if port != 0 {
+		p = port
 	}
 
 	listener, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(p)))
