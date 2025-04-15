@@ -3,7 +3,7 @@ module github.com/bakito/gws
 go 1.24.1
 
 require (
-	cloud.google.com/go/workstations v1.1.4
+	cloud.google.com/go/workstations v1.1.5
 	github.com/bramvdbogaerde/go-scp v1.5.0
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/bubbletea v1.3.4
