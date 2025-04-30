@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/workstations v1.1.5
 	github.com/bramvdbogaerde/go-scp v1.5.0
 	github.com/briandowns/spinner v1.23.2
-	github.com/charmbracelet/bubbletea v1.3.4
+	github.com/charmbracelet/bubbletea v1.3.5
 	github.com/gorilla/websocket v1.5.3
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
