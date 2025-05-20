@@ -6,7 +6,7 @@ TB_LOCALDIR ?= $(shell which cygpath > /dev/null 2>&1 && cygpath -m $$(pwd) || p
 ## Location to install dependencies to
 TB_LOCALBIN ?= $(TB_LOCALDIR)/bin
 $(TB_LOCALBIN):
-	mkdir -p $(TB_LOCALBIN)
+	if [ ! -e $(TB_LOCALBIN) ]; then mkdir -p $(TB_LOCALBIN); fi
 
 ## Tool Binaries
 TB_DEEPCOPY_GEN ?= $(TB_LOCALBIN)/deepcopy-gen
@@ -21,17 +21,17 @@ TB_SEMVER ?= $(TB_LOCALBIN)/semver
 ## Tool Versions
 # renovate: packageName=k8s.io/code-generator/cmd/deepcopy-gen
 TB_DEEPCOPY_GEN_VERSION ?= v0.33.1
-# renovate: packageName=github.com/onsi/ginkgo/v2/ginkgo
+# renovate: packageName=github.com/onsi/ginkgo/v2
 TB_GINKGO_VERSION ?= v2.23.4
 # renovate: packageName=mvdan.cc/gofumpt
 TB_GOFUMPT_VERSION ?= v0.8.0
-# renovate: packageName=github.com/golangci/golangci-lint/v2/cmd/golangci-lint
+# renovate: packageName=github.com/golangci/golangci-lint/v2
 TB_GOLANGCI_LINT_VERSION ?= v2.1.6
 # renovate: packageName=github.com/segmentio/golines
 TB_GOLINES_VERSION ?= v0.12.2
 # renovate: packageName=github.com/goreleaser/goreleaser/v2
 TB_GORELEASER_VERSION ?= v2.9.0
-# renovate: packageName=github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen
+# renovate: packageName=github.com/deepmap/oapi-codegen/v2
 TB_OAPI_CODEGEN_VERSION ?= v2.4.1
 # renovate: packageName=github.com/bakito/semver
 TB_SEMVER_VERSION ?= v1.1.3
