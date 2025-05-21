@@ -24,8 +24,8 @@ type tunnel struct {
 	client  *workstations.Client
 }
 
-func TCPTunnel(cfg *types.Config, port int) error {
-	sshContext, ctx, c, ws, err := setup(cfg)
+func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
+	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
 	}

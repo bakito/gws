@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/pkg/gcloud"
@@ -21,7 +23,9 @@ var tunnelCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return gcloud.TCPTunnel(cfg, flagLocalPort)
+
+		ctx := context.Background()
+		return gcloud.TCPTunnel(ctx, cfg, flagLocalPort)
 	},
 }
 

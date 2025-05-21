@@ -53,7 +53,7 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 	return codeVerifier, codeChallenge
 }
 
-func Login(cfg *types.Config) (oauth2.TokenSource, error) {
+func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	existingToken := cfg.Token
 
 	if existingToken.ExpiresIn > 10*60 {
@@ -61,11 +61,11 @@ func Login(cfg *types.Config) (oauth2.TokenSource, error) {
 	}
 	// Try refreshing the token
 	if existingToken.RefreshToken != "" {
-		tokenSource := oauthConfig.TokenSource(context.Background(), &existingToken)
+		tokenSource := oauthConfig.TokenSource(ctx, &existingToken)
 		token, err := tokenSource.Token()
 		if err == nil {
 			_ = cfg.SetToken(*token)
-			return oauthConfig.TokenSource(context.Background(), token), nil
+			return oauthConfig.TokenSource(ctx, token), nil
 		}
 	}
 
@@ -93,7 +93,7 @@ func Login(cfg *types.Config) (oauth2.TokenSource, error) {
 	shutdownChan := make(chan *oauth2.Token)
 
 	server := &http.Server{Addr: fmt.Sprintf(":%d", port), ReadHeaderTimeout: 1 * time.Second}
-	// Start local server to handle callback
+	// Start a local server to handle callback
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		code := query.Get("code")
@@ -104,7 +104,7 @@ func Login(cfg *types.Config) (oauth2.TokenSource, error) {
 
 		// Exchange authorization code for token
 
-		token, err := oauthConfig.Exchange(context.Background(), code,
+		token, err := oauthConfig.Exchange(ctx, code,
 			oauth2.SetAuthURLParam("code_verifier", codeVerifier),
 			oauth2.SetAuthURLParam("client_secret", oauthConfig.ClientSecret),
 		)
@@ -133,6 +133,6 @@ func Login(cfg *types.Config) (oauth2.TokenSource, error) {
 	// Block until we receive a shutdown signal
 	token := <-shutdownChan
 	_, _ = fmt.Println("Authenticated...")
-	_ = server.Shutdown(context.Background())
-	return oauth2.StaticTokenSource(token), nil
+	_ = server.Shutdown(ctx)
+	return oauthConfig.TokenSource(ctx, token), nil
 }

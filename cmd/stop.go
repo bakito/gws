@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/pkg/gcloud"
@@ -19,7 +21,9 @@ var stopCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return gcloud.StopWorkstation(cfg)
+
+		ctx := context.Background()
+		return gcloud.StopWorkstation(ctx, cfg)
 	},
 }
 

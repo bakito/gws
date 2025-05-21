@@ -16,8 +16,8 @@ import (
 	"github.com/bakito/gws/pkg/types"
 )
 
-func StartWorkstation(cfg *types.Config) error {
-	sshContext, ctx, c, ws, err := setup(cfg)
+func StartWorkstation(ctx context.Context, cfg *types.Config) error {
+	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -65,26 +65,24 @@ func StartWorkstation(cfg *types.Config) error {
 	return nil
 }
 
-func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Client, *workstationspb.Workstation, error) {
+func setup(ctx context.Context, cfg *types.Config) (*types.Context, *workstations.Client, *workstationspb.Workstation, error) {
 	sshContext := cfg.CurrentContext()
 	if sshContext.GCloud == nil {
 		_, _ = fmt.Println("No gcloud config found")
-		return nil, nil, nil, nil, nil
+		return nil, nil, nil, nil
 	}
 	// gcloud auth application-default login
-	ctx := context.TODO()
-
 	// Default credentials: ${HOME}/.config/gcloud/application_default_credentials.json
-	tokenSource, err := Login(cfg)
+	tokenSource, err := Login(ctx, cfg)
 	if err != nil {
 		_, _ = fmt.Printf("Error getting OAUTH token: %v\n", err)
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	c, err := workstations.NewClient(ctx, option.WithTokenSource(tokenSource))
 	if err != nil {
 		_, _ = fmt.Printf("Error creating workstations client: %v\n", err)
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 	wsName := fmt.Sprintf("projects/%s/locations/%s/workstationClusters/%s/workstationConfigs/%s/workstations/%s",
 		sshContext.GCloud.Project,
@@ -97,13 +95,13 @@ func setup(cfg *types.Config) (*types.Context, context.Context, *workstations.Cl
 	ws, err := c.GetWorkstation(ctx, &workstationspb.GetWorkstationRequest{Name: wsName})
 	if err != nil {
 		_, _ = fmt.Printf("Error getting workstation: %v\n", err)
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
-	return sshContext, ctx, c, ws, err
+	return sshContext, c, ws, err
 }
 
-func StopWorkstation(cfg *types.Config) error {
-	sshContext, ctx, c, ws, err := setup(cfg)
+func StopWorkstation(ctx context.Context, cfg *types.Config) error {
+	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -143,7 +141,7 @@ func stringPrompt(label string) string {
 	return strings.TrimSpace(s)
 }
 
-func DeleteWorkstation(cfg *types.Config) error {
+func DeleteWorkstation(ctx context.Context, cfg *types.Config) error {
 	name := stringPrompt(
 		fmt.Sprintf(
 			"Please confirm the deletion of workstation %q by entering the name again:",
@@ -155,7 +153,7 @@ func DeleteWorkstation(cfg *types.Config) error {
 		return nil
 	}
 
-	sshContext, ctx, c, ws, err := setup(cfg)
+	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
 	}
