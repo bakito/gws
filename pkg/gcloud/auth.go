@@ -56,9 +56,6 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	existingToken := cfg.Token
 
-	if existingToken.ExpiresIn > 10*60 {
-		return oauth2.StaticTokenSource(&existingToken), nil
-	}
 	// Try refreshing the token
 	if existingToken.RefreshToken != "" {
 		tokenSource := oauthConfig.TokenSource(ctx, &existingToken)
