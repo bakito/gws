@@ -62,7 +62,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		token, err := tokenSource.Token()
 		if err == nil {
 			_ = cfg.SetToken(*token)
-			return oauthConfig.TokenSource(ctx, token), nil
+			return wrapTokenSource(ctx, token, cfg), nil
 		}
 	}
 
@@ -74,7 +74,6 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	}
 
 	oauthConfig.RedirectURL = fmt.Sprintf("http://%s/callback", net.JoinHostPort("localhost", strconv.Itoa(port)))
-	println(oauthConfig.RedirectURL)
 
 	// Add PKCE to auth URL
 	authURL := oauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline,
@@ -131,5 +130,32 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	token := <-shutdownChan
 	_, _ = fmt.Println("Authenticated...")
 	_ = server.Shutdown(ctx)
-	return oauthConfig.TokenSource(ctx, token), nil
+	return wrapTokenSource(ctx, token, cfg), nil
+}
+
+type TokenSourceWithNotification struct {
+	underlying    oauth2.TokenSource
+	previousToken string
+	cfg           *types.Config
+}
+
+func (ts *TokenSourceWithNotification) Token() (*oauth2.Token, error) {
+	token, err := ts.underlying.Token()
+	if err != nil {
+		return nil, err
+	}
+
+	if token.AccessToken != ts.previousToken {
+		_ = ts.cfg.SetToken(*token)
+	}
+
+	return token, nil
+}
+
+func wrapTokenSource(ctx context.Context, token *oauth2.Token, cfg *types.Config) oauth2.TokenSource {
+	return &TokenSourceWithNotification{
+		underlying:    oauthConfig.TokenSource(ctx, token),
+		cfg:           cfg,
+		previousToken: token.AccessToken,
+	}
 }

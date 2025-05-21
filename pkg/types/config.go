@@ -7,6 +7,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"time"
 
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
@@ -112,6 +113,10 @@ func (c *Config) save() error {
 }
 
 func (c *Config) SetToken(token oauth2.Token) error {
-	c.Token = token
-	return c.save()
+	if c.Token.AccessToken != token.AccessToken {
+		_, _ = fmt.Printf("🎟️ Got new Google Access Token (expires: %s)\n", token.Expiry.Format(time.RFC822))
+		c.Token = token
+		return c.save()
+	}
+	return nil
 }
