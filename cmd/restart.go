@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/pkg/gcloud"
@@ -19,10 +21,11 @@ var restartCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if err := gcloud.StopWorkstation(cfg); err != nil {
+		ctx := context.Background()
+		if err := gcloud.StopWorkstation(ctx, cfg); err != nil {
 			return err
 		}
-		return gcloud.StartWorkstation(cfg)
+		return gcloud.StartWorkstation(ctx, cfg)
 	},
 }
 
