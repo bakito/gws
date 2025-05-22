@@ -10,7 +10,10 @@ import (
 	"github.com/bakito/gws/pkg/gcloud"
 )
 
-var flagLocalPort int
+var (
+	flagLocalPort  int
+	flagTokenCheck bool
+)
 
 // tunnelCmd represents the tunnel command.
 var tunnelCmd = &cobra.Command{
@@ -36,4 +39,6 @@ func init() {
 	rootCmd.AddCommand(tunnelCmd)
 	tunnelCmd.PersistentFlags().
 		IntVarP(&flagLocalPort, "local-host-port", "p", 0, "The local host port to open (default ist the port from the config)")
+	tunnelCmd.PersistentFlags().
+		BoolVarP(&flagTokenCheck, "check-token", "c", true, "Enable periodic token check")
 }

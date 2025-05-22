@@ -19,6 +19,7 @@ type Config struct {
 	Contexts           map[string]*Context  `yaml:"contexts"`
 	CurrentContextName string               `yaml:"currentContext"`
 	FilePath           string               `yaml:"-"`
+	TokenCheck         bool                 `yaml:"-"`
 	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
 	currentContext     *Context
 	Token              oauth2.Token `yaml:"token"`

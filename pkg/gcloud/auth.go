@@ -151,9 +151,10 @@ func newTokenSourceWithRefreshCheck(ctx context.Context, token *oauth2.Token, cf
 		cancel:      cancel,
 	}
 
-	// Start periodic check
-	go ts.periodicCheck(ctx)
-
+	if cfg.TokenCheck {
+		// Start periodic check
+		go ts.periodicCheck(ctx)
+	}
 	return ts
 }
 

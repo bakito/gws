@@ -52,7 +52,7 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	}
 	defer closeIt(listener)
 
-	_, _ = fmt.Printf("🕳️ Listening on local ssh port %d ...\n", p)
+	_, _ = fmt.Printf("🕳️ Opening tunnel and listening on local ssh port %d ...\n", p)
 
 	for {
 		select {
