@@ -28,7 +28,6 @@ var oauthConfig = &oauth2.Config{
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/cloud-platform",
 		"https://www.googleapis.com/auth/appengine.admin",
-		//	"https://www.googleapis.com/auth/sqlservice.login",
 		"https://www.googleapis.com/auth/compute",
 	},
 	Endpoint: google.Endpoint,
@@ -62,7 +61,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		token, err := tokenSource.Token()
 		if err == nil {
 			_ = cfg.SetToken(*token)
-			return wrapTokenSource(ctx, token, cfg), nil
+			return newTokenSourceWithRefreshCheck(ctx, token, cfg), nil
 		}
 	}
 
@@ -130,32 +129,75 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	token := <-shutdownChan
 	_, _ = fmt.Println("Authenticated...")
 	_ = server.Shutdown(ctx)
-	return wrapTokenSource(ctx, token, cfg), nil
+	return newTokenSourceWithRefreshCheck(ctx, token, cfg), nil
 }
 
-type TokenSourceWithNotification struct {
-	underlying    oauth2.TokenSource
-	previousToken string
-	cfg           *types.Config
+type TokenSourceWithRefreshCheck struct {
+	source      oauth2.TokenSource
+	checkPeriod time.Duration
+	lastToken   *oauth2.Token
+	done        chan struct{}
+	cancel      context.CancelFunc
+	cfg         *types.Config
 }
 
-func (ts *TokenSourceWithNotification) Token() (*oauth2.Token, error) {
-	token, err := ts.underlying.Token()
+func newTokenSourceWithRefreshCheck(ctx context.Context, token *oauth2.Token, cfg *types.Config) oauth2.TokenSource {
+	_, cancel := context.WithCancel(ctx)
+	ts := &TokenSourceWithRefreshCheck{
+		checkPeriod: 10 * time.Minute,
+		source:      oauthConfig.TokenSource(ctx, token),
+		cfg:         cfg,
+		done:        make(chan struct{}),
+		cancel:      cancel,
+	}
+
+	// Start periodic check
+	go ts.periodicCheck(ctx)
+
+	return ts
+}
+
+func (ts *TokenSourceWithRefreshCheck) periodicCheck(ctx context.Context) {
+	ticker := time.NewTicker(ts.checkPeriod)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ts.done:
+			return
+		case <-ticker.C:
+			token, err := ts.source.Token()
+			if err != nil {
+				continue
+			}
+
+			if ts.lastToken == nil || ts.lastToken.AccessToken != token.AccessToken {
+				_ = ts.cfg.SetToken(*token)
+				ts.lastToken = token
+			}
+		}
+	}
+}
+
+func (ts *TokenSourceWithRefreshCheck) Token() (*oauth2.Token, error) {
+	token, err := ts.source.Token()
 	if err != nil {
 		return nil, err
 	}
 
-	if token.AccessToken != ts.previousToken {
+	// Also check for refresh during direct Token() calls
+	if ts.lastToken == nil || ts.lastToken.AccessToken != token.AccessToken {
 		_ = ts.cfg.SetToken(*token)
+		ts.lastToken = token
 	}
 
 	return token, nil
 }
 
-func wrapTokenSource(ctx context.Context, token *oauth2.Token, cfg *types.Config) oauth2.TokenSource {
-	return &TokenSourceWithNotification{
-		underlying:    oauthConfig.TokenSource(ctx, token),
-		cfg:           cfg,
-		previousToken: token.AccessToken,
-	}
+// Stop stops the periodic check.
+func (ts *TokenSourceWithRefreshCheck) Stop() {
+	ts.cancel()
+	close(ts.done)
 }

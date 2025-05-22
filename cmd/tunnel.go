@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"context"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -24,7 +26,8 @@ var tunnelCmd = &cobra.Command{
 			return err
 		}
 
-		ctx := context.Background()
+		ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+		defer stop()
 		return gcloud.TCPTunnel(ctx, cfg, flagLocalPort)
 	},
 }

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"context"
+	"os"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 
@@ -21,7 +23,9 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		ctx := context.Background()
+
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+		defer stop()
 		return gcloud.StartWorkstation(ctx, cfg)
 	},
 }

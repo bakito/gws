@@ -55,15 +55,20 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	_, _ = fmt.Printf("🕳️ Listening on local ssh port %d ...\n", p)
 
 	for {
-		clientConn, err := listener.Accept()
-		if err != nil {
-			_, _ = fmt.Printf("Failed to accept connection: %v\n", err)
-			continue
-		}
-		_, _ = fmt.Println("🤝 Accepted TCP connection")
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			clientConn, err := listener.Accept()
+			if err != nil {
+				_, _ = fmt.Printf("Failed to accept connection: %v\n", err)
+				continue
+			}
+			_, _ = fmt.Println("🤝 Accepted TCP connection")
 
-		// Handle the connection in a separate goroutine
-		go t.handleConnection(clientConn)
+			// Handle the connection in a separate goroutine
+			go t.handleConnection(clientConn)
+		}
 	}
 }
 
