@@ -83,13 +83,16 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	case err := <-errChan:
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
 		return err
 	}
 }
 
 func (t *tunnel) connectWebsocket() (*websocket.Conn, error) {
 	wsURL := fmt.Sprintf("wss://%s/_workstation/tcp/%d", t.wsHost, 22)
-	// Establish persistent WebSocket connection
+	// Establish a persistent WebSocket connection
 	conn, resp, err := websocket.DefaultDialer.Dial(wsURL, t.headers)
 	if err != nil {
 		if resp != nil {
