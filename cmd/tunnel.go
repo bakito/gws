@@ -40,5 +40,5 @@ func init() {
 	tunnelCmd.PersistentFlags().
 		IntVarP(&flagLocalPort, "local-host-port", "p", 0, "The local host port to open (default ist the port from the config)")
 	tunnelCmd.PersistentFlags().
-		BoolVarP(&flagTokenCheck, "check-token", "c", true, "Enable periodic token check")
+		BoolVar(&flagTokenCheck, "check-token", true, "Enable periodic token check")
 }
