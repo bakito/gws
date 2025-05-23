@@ -54,21 +54,36 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 
 	_, _ = fmt.Printf("🕳️ Opening tunnel to %s and listening on local ssh port %d ...\n", sshContext.GCloud.Name, p)
 
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			clientConn, err := listener.Accept()
-			if err != nil {
-				_, _ = fmt.Printf("Failed to accept connection: %v\n", err)
-				continue
-			}
-			_, _ = fmt.Println("🤝 Accepted TCP connection")
+	// Create an error channel to handle errors from goroutines
+	errChan := make(chan error, 1)
 
-			// Handle the connection in a separate goroutine
-			go t.handleConnection(clientConn)
+	// Start accepting connections in a separate goroutine
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				errChan <- ctx.Err()
+				return
+			default:
+				clientConn, err := listener.Accept()
+				if err != nil {
+					if !errors.Is(err, net.ErrClosed) {
+						_, _ = fmt.Printf("Failed to accept connection: %v\n", err)
+					}
+					continue
+				}
+				_, _ = fmt.Println("🤝 Accepted TCP connection")
+				go t.handleConnection(clientConn)
+			}
 		}
+	}()
+
+	// Wait for either context cancellation or error
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-errChan:
+		return err
 	}
 }
 
