@@ -16,12 +16,20 @@ import (
 	"github.com/bakito/gws/pkg/types"
 )
 
+const (
+	pollInterval    = 10 * time.Second
+	maxPollAttempts = 10
+	defaultTimeout  = pollInterval * maxPollAttempts
+)
+
 func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
 	}
 	defer c.Close()
+
+	start := time.Now()
 
 	switch ws.GetState() {
 	case workstationspb.Workstation_STATE_STOPPED:
@@ -38,31 +46,55 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 			_, _ = fmt.Printf("Error waiting for workstation to start: %v\n", err)
 			return err
 		}
-		_, _ = fmt.Printf("Workstation started %q\n", sshContext.GCloud.Name)
+		_, _ = fmt.Printf("Workstation started in %s %q\n", time.Since(start).String(), sshContext.GCloud.Name)
 	case workstationspb.Workstation_STATE_RUNNING:
 		_, _ = fmt.Printf("Workstation running %q\n", sshContext.GCloud.Name)
 	case workstationspb.Workstation_STATE_STARTING:
 		spinny := spinner.Start(fmt.Sprintf(" Workstation %s is already starting ...", sshContext.GCloud.Name))
 		defer spinny.Stop() // reset the terminal in case of a panic
-		for range 10 {
-			time.Sleep(10 * time.Second)
-			ws, err = c.GetWorkstation(ctx, &workstationspb.GetWorkstationRequest{Name: ws.GetName()})
-			if err != nil {
-				_, _ = fmt.Printf("Error getting workstation: %v\n", err)
-				return err
-			}
-			if ws.GetState() == workstationspb.Workstation_STATE_RUNNING {
-				break
-			}
-		}
+
+		err = waitForWorkstationRunning(ctx, c, ws, defaultTimeout)
 		spinny.Stop()
+
+		if err != nil {
+			return err
+		}
+
 		if ws.GetState() == workstationspb.Workstation_STATE_RUNNING {
-			_, _ = fmt.Printf("Workstation started %q\n", sshContext.GCloud.Name)
+			_, _ = fmt.Printf("Workstation started in %s %q\n", time.Since(start).String(), sshContext.GCloud.Name)
 		} else {
 			_, _ = fmt.Printf("Workstation is in unexpected state: %s\n", ws.GetState())
 		}
 	}
 	return nil
+}
+
+// waitForWorkstationRunning polls the workstation status until it's running or timeout occurs.
+// Returns error if the workstation fails to reach in running state within the specified timeout.
+func waitForWorkstationRunning(ctx context.Context, c *workstations.Client, ws *workstationspb.Workstation, timeout time.Duration) error {
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+
+	timeoutCh := time.After(timeout)
+
+	for {
+		select {
+		case <-timeoutCh:
+			return fmt.Errorf("timeout waiting for workstation %s to start", ws.GetName())
+		case <-ticker.C:
+			updatedWs, err := c.GetWorkstation(ctx, &workstationspb.GetWorkstationRequest{Name: ws.GetName()})
+			if err != nil {
+				return fmt.Errorf("failed to get workstation status: %w", err)
+			}
+
+			if updatedWs.GetState() == workstationspb.Workstation_STATE_RUNNING {
+				*ws = *updatedWs
+				return nil
+			}
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
 
 func setup(ctx context.Context, cfg *types.Config) (*types.Context, *workstations.Client, *workstationspb.Workstation, error) {
