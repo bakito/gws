@@ -71,7 +71,12 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 
 // waitForWorkstationRunning polls the workstation status until it's running or timeout occurs.
 // Returns error if the workstation fails to reach in running state within the specified timeout.
-func waitForWorkstationRunning(ctx context.Context, c *workstations.Client, ws *workstationspb.Workstation, timeout time.Duration) error {
+func waitForWorkstationRunning(
+	ctx context.Context,
+	c *workstations.Client,
+	ws *workstationspb.Workstation,
+	timeout time.Duration,
+) error {
 	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 
@@ -88,7 +93,10 @@ func waitForWorkstationRunning(ctx context.Context, c *workstations.Client, ws *
 			}
 
 			if updatedWs.GetState() == workstationspb.Workstation_STATE_RUNNING {
-				*ws = *updatedWs
+				*ws = workstationspb.Workstation{
+					Name:  updatedWs.GetName(),
+					State: updatedWs.GetState(),
+				}
 				return nil
 			}
 		case <-ctx.Done():
