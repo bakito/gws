@@ -20,7 +20,7 @@ TB_SEMVER ?= $(TB_LOCALBIN)/semver
 
 ## Tool Versions
 # renovate: packageName=k8s.io/code-generator/cmd/deepcopy-gen
-TB_DEEPCOPY_GEN_VERSION ?= v0.33.2
+TB_DEEPCOPY_GEN_VERSION ?= v0.33.3
 # renovate: packageName=github.com/onsi/ginkgo/v2
 TB_GINKGO_VERSION ?= v2.23.4
 # renovate: packageName=mvdan.cc/gofumpt
