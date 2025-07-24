@@ -45,7 +45,8 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 		p = port
 	}
 
-	listener, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(p)))
+	lc := net.ListenConfig{}
+	listener, err := lc.Listen(ctx, "tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(p)))
 	if err != nil {
 		_, _ = fmt.Printf("Failed to start TCP listener: %v\n", err)
 		return err

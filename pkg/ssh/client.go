@@ -147,7 +147,7 @@ func getSSHAgentAuthMethod() (ssh.AuthMethod, error) {
 		return nil, nil
 	}
 
-	conn, err := net.Dial("unix", sshAuthSock)
+	conn, err := (&net.Dialer{}).DialContext(context.Background(), "unix", sshAuthSock)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to SSH agent: %w", err)
 	}

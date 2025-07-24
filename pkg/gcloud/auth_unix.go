@@ -3,6 +3,7 @@
 package gcloud
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"strings"
@@ -13,7 +14,7 @@ func openBrowser(authURL string) {
 	if IsWSL() {
 		cmd = windowsCmd(authURL)
 	} else {
-		cmd = exec.Command("xdg-open", authURL)
+		cmd = exec.CommandContext(context.Background(), "xdg-open", authURL)
 	}
 	_ = cmd.Start()
 }

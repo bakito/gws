@@ -65,6 +65,7 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 		} else {
 			_, _ = fmt.Printf("Workstation is in unexpected state: %s\n", ws.GetState())
 		}
+	default:
 	}
 	return nil
 }
