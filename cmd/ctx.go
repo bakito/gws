@@ -91,6 +91,7 @@ func (m *ctxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			m.selected = m.choices[m.cursor]
 			return m, tea.Quit
+		default:
 		}
 	}
 	return m, nil
