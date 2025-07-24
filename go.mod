@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/gorilla/websocket v1.5.3
 	github.com/onsi/ginkgo/v2 v2.23.4
-	github.com/onsi/gomega v1.37.0
+	github.com/onsi/gomega v1.38.0
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/crypto v0.40.0
