@@ -122,8 +122,8 @@ func updateKnownHosts(sshContext *types.Context, address string, port int) {
 	linePrefix := fmt.Sprintf("[127.0.0.1]:%d", port)
 	for i, line := range lines {
 		if strings.HasPrefix(line, linePrefix) {
-			if line != c.HostKey() {
-				lines[i] = c.HostKey()
+			if line != c.KnownHostsEntry() {
+				lines[i] = c.KnownHostsEntry()
 				changed = true
 			}
 			found = true
@@ -131,7 +131,7 @@ func updateKnownHosts(sshContext *types.Context, address string, port int) {
 		}
 	}
 	if !found {
-		lines = append(lines, c.HostKey())
+		lines = append(lines, c.KnownHostsEntry())
 		changed = true
 	}
 
