@@ -29,9 +29,12 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 
 	// Define SSH connection details
 	clientConfig := &ssh.ClientConfig{
-		User:            user,                        // Remote SSH username
-		Auth:            []ssh.AuthMethod{auth},      // Auth method
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // #nosec G106: Insecure, as we always get a new cert with gcloud
+		User: user,                   // Remote SSH username
+		Auth: []ssh.AuthMethod{auth}, // Auth method
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			// #nosec G106: Insecure, as we always get a new cert with gcloud
+			return nil
+		},
 	}
 
 	// Connect to the SSH server

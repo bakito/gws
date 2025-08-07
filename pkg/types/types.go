@@ -9,6 +9,7 @@ type Context struct {
 	Port           int    `yaml:"port"`
 	User           string `yaml:"user"`
 	PrivateKeyFile string `yaml:"privateKeyFile"`
+	KnownHostsFile string `yaml:"knownHostsFile"`
 
 	GCloud *GCloud `yaml:"gcloud"`
 
