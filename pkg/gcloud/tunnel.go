@@ -103,7 +103,6 @@ func updateKnownHosts(sshContext *types.Context, address string, port int) {
 	if sshContext.KnownHostsFile == "" {
 		return
 	}
-	_, _ = fmt.Println("Checking ssh connection ...")
 	c, err := ssh.NewClient(address, sshContext.User, sshContext.PrivateKeyFile)
 	if err != nil {
 		_, _ = fmt.Println("Error creating ssh client")
@@ -113,16 +112,19 @@ func updateKnownHosts(sshContext *types.Context, address string, port int) {
 
 	f, err := os.ReadFile(sshContext.KnownHostsFile)
 	if err != nil {
-		_, _ = fmt.Printf("Error reading known_hosts file: %v\n", err)
+		_, _ = fmt.Printf("Error reading known_hosts %s file: %v\n", sshContext.KnownHostsFile, err)
 		return
 	}
 
 	lines := strings.Split(string(f), "\n")
 	found := false
+	changed := false
+	linePrefix := fmt.Sprintf("[127.0.0.1]:%d", port)
 	for i, line := range lines {
-		if strings.HasPrefix(line, fmt.Sprintf("[127.0.0.1]:%d", port)) {
+		if strings.HasPrefix(line, linePrefix) {
 			if line != c.HostKey() {
 				lines[i] = c.HostKey()
+				changed = true
 			}
 			found = true
 			break
@@ -130,15 +132,17 @@ func updateKnownHosts(sshContext *types.Context, address string, port int) {
 	}
 	if !found {
 		lines = append(lines, c.HostKey())
+		changed = true
 	}
 
-	_, _ = fmt.Println("updateKnownHosts: " + sshContext.KnownHostsFile)
-	err = os.WriteFile(sshContext.KnownHostsFile, []byte(strings.Join(lines, "\n")), 0o644)
-	if err != nil {
-		_, _ = fmt.Printf("Error writing known_hosts file: %v\n", err)
-		return
+	if changed {
+		err = os.WriteFile(sshContext.KnownHostsFile, []byte(strings.Join(lines, "\n")), 0o644)
+		if err != nil {
+			_, _ = fmt.Printf("Error writing known_hosts file: %v\n", err)
+			return
+		}
+		_, _ = fmt.Printf("📝 KnownHosts file %s updated for %s\n", sshContext.KnownHostsFile, linePrefix)
 	}
-	_, _ = fmt.Println("updateKnownHosts: done")
 }
 
 func (t *tunnel) connectWebsocket() (*websocket.Conn, error) {
