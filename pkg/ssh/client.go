@@ -2,6 +2,7 @@ package ssh
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -28,11 +29,21 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 	}
 
 	// Define SSH connection details
+	var hostKey string
 	clientConfig := &ssh.ClientConfig{
 		User: user,                   // Remote SSH username
 		Auth: []ssh.AuthMethod{auth}, // Auth method
 		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 			// #nosec G106: Insecure, as we always get a new cert with gcloud
+			if tcpAddr, ok := remote.(*net.TCPAddr); ok {
+				hostKey = fmt.Sprintf(
+					"[%s]:%d %s %s",
+					tcpAddr.IP,
+					tcpAddr.Port,
+					key.Type(),
+					base64.StdEncoding.EncodeToString(key.Marshal()),
+				)
+			}
 			return nil
 		},
 	}
@@ -57,6 +68,7 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 	return &client{
 		sshClient: sshClient,
 		scpClient: scpClient,
+		hostKey:   hostKey,
 	}, nil
 }
 
@@ -64,11 +76,13 @@ type Client interface {
 	Close()
 	Execute(command string) (output string, err error)
 	CopyFile(from, to, permissions string) (err error)
+	HostKey() string
 }
 
 type client struct {
 	sshClient *ssh.Client
 	scpClient scp.Client
+	hostKey   string
 }
 
 func (c *client) Close() {
@@ -77,6 +91,10 @@ func (c *client) Close() {
 	}
 
 	c.scpClient.Close()
+}
+
+func (c *client) HostKey() string {
+	return c.hostKey
 }
 
 func (c *client) Execute(command string) (string, error) {

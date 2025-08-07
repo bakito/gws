@@ -7,13 +7,16 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	workstations "cloud.google.com/go/workstations/apiv1"
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
 	"github.com/gorilla/websocket"
 
+	"github.com/bakito/gws/pkg/ssh"
 	"github.com/bakito/gws/pkg/types"
 )
 
@@ -46,7 +49,8 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	}
 
 	lc := net.ListenConfig{}
-	listener, err := lc.Listen(ctx, "tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(p)))
+	sshAddress := net.JoinHostPort("127.0.0.1", strconv.Itoa(p))
+	listener, err := lc.Listen(ctx, "tcp", sshAddress)
 	if err != nil {
 		_, _ = fmt.Printf("Failed to start TCP listener: %v\n", err)
 		return err
@@ -79,6 +83,10 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 		}
 	}()
 
+	if sshContext.KnownHostsFile != "" {
+		go updateKnownHosts(sshContext, sshAddress, p)
+	}
+
 	// Wait for either context cancellation or error
 	select {
 	case <-ctx.Done():
@@ -89,6 +97,48 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 		}
 		return err
 	}
+}
+
+func updateKnownHosts(sshContext *types.Context, address string, port int) {
+	if sshContext.KnownHostsFile == "" {
+		return
+	}
+	_, _ = fmt.Println("Checking ssh connection ...")
+	c, err := ssh.NewClient(address, sshContext.User, sshContext.PrivateKeyFile)
+	if err != nil {
+		_, _ = fmt.Println("Error creating ssh client")
+		return
+	}
+	defer c.Close()
+
+	f, err := os.ReadFile(sshContext.KnownHostsFile)
+	if err != nil {
+		_, _ = fmt.Printf("Error reading known_hosts file: %v\n", err)
+		return
+	}
+
+	lines := strings.Split(string(f), "\n")
+	found := false
+	for i, line := range lines {
+		if strings.HasPrefix(line, fmt.Sprintf("[127.0.0.1]:%d", port)) {
+			if line != c.HostKey() {
+				lines[i] = c.HostKey()
+			}
+			found = true
+			break
+		}
+	}
+	if !found {
+		lines = append(lines, c.HostKey())
+	}
+
+	_, _ = fmt.Println("updateKnownHosts: " + sshContext.KnownHostsFile)
+	err = os.WriteFile(sshContext.KnownHostsFile, []byte(strings.Join(lines, "\n")), 0o644)
+	if err != nil {
+		_, _ = fmt.Printf("Error writing known_hosts file: %v\n", err)
+		return
+	}
+	_, _ = fmt.Println("updateKnownHosts: done")
 }
 
 func (t *tunnel) connectWebsocket() (*websocket.Conn, error) {
