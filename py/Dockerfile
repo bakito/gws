@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get update && \
     apt-get install google-cloud-cli -y
 
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25-alpine AS builder
 WORKDIR /build
 COPY main.go /build
 COPY auth_config.go.tpl /build
