@@ -20,7 +20,7 @@ TB_SEMVER ?= $(TB_LOCALBIN)/semver
 
 ## Tool Versions
 # renovate: packageName=github.com/kubernetes/code-generator
-TB_DEEPCOPY_GEN_VERSION ?= v0.33.4
+TB_DEEPCOPY_GEN_VERSION ?= v0.34.0
 # renovate: packageName=github.com/onsi/ginkgo/v2
 TB_GINKGO_VERSION ?= v2.25.1
 # renovate: packageName=github.com/mvdan/gofumpt
