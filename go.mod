@@ -11,7 +11,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.25.2
 	github.com/onsi/gomega v1.38.2
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
-	github.com/spf13/cobra v1.9.1
+	github.com/spf13/cobra v1.10.1
 	golang.org/x/crypto v0.41.0
 	golang.org/x/oauth2 v0.30.0
 	golang.org/x/term v0.34.0
@@ -56,7 +56,7 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0 // indirect
