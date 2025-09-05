@@ -27,7 +27,7 @@ TB_GOLANGCI_LINT_VERSION_NUM ?= $(call STRIP_V,$(TB_GOLANGCI_LINT_VERSION))
 # renovate: packageName=github.com/goreleaser/goreleaser/v2
 TB_GORELEASER_VERSION ?= v2.11.2
 # renovate: packageName=github.com/bakito/semver
-TB_SEMVER_VERSION ?= v1.1.6
+TB_SEMVER_VERSION ?= v1.1.7
 TB_SEMVER_VERSION_NUM ?= $(call STRIP_V,$(TB_SEMVER_VERSION))
 
 ## Tool Installer
