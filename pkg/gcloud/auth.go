@@ -72,6 +72,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		return nil, err
 	}
 
+	// nolint: revive // http is ok for local callback
 	oauthConfig.RedirectURL = fmt.Sprintf("http://%s/callback", net.JoinHostPort("localhost", strconv.Itoa(port)))
 
 	// Add PKCE to auth URL
