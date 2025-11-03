@@ -13,7 +13,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const ConfigFileName = ".gws.yaml"
+const (
+	ConfigFileName = "config.yaml"
+	ConfigDir      = ".config/gws"
+)
 
 type Config struct {
 	Contexts           map[string]*Context  `yaml:"contexts"`
@@ -22,7 +25,7 @@ type Config struct {
 	TokenCheck         bool                 `yaml:"-"`
 	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
 	currentContext     *Context
-	Token              oauth2.Token `yaml:"token"`
+	Token              *TokenStorage `yaml:"-"`
 }
 
 func (c *Config) CurrentContext() *Context {
@@ -51,6 +54,15 @@ func (c *Config) Load(fileName string) error {
 			}
 		}
 	}
+
+	tk, err := LoadToken()
+	if err != nil {
+		return err
+	}
+	c.Token = &TokenStorage{}
+	if tk != nil {
+		c.Token.Token = *tk
+	}
 	return c.SwitchContext(c.CurrentContextName)
 }
 
@@ -68,11 +80,19 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 			return "", nil, err
 		}
 
-		homePath := filepath.Join(userHomeDir, ConfigFileName)
-		if _, err := os.Stat(homePath); err != nil {
-			return "", nil, errors.New("config file not found")
+		// Try new location first
+		newConfigPath := filepath.Join(userHomeDir, ConfigDir, ConfigFileName)
+		if _, err := os.Stat(newConfigPath); err == nil {
+			file = newConfigPath
+		} else {
+			// Fallback to legacy location for backward compatibility
+			legacyPath := filepath.Join(userHomeDir, ".gws.yaml")
+			if _, err := os.Stat(legacyPath); err != nil {
+				return "", nil, errors.New("config file not found")
+			}
+			file = legacyPath
+			_, _ = fmt.Printf("⚠️  Using legacy config location. Consider moving to: %s\n", newConfigPath)
 		}
-		file = homePath
 	}
 
 	abs, err := filepath.Abs(file)
@@ -114,10 +134,14 @@ func (c *Config) save() error {
 }
 
 func (c *Config) SetToken(token oauth2.Token) error {
-	if c.Token.AccessToken != token.AccessToken {
+	if c.Token == nil {
+		c.Token = &TokenStorage{Token: token}
+	}
+
+	if c.Token.Token.AccessToken != token.AccessToken {
 		_, _ = fmt.Printf("🎟️ Got new Google Access Token (expires: %s)\n", token.Expiry.Format(time.RFC822))
-		c.Token = token
-		return c.save()
+		c.Token.Token = token
+		return SaveToken(c.Token.Token)
 	}
 	return nil
 }

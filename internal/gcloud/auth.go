@@ -53,7 +53,7 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 }
 
 func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
-	existingToken := cfg.Token
+	existingToken := cfg.Token.Token
 
 	// Try refreshing the token
 	if existingToken.RefreshToken != "" {
