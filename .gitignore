@@ -8,4 +8,4 @@ coverage.out
 .gws.yaml
 
 # generated file
-pkg/gcloud/auth_config.go
+internal/gcloud/auth_config.go

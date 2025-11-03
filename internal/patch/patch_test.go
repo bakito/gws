@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bakito/gws/pkg/patch"
-	"github.com/bakito/gws/pkg/types"
+	"github.com/bakito/gws/internal/patch"
+	"github.com/bakito/gws/internal/types"
 )
 
 const (

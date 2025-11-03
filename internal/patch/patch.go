@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bakito/gws/pkg/env"
-	"github.com/bakito/gws/pkg/types"
+	"github.com/bakito/gws/internal/env"
+	"github.com/bakito/gws/internal/types"
 )
 
 func Patch(id string, filePatch types.FilePatch) error {

@@ -12,8 +12,8 @@ import (
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
 	"google.golang.org/api/option"
 
-	"github.com/bakito/gws/pkg/spinner"
-	"github.com/bakito/gws/pkg/types"
+	"github.com/bakito/gws/internal/spinner"
+	"github.com/bakito/gws/internal/types"
 )
 
 const (

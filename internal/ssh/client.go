@@ -12,8 +12,8 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 
-	"github.com/bakito/gws/pkg/env"
-	"github.com/bakito/gws/pkg/passwd"
+	"github.com/bakito/gws/internal/env"
+	"github.com/bakito/gws/internal/passwd"
 )
 
 func NewClient(addr, user, privateKeyFile string) (Client, error) {

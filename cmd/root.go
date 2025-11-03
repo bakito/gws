@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/pkg/types"
+	"github.com/bakito/gws/internal/types"
 	"github.com/bakito/gws/version"
 )
 

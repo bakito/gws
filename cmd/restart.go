@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/pkg/gcloud"
+	"github.com/bakito/gws/internal/gcloud"
 )
 
 // restartCmd represents the start command.

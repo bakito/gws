@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/pkg/types"
+	"github.com/bakito/gws/internal/types"
 )
 
 var flagCurrent bool
@@ -99,13 +100,15 @@ func (m *ctxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *ctxModel) View() string {
 	s := "Choose an option:\n\n"
+	var sSb102 strings.Builder
 	for i, choice := range m.choices {
 		cursor := " "
 		if m.cursor == i {
 			cursor = ">"
 		}
-		s += fmt.Sprintf("%s %s\n", cursor, choice)
+		sSb102.WriteString(fmt.Sprintf("%s %s\n", cursor, choice))
 	}
+	s += sSb102.String()
 	s += "\nPress ↑/↓ to move, Enter to select, Q to quit.\n"
 	return s
 }

@@ -16,8 +16,8 @@ import (
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
 	"github.com/gorilla/websocket"
 
-	"github.com/bakito/gws/pkg/ssh"
-	"github.com/bakito/gws/pkg/types"
+	"github.com/bakito/gws/internal/ssh"
+	"github.com/bakito/gws/internal/types"
 )
 
 type tunnel struct {
