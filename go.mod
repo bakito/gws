@@ -1,6 +1,6 @@
 module github.com/bakito/gws
 
-go 1.25.4
+go 1.25.5
 
 require (
 	cloud.google.com/go/workstations v1.1.6
