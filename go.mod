@@ -11,7 +11,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.45.0
 	golang.org/x/oauth2 v0.33.0
 	golang.org/x/term v0.37.0
