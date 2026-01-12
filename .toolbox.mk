@@ -19,7 +19,7 @@ TB_SEMVER ?= $(TB_LOCALBIN)/semver
 
 ## Tool Versions
 # renovate: packageName=github.com/onsi/ginkgo/v2
-TB_GINKGO_VERSION ?= v2.27.3
+TB_GINKGO_VERSION ?= v2.27.4
 TB_GINKGO_VERSION_NUM ?= $(call STRIP_V,$(TB_GINKGO_VERSION))
 # renovate: packageName=github.com/golangci/golangci-lint/v2
 TB_GOLANGCI_LINT_VERSION ?= v2.7.2
