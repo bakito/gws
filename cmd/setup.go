@@ -29,8 +29,61 @@ const (
 	gcloudCluster
 	gcloudConfig
 	gcloudName
+	submit
 	maxFocusable
 )
+
+var (
+	indigo    = lipgloss.Color("63")
+	hotPink   = lipgloss.Color("205")
+	darkGray  = lipgloss.Color("240")
+	lightGray = lipgloss.Color("244")
+)
+
+type styles struct {
+	Border         lipgloss.Style
+	Label          lipgloss.Style
+	Help           lipgloss.Style
+	Err            lipgloss.Style
+	ErrText        lipgloss.Style
+	Focused        lipgloss.Style
+	Blurred        lipgloss.Style
+	NoStyle        lipgloss.Style
+	button         lipgloss.Style
+	inputFocused   lipgloss.Style
+	inputUnfocused lipgloss.Style
+}
+
+func defaultStyles() *styles {
+	s := new(styles)
+	s.Border = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(indigo).
+		Padding(1, 2)
+	s.Label = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(darkGray).
+		Padding(0, 2)
+	s.Help = lipgloss.NewStyle().
+		Foreground(lightGray)
+	s.Err = lipgloss.NewStyle().
+		Foreground(hotPink)
+	s.ErrText = s.Err.Bold(true)
+	s.Focused = lipgloss.NewStyle().
+		Foreground(hotPink)
+	s.Blurred = lipgloss.NewStyle().
+		Foreground(lightGray)
+	s.NoStyle = lipgloss.NewStyle()
+	s.button = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("255")).
+		Background(hotPink).
+		Padding(0, 3).
+		MarginTop(1)
+	s.inputFocused = lipgloss.NewStyle().
+		Foreground(hotPink)
+	s.inputUnfocused = lipgloss.NewStyle()
+	return s
+}
 
 var setupCmd = &cobra.Command{
 	Use:   "setup",
@@ -64,19 +117,28 @@ func setup(_ *cobra.Command, _ []string) error {
 type focusable int
 
 type model struct {
-	inputs        []textinput.Model
+	inputs        []input
 	focused       focusable
 	aborted       bool
 	statusMessage string
 	config        *types.Config
+	styles        *styles
+	help          string
+}
+
+type input struct {
+	textinput.Model
+	label string
 }
 
 func initialModel() model {
 	m := model{
-		inputs: make([]textinput.Model, maxFocusable),
+		inputs: make([]input, maxFocusable-1),
 		config: &types.Config{
 			Contexts: make(map[string]*types.Context),
 		},
+		styles: defaultStyles(),
+		help:   "tab: next field / up: prev field / esc: quit / enter: confirm",
 	}
 
 	userHomeDir, err := os.UserHomeDir()
@@ -92,47 +154,46 @@ func initialModel() model {
 
 	for i := range m.inputs {
 		t := textinput.New()
-		t.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+		t.Cursor.Style = m.styles.inputFocused
 		t.CharLimit = 32
 		t.Width = 50
 
 		switch focusable(i) {
 		case contextName:
-			t.Placeholder = "Context Name"
+			m.inputs[i].label = "Context Name"
 			t.Focus()
-			t.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-			t.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+			t.PromptStyle = m.styles.inputFocused
+			t.TextStyle = m.styles.inputFocused
 		case host:
-			t.Placeholder = "Host"
+			m.inputs[i].label = "Host"
 			t.SetValue("localhost")
 		case port:
-			t.Placeholder = "Port"
+			m.inputs[i].label = "Port"
 			t.CharLimit = 5
 		case user:
-			t.Placeholder = "User"
+			m.inputs[i].label = "User"
 			t.SetValue("user")
 		case privateKeyFile:
-			t.Placeholder = "Private Key File"
+			m.inputs[i].label = "Private Key File"
 			t.CharLimit = 128
 		case knownHostsFile:
-			t.Placeholder = "Known Hosts File (optional)"
+			m.inputs[i].label = "Known Hosts File (optional)"
 			t.CharLimit = 128
 		case gcloudProject:
-			t.Placeholder = "gcloud: Project"
+			m.inputs[i].label = "gcloud: Project"
 		case gcloudRegion:
-			t.Placeholder = "gcloud: Region"
+			m.inputs[i].label = "gcloud: Region"
 		case gcloudCluster:
-			t.Placeholder = "gcloud: Cluster"
+			m.inputs[i].label = "gcloud: Cluster"
 		case gcloudConfig:
-			t.Placeholder = "gcloud: Config"
+			m.inputs[i].label = "gcloud: Config"
 		case gcloudName:
-			t.Placeholder = "gcloud: Name"
+			m.inputs[i].label = "gcloud: Name"
 		default:
-			// This case should not be reached as maxFocusable defines the number of inputs.
-			// Adding a default to satisfy the linter.
+			// This should not be reached as maxFocusable defines the number of inputs.
 		}
-
-		m.inputs[i] = t
+		t.Placeholder = m.inputs[i].label
+		m.inputs[i].Model = t
 	}
 
 	return m
@@ -152,39 +213,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
 
-			// Clear status message on navigation
-			m.statusMessage = ""
-
-			// Check current field for validity before moving
-			if m.focused == contextName {
-				ctxName := m.inputs[contextName].Value()
-				if _, ok := m.config.Contexts[ctxName]; ok {
-					m.statusMessage = fmt.Sprintf("Error: Context name %q already exists.", ctxName)
-					return m, nil
-				}
-			}
-
-			if m.focused == port {
-				portVal, err := strconv.Atoi(m.inputs[port].Value())
-				if err != nil || portVal < 1000 || portVal > 65535 {
-					m.statusMessage = fmt.Sprintf(
-						"Error: Port must be a number between 1000 and 65535. (Current value: %s)",
-						m.inputs[port].Value(),
-					)
-					return m, nil
-				}
-				for name, ctx := range m.config.Contexts {
-					if ctx.Port == portVal {
-						m.statusMessage = fmt.Sprintf("Error: Port %d is already used by context %q.", portVal, name)
-						return m, nil
-					}
-				}
-			} else if m.focused != knownHostsFile && m.inputs[m.focused].Value() == "" {
-				m.statusMessage = fmt.Sprintf("Error: %s is a required field.", m.inputs[m.focused].Placeholder)
-				return m, nil
-			}
-
-			if s == "enter" && m.focused == maxFocusable-1 {
+			// check if the user wants to submit
+			if s == "enter" && m.focused == submit {
 				// Final validation before quitting
 				ctxName := m.inputs[contextName].Value()
 				if _, ok := m.config.Contexts[ctxName]; ok {
@@ -208,12 +238,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
-				if m.inputs[m.focused].Value() == "" && m.focused != knownHostsFile {
-					m.statusMessage = fmt.Sprintf("Error: %s is a required field.", m.inputs[m.focused].Placeholder)
-					return m, nil
+				for i := range m.inputs {
+					if m.inputs[i].Value() == "" && focusable(i) != knownHostsFile {
+						m.statusMessage = fmt.Sprintf("Error: %s is a required field.", m.inputs[i].label)
+						return m, nil
+					}
 				}
 				return m, tea.Quit
 			}
+
+			// Clear status message on navigation
+			m.statusMessage = ""
 
 			if s == "up" || s == "shift+tab" {
 				m.focused--
@@ -221,21 +256,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focused++
 			}
 
-			if m.focused > maxFocusable-1 {
+			if m.focused > submit {
 				m.focused = 0
 			} else if m.focused < 0 {
-				m.focused = maxFocusable - 1
+				m.focused = submit
 			}
 
-			for i := range m.inputs {
+			for i := range len(m.inputs) {
 				if i == int(m.focused) {
 					m.inputs[i].Focus()
-					m.inputs[i].PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-					m.inputs[i].TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+					m.inputs[i].PromptStyle = m.styles.inputFocused
+					m.inputs[i].TextStyle = m.styles.inputFocused
 				} else {
 					m.inputs[i].Blur()
-					m.inputs[i].PromptStyle = lipgloss.NewStyle()
-					m.inputs[i].TextStyle = lipgloss.NewStyle()
+					m.inputs[i].PromptStyle = m.styles.inputUnfocused
+					m.inputs[i].TextStyle = m.styles.inputUnfocused
 				}
 			}
 
@@ -250,40 +285,44 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 	for i := range m.inputs {
-		m.inputs[i], _ = m.inputs[i].Update(msg)
+		m.inputs[i].Model, _ = m.inputs[i].Update(msg)
 		cmds = append(cmds, nil) // no-op to satisfy the interface
 	}
 	return tea.Batch(cmds...)
 }
 
+func (i input) View() string {
+	return lipgloss.JoinVertical(lipgloss.Left, i.label, i.Model.View())
+}
+
 func (m model) View() string {
 	var b strings.Builder
-	b.WriteString("Create a new gws context\n\n")
+
+	b.WriteString(m.styles.Label.Render("Create a new gws context"))
+	b.WriteString("\n\n")
+
 	for i := range m.inputs {
 		b.WriteString(m.inputs[i].View())
-		if i < len(m.inputs)-1 {
-			b.WriteString("\n")
-		}
+		b.WriteString("\n")
 	}
 
+	var button string
+	if m.focused == submit {
+		button = m.styles.button.Render("[ Submit ]")
+	} else {
+		button = fmt.Sprintf("[ %s ]", m.styles.Blurred.Render("Submit"))
+	}
+	b.WriteString(fmt.Sprintf("\n%s\n\n", button))
+
 	if m.statusMessage != "" {
-		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(m.statusMessage))
+		b.WriteString(m.styles.ErrText.Render(m.statusMessage))
 		b.WriteString("\n\n")
 	}
 
-	button := &blurredButton
-	if m.focused == maxFocusable-1 {
-		button = &focusedButton
-	}
-	fmt.Fprintf(&b, "%s\n\n", *button)
+	b.WriteString(m.styles.Help.Render(m.help))
 
-	return b.String()
+	return m.styles.Border.Render(b.String())
 }
-
-var (
-	focusedButton = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render("[ Submit ]")
-	blurredButton = fmt.Sprintf("[ %s ]", lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Submit"))
-)
 
 func saveConfig(m model) error {
 	portVal, err := strconv.Atoi(m.inputs[port].Value())
