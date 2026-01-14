@@ -72,7 +72,7 @@ type ctxModel struct {
 	selected string
 }
 
-func (m *ctxModel) Init() tea.Cmd {
+func (*ctxModel) Init() tea.Cmd {
 	return nil
 }
 
@@ -106,7 +106,7 @@ func (m *ctxModel) View() string {
 		if m.cursor == i {
 			cursor = ">"
 		}
-		_, _ = sSb102.WriteString(fmt.Sprintf("%s %s\n", cursor, choice))
+		sSb102.WriteString(fmt.Sprintf("%s %s\n", cursor, choice))
 	}
 	s += sSb102.String()
 	s += "\nPress ↑/↓ to move, Enter to select, Q to quit.\n"

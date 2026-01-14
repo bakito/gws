@@ -19,7 +19,7 @@ var (
 var tunnelCmd = &cobra.Command{
 	Use:   "tunnel",
 	Short: "tunnel a workstation",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		if flagContext == "" && len(args) == 1 {
 			flagContext = args[0]
 		}

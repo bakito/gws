@@ -28,7 +28,7 @@ func Prompt(prompt string) (string, error) {
 		}
 	}()
 
-	_, _ = fmt.Printf("%s \n", prompt)
+	fmt.Printf("%s \n", prompt)
 	key, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err

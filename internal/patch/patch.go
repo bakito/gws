@@ -11,7 +11,7 @@ import (
 )
 
 func Patch(id string, filePatch types.FilePatch) error {
-	_, _ = fmt.Printf("Patching file %q\n", id)
+	fmt.Printf("Patching file %q\n", id)
 	// Read the content of the file
 	lines, err := readLines(filePatch.File)
 	if err != nil {
@@ -37,8 +37,8 @@ func Patch(id string, filePatch types.FilePatch) error {
 
 		// Backup the original file
 		backupFileName := filePatch.File + ".bak"
-		_, _ = fmt.Printf("Backup created: %s\n", backupFileName)
-		_, _ = fmt.Printf("Original file %q back-upped to %s\n", id, backupFileName)
+		fmt.Printf("Backup created: %s\n", backupFileName)
+		fmt.Printf("Original file %q back-upped to %s\n", id, backupFileName)
 		err = backupFile(filePatch.File, backupFileName)
 		if err != nil {
 			return err
@@ -50,9 +50,9 @@ func Patch(id string, filePatch types.FilePatch) error {
 			return err
 		}
 
-		_, _ = fmt.Printf("Successfully patched %q\n", id)
+		fmt.Printf("Successfully patched %q\n", id)
 	} else {
-		_, _ = fmt.Printf("No patching required %q\n", id)
+		fmt.Printf("No patching required %q\n", id)
 	}
 	return nil
 }

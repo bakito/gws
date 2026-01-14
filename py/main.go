@@ -20,7 +20,7 @@ func main() {
 	}
 	tmpl, err := template.ParseFiles("auth_config.go.tpl")
 	if err != nil {
-		_, _ = fmt.Println("Error parsing template file:", err)
+		fmt.Println("Error parsing template file:", err)
 		return
 	}
 	err = tmpl.Execute(os.Stdout, map[string]any{
@@ -28,7 +28,7 @@ func main() {
 		"ClientSecret": varsDefault["CLOUDSDK_CLIENT_NOTSOSECRET"],
 	})
 	if err != nil {
-		_, _ = fmt.Println("Error processing template file:", err)
+		fmt.Println("Error processing template file:", err)
 	}
 }
 
@@ -36,7 +36,7 @@ func readPythonFile(name string, keys ...string) (map[string]string, error) {
 	// Open the file
 	file, err := os.Open(name) // Replace with your actual file name
 	if err != nil {
-		_, _ = fmt.Println("Error opening file:", err)
+		fmt.Println("Error opening file:", err)
 		return nil, err
 	}
 	defer file.Close()
@@ -79,7 +79,7 @@ func readPythonFile(name string, keys ...string) (map[string]string, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		_, _ = fmt.Println("Error reading file:", err)
+		fmt.Println("Error reading file:", err)
 		return nil, err
 	}
 

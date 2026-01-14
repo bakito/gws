@@ -38,7 +38,7 @@ func (c *Config) Load(fileName string) error {
 	if err != nil {
 		return err
 	}
-	_, _ = fmt.Printf("Using config: %s\n", file)
+	fmt.Printf("Using config: %s\n", file)
 
 	err = yaml.Unmarshal(data, c)
 	if err != nil {
@@ -91,7 +91,7 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 				return "", nil, errors.New("config file not found")
 			}
 			file = legacyPath
-			_, _ = fmt.Printf("⚠️  Using legacy config location. Consider moving to: %s\n", newConfigPath)
+			fmt.Printf("⚠️  Using legacy config location. Consider moving to: %s\n", newConfigPath)
 		}
 	}
 
@@ -139,7 +139,7 @@ func (c *Config) SetToken(token oauth2.Token) error {
 	}
 
 	if c.Token.Token.AccessToken != token.AccessToken {
-		_, _ = fmt.Printf("🎟️ Got new Google Access Token (expires: %s)\n", token.Expiry.Format(time.RFC822))
+		fmt.Printf("🎟️ Got new Google Access Token (expires: %s)\n", token.Expiry.Format(time.RFC822))
 		c.Token.Token = token
 		return SaveToken(c.Token.Token)
 	}

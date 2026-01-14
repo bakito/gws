@@ -33,7 +33,7 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 	clientConfig := &ssh.ClientConfig{
 		User: user,                   // Remote SSH username
 		Auth: []ssh.AuthMethod{auth}, // Auth method
-		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+		HostKeyCallback: func(_ string, remote net.Addr, key ssh.PublicKey) error {
 			// #nosec G106: Insecure, as we always get a new cert with gcloud
 			if tcpAddr, ok := remote.(*net.TCPAddr); ok {
 				knownHostsEntry = fmt.Sprintf(
@@ -98,7 +98,7 @@ func (c *client) KnownHostsEntry() string {
 }
 
 func (c *client) Execute(command string) (string, error) {
-	_, _ = fmt.Printf("Executing ssh %q\n", command)
+	fmt.Printf("Executing ssh %q\n", command)
 
 	// Start a new SSH session
 	session, err := c.sshClient.NewSession()
@@ -116,7 +116,7 @@ func (c *client) Execute(command string) (string, error) {
 }
 
 func (c *client) CopyFile(from, to, permissions string) error {
-	_, _ = fmt.Printf("Copy file form %q to %q with perissions %s\n", from, to, permissions)
+	fmt.Printf("Copy file form %q to %q with perissions %s\n", from, to, permissions)
 	// Open a file
 	f, _ := os.Open(env.ExpandEnv(from))
 	// Close the file after it has been copied

@@ -82,7 +82,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	)
 
 	// Open URL in browser
-	_, _ = fmt.Println("Opening URL:", authURL)
+	fmt.Println("Opening URL:", authURL)
 	openBrowser(authURL)
 
 	// Create a channel for shutdown signaling
@@ -112,7 +112,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		// Save token
 		_ = cfg.SetToken(*token)
 
-		_, _ = fmt.Fprint(w, "Authentication successful! You can close this window.")
+		fmt.Fprint(w, "Authentication successful! You can close this window.")
 		// Signal shutdown using a channel
 		go func() {
 			shutdownChan <- token
@@ -125,10 +125,10 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		}
 	}()
 
-	_, _ = fmt.Println("Waiting for authentication...")
+	fmt.Println("Waiting for authentication...")
 	// Block until we receive a shutdown signal
 	token := <-shutdownChan
-	_, _ = fmt.Println("Authenticated...")
+	fmt.Println("Authenticated...")
 	_ = server.Shutdown(ctx)
 	return newTokenSourceWithRefreshCheck(ctx, token, cfg), nil
 }

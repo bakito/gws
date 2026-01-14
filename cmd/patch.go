@@ -10,7 +10,7 @@ import (
 var patchCmd = &cobra.Command{
 	Use:   "patch",
 	Short: "patch local files",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(*cobra.Command, []string) error {
 		cfg, err := readConfig()
 		if err != nil {
 			return err
