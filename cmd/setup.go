@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,46 +24,70 @@ const (
 	user
 	privateKeyFile
 	knownHostsFile
+	gcloudProject
+	gcloudRegion
+	gcloudCluster
+	gcloudConfig
+	gcloudName
 	maxFocusable
 )
 
 var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Create a new or update the config.yaml and create a context configuration",
-	Long:  `Create a new or update the config.yaml and create a context configuration using an interactive terminal setup wizard.`,
-	RunE:  setup,
+	Long: `Create a new or update the config.yaml and create a context configuration using an
+interactive terminal setup wizard.`,
+	RunE: setup,
 }
 
 func init() {
 	rootCmd.AddCommand(setupCmd)
 }
 
-func setup(cmd *cobra.Command, args []string) error {
+func setup(_ *cobra.Command, _ []string) error {
 	p := tea.NewProgram(initialModel())
 	m, err := p.Run()
 	if err != nil {
 		return err
 	}
 
-	if m.(model).aborted {
-		fmt.Println("Setup aborted.")
-		return nil
+	if model, ok := m.(model); ok {
+		if model.aborted {
+			fmt.Println("Setup aborted.")
+			return nil
+		}
+		return saveConfig(model)
 	}
-
-	return saveConfig(m.(model))
+	return errors.New("could not assert model type")
 }
 
 type focusable int
 
 type model struct {
-	inputs  []textinput.Model
-	focused focusable
-	aborted bool
+	inputs        []textinput.Model
+	focused       focusable
+	aborted       bool
+	statusMessage string
+	config        *types.Config
 }
 
 func initialModel() model {
 	m := model{
 		inputs: make([]textinput.Model, maxFocusable),
+		config: &types.Config{
+			Contexts: make(map[string]*types.Context),
+		},
+	}
+
+	userHomeDir, err := os.UserHomeDir()
+	if err == nil {
+		configPath := filepath.Join(userHomeDir, types.ConfigDir, types.ConfigFileName)
+		if _, err := os.Stat(configPath); err == nil {
+			data, err := os.ReadFile(configPath)
+			if err == nil {
+				_ = yaml.Unmarshal(data, m.config)
+			}
+		}
 	}
 
 	for i := range m.inputs {
@@ -79,17 +104,32 @@ func initialModel() model {
 			t.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 		case host:
 			t.Placeholder = "Host"
+			t.SetValue("localhost")
 		case port:
 			t.Placeholder = "Port"
 			t.CharLimit = 5
 		case user:
 			t.Placeholder = "User"
+			t.SetValue("user")
 		case privateKeyFile:
 			t.Placeholder = "Private Key File"
 			t.CharLimit = 128
 		case knownHostsFile:
-			t.Placeholder = "Known Hosts File"
+			t.Placeholder = "Known Hosts File (optional)"
 			t.CharLimit = 128
+		case gcloudProject:
+			t.Placeholder = "gcloud: Project"
+		case gcloudRegion:
+			t.Placeholder = "gcloud: Region"
+		case gcloudCluster:
+			t.Placeholder = "gcloud: Cluster"
+		case gcloudConfig:
+			t.Placeholder = "gcloud: Config"
+		case gcloudName:
+			t.Placeholder = "gcloud: Name"
+		default:
+			// This case should not be reached as maxFocusable defines the number of inputs.
+			// Adding a default to satisfy the linter.
 		}
 
 		m.inputs[i] = t
@@ -98,13 +138,12 @@ func initialModel() model {
 	return m
 }
 
-func (m model) Init() tea.Cmd {
+func (model) Init() tea.Cmd {
 	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	if msg, ok := msg.(tea.KeyMsg); ok {
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			m.aborted = true
@@ -113,7 +152,66 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
 
+			// Clear status message on navigation
+			m.statusMessage = ""
+
+			// Check current field for validity before moving
+			if m.focused == contextName {
+				ctxName := m.inputs[contextName].Value()
+				if _, ok := m.config.Contexts[ctxName]; ok {
+					m.statusMessage = fmt.Sprintf("Error: Context name %q already exists.", ctxName)
+					return m, nil
+				}
+			}
+
+			if m.focused == port {
+				portVal, err := strconv.Atoi(m.inputs[port].Value())
+				if err != nil || portVal < 1000 || portVal > 65535 {
+					m.statusMessage = fmt.Sprintf(
+						"Error: Port must be a number between 1000 and 65535. (Current value: %s)",
+						m.inputs[port].Value(),
+					)
+					return m, nil
+				}
+				for name, ctx := range m.config.Contexts {
+					if ctx.Port == portVal {
+						m.statusMessage = fmt.Sprintf("Error: Port %d is already used by context %q.", portVal, name)
+						return m, nil
+					}
+				}
+			} else if m.focused != knownHostsFile && m.inputs[m.focused].Value() == "" {
+				m.statusMessage = fmt.Sprintf("Error: %s is a required field.", m.inputs[m.focused].Placeholder)
+				return m, nil
+			}
+
 			if s == "enter" && m.focused == maxFocusable-1 {
+				// Final validation before quitting
+				ctxName := m.inputs[contextName].Value()
+				if _, ok := m.config.Contexts[ctxName]; ok {
+					m.statusMessage = fmt.Sprintf("Error: Context name %q already exists.", ctxName)
+					return m, nil
+				}
+
+				portVal, err := strconv.Atoi(m.inputs[port].Value())
+				if err != nil || portVal < 1000 || portVal > 65535 {
+					m.statusMessage = fmt.Sprintf(
+						"Error: Port must be a number between 1001 and 65535. (Current value: %s)",
+						m.inputs[port].Value(),
+					)
+					return m, nil
+				}
+
+				for name, ctx := range m.config.Contexts {
+					if ctx.Port == portVal {
+						m.statusMessage = fmt.Sprintf("Error: Port %d is already used by context %q.", portVal, name)
+						return m, nil
+					}
+				}
+
+				if m.inputs[m.focused].Value() == "" && m.focused != knownHostsFile {
+					m.statusMessage = fmt.Sprintf("Error: %s is a required field.", m.inputs[m.focused].Placeholder)
+					return m, nil
+				}
 				return m, tea.Quit
 			}
 
@@ -129,7 +227,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focused = maxFocusable - 1
 			}
 
-			for i := range len(m.inputs) {
+			for i := range m.inputs {
 				if i == int(m.focused) {
 					m.inputs[i].Focus()
 					m.inputs[i].PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
@@ -168,11 +266,16 @@ func (m model) View() string {
 		}
 	}
 
+	if m.statusMessage != "" {
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(m.statusMessage))
+		b.WriteString("\n\n")
+	}
+
 	button := &blurredButton
 	if m.focused == maxFocusable-1 {
 		button = &focusedButton
 	}
-	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
+	fmt.Fprintf(&b, "%s\n\n", *button)
 
 	return b.String()
 }
@@ -195,6 +298,22 @@ func saveConfig(m model) error {
 		KnownHostsFile: m.inputs[knownHostsFile].Value(),
 	}
 
+	gcloudProject := m.inputs[gcloudProject].Value()
+	gcloudRegion := m.inputs[gcloudRegion].Value()
+	gcloudCluster := m.inputs[gcloudCluster].Value()
+	gcloudConfig := m.inputs[gcloudConfig].Value()
+	gcloudName := m.inputs[gcloudName].Value()
+
+	if gcloudProject != "" || gcloudRegion != "" || gcloudCluster != "" || gcloudConfig != "" || gcloudName != "" {
+		newCtx.GCloud = &types.GCloud{
+			Project: gcloudProject,
+			Region:  gcloudRegion,
+			Cluster: gcloudCluster,
+			Config:  gcloudConfig,
+			Name:    gcloudName,
+		}
+	}
+
 	ctxName := m.inputs[contextName].Value()
 
 	userHomeDir, err := os.UserHomeDir()
@@ -204,19 +323,7 @@ func saveConfig(m model) error {
 	configDir := filepath.Join(userHomeDir, types.ConfigDir)
 	configPath := filepath.Join(configDir, types.ConfigFileName)
 
-	var config types.Config
-	if _, err := os.Stat(configPath); err == nil {
-		data, err := os.ReadFile(configPath)
-		if err != nil {
-			return err
-		}
-		if err := yaml.Unmarshal(data, &config); err != nil {
-			return err
-		}
-	} else {
-		config.Contexts = make(map[string]*types.Context)
-	}
-
+	config := m.config
 	config.Contexts[ctxName] = newCtx
 	config.CurrentContextName = ctxName
 	config.FilePath = configPath
@@ -225,7 +332,7 @@ func saveConfig(m model) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&config)
+	data, err := yaml.Marshal(config)
 	if err != nil {
 		return err
 	}
