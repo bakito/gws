@@ -88,12 +88,6 @@ contexts:
       - `source-path`: The path of the local file.
       - `path`: The path of the remote file.
       - `permissions`: The permissions of the remote file.
-- `file-patches`: A map of file patches.
-  - `<patch-name>`:
-    - `file`: The path of the file to patch.
-    - `patches`: A list of patches to apply.
-      - `old`: The old string to replace.
-      - `new`: The new string to replace the old string with.
 
 ## Contributing
 

@@ -176,9 +176,15 @@ func initialModel() model {
 		case privateKeyFile:
 			m.inputs[i].label = "Private Key File"
 			t.CharLimit = 128
+			if userHomeDir != "" {
+				t.SetValue(filepath.Join(userHomeDir, ".ssh", "id_rsa"))
+			}
 		case knownHostsFile:
 			m.inputs[i].label = "Known Hosts File (optional)"
 			t.CharLimit = 128
+			if userHomeDir != "" {
+				t.SetValue(filepath.Join(userHomeDir, ".ssh", "known_hosts"))
+			}
 		case gcloudProject:
 			m.inputs[i].label = "gcloud: Project"
 		case gcloudRegion:
@@ -244,6 +250,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, nil
 					}
 				}
+
+				privateKeyFile := m.inputs[privateKeyFile].Value()
+				if _, err := os.Stat(privateKeyFile); os.IsNotExist(err) {
+					m.statusMessage = "Error: private key file does not exist: " + privateKeyFile
+					return m, nil
+				}
+
+				knownHostsFile := m.inputs[knownHostsFile].Value()
+				if knownHostsFile != "" {
+					if _, err := os.Stat(knownHostsFile); os.IsNotExist(err) {
+						m.statusMessage = "Error: known hosts file does not exist: " + knownHostsFile
+						return m, nil
+					}
+				}
+
 				return m, tea.Quit
 			}
 
