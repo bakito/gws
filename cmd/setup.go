@@ -168,9 +168,8 @@ func initialModel(cfg *types.Config) model {
 
 	fp := filepicker.New()
 	fp.SetHeight(20)
-	fp.ShowHidden = true                // Show hidden files (e.g., .ssh)
-	fp.KeyMap.Back.SetKeys("backspace") // Explicitly set key for going up a directory
-	fp.KeyMap.Open.SetKeys("enter")     // Explicitly set key for going down into a directory
+	fp.ShowHidden = true            // Show hidden files (e.g., .ssh)	fp.KeyMap.Back.SetKeys("backspace") // Explicitly set key for going up a directory
+	fp.KeyMap.Open.SetKeys("enter") // Explicitly set key for going down into a directory
 	startDir := ""
 	if context.PrivateKeyFile != "" {
 		startDir = filepath.Dir(context.PrivateKeyFile)
@@ -266,7 +265,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.filePickerActive = false
 			return m, nil
 		}
-		if key, ok := msg.(tea.KeyMsg); ok && (key.String() == "esc" || key.String() == "q") {
+		if key, ok := msg.(tea.KeyMsg); ok && key.String() == "esc" {
 			m.filePickerActive = false
 			return m, nil
 		}
@@ -403,7 +402,8 @@ func (i input) View() string {
 
 func (m model) View() string {
 	if m.filePickerActive {
-		return m.styles.Border.Render(m.fp.View())
+		help := m.styles.Help.Render("enter: select / backspace: directory up / esc: quit")
+		return lipgloss.JoinVertical(lipgloss.Left, m.styles.Border.Render(m.fp.View()), help)
 	}
 	var b strings.Builder
 
