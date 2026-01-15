@@ -19,7 +19,6 @@ import (
 
 const (
 	contextName focusable = iota
-	host
 	port
 	user
 	privateKeyFile
@@ -164,9 +163,6 @@ func initialModel() model {
 			t.Focus()
 			t.PromptStyle = m.styles.inputFocused
 			t.TextStyle = m.styles.inputFocused
-		case host:
-			m.inputs[i].label = "Host (to open ssh tunnel on - localhost)"
-			t.SetValue("localhost")
 		case port:
 			m.inputs[i].label = "Port"
 			t.CharLimit = 5
@@ -351,7 +347,7 @@ func saveConfig(m model) error {
 		portVal = 22
 	}
 	newCtx := &types.Context{
-		Host:           m.inputs[host].Value(),
+		Host:           "localhost",
 		Port:           portVal,
 		User:           m.inputs[user].Value(),
 		PrivateKeyFile: m.inputs[privateKeyFile].Value(),
