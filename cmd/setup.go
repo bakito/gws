@@ -301,54 +301,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			// check if the user wants to submit
 			if s == "enter" && m.focused == submit {
-				// Final validation before quitting
-				ctxName := m.inputs[contextName].Value()
-				portVal, err := strconv.Atoi(m.inputs[port].Value())
-				if err != nil || portVal < 1000 || portVal > 65535 {
-					m.statusMessage = fmt.Sprintf(
-						"Error: Port must be a number between 1001 and 65535. (Current value: %s)",
-						m.inputs[port].Value(),
-					)
-					return m, nil
-				}
-
-				if m.config.Contexts != nil {
-					for name, ctx := range m.config.Contexts {
-						if ctx.Port == portVal && name != ctxName {
-							m.statusMessage = fmt.Sprintf("Error: Port %d is already used by context %q.", portVal, name)
-							return m, nil
-						}
-					}
-				}
-
-				for i := range m.inputs {
-					if m.inputs[i].Value() == "" && focusable(i) != knownHostsFile {
-						m.statusMessage = fmt.Sprintf("Error: %s is a required field.", m.inputs[i].label)
-						return m, nil
-					}
-				}
-
-				privateKeyFile := m.inputs[privateKeyFile].Value()
-				if st, err := os.Stat(privateKeyFile); os.IsNotExist(err) {
-					m.statusMessage = "Error: private key file does not exist: " + privateKeyFile
-					return m, nil
-				} else if st.IsDir() {
-					m.statusMessage = "Error: private key must not be directory: " + privateKeyFile
-					return m, nil
-				}
-
-				knownHostsFile := m.inputs[knownHostsFile].Value()
-				if knownHostsFile != "" {
-					if st, err := os.Stat(knownHostsFile); os.IsNotExist(err) {
-						m.statusMessage = "Error: known hosts file does not exist: " + knownHostsFile
-						return m, nil
-					} else if st.IsDir() {
-						m.statusMessage = "Error: known hosts must not be directory: " + knownHostsFile
-						return m, nil
-					}
-				}
-
-				return m, tea.Quit
+				return m.validateAndSubmit()
 			}
 
 			// Clear status message on navigation
@@ -388,6 +341,56 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	cmd := m.updateInputs(msg)
 	return m, cmd
+}
+
+func (m model) validateAndSubmit() (tea.Model, tea.Cmd) {
+	ctxName := m.inputs[contextName].Value()
+	portVal, err := strconv.Atoi(m.inputs[port].Value())
+	if err != nil || portVal < 1000 || portVal > 65535 {
+		m.statusMessage = fmt.Sprintf(
+			"Error: Port must be a number between 1001 and 65535. (Current value: %s)",
+			m.inputs[port].Value(),
+		)
+		return m, nil
+	}
+
+	if m.config.Contexts != nil {
+		for name, ctx := range m.config.Contexts {
+			if ctx.Port == portVal && name != ctxName {
+				m.statusMessage = fmt.Sprintf("Error: Port %d is already used by context %q.", portVal, name)
+				return m, nil
+			}
+		}
+	}
+
+	for i := range m.inputs {
+		if m.inputs[i].Value() == "" && focusable(i) != knownHostsFile {
+			m.statusMessage = fmt.Sprintf("Error: %s is a required field.", m.inputs[i].label)
+			return m, nil
+		}
+	}
+
+	privateKeyFile := m.inputs[privateKeyFile].Value()
+	if st, err := os.Stat(privateKeyFile); os.IsNotExist(err) {
+		m.statusMessage = "Error: private key file does not exist: " + privateKeyFile
+		return m, nil
+	} else if st.IsDir() {
+		m.statusMessage = "Error: private key must not be directory: " + privateKeyFile
+		return m, nil
+	}
+
+	knownHostsFile := m.inputs[knownHostsFile].Value()
+	if knownHostsFile != "" {
+		if st, err := os.Stat(knownHostsFile); os.IsNotExist(err) {
+			m.statusMessage = "Error: known hosts file does not exist: " + knownHostsFile
+			return m, nil
+		} else if st.IsDir() {
+			m.statusMessage = "Error: known hosts must not be directory: " + knownHostsFile
+			return m, nil
+		}
+	}
+
+	return m, tea.Quit
 }
 
 func (m model) updateInputs(msg tea.Msg) tea.Cmd {
