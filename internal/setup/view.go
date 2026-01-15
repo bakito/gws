@@ -7,6 +7,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const title = `██████╗ ██╗    ██╗███████╗
+██╔════╝ ██║    ██║██╔════╝
+██║  ███╗██║ █╗ ██║███████╗
+██║   ██║██║███╗██║╚════██║
+╚██████╔╝╚███╔███╔╝███████║
+ ╚═════╝  ╚══╝╚══╝ ╚══════╝`
+
 func (i Input) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, i.Style.Render(i.Label), i.Model.View())
 }
@@ -19,7 +26,7 @@ func (m Model) View() string {
 	}
 	var b strings.Builder
 
-	b.WriteString(m.Styles.Title.Render(">_ Modify the gws context"))
+	b.WriteString(m.Styles.Title.Render(title))
 	b.WriteString("\n\n")
 
 	for i := range m.Inputs {
