@@ -76,8 +76,7 @@ func defaultStyles() *styles {
 	s.button = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("255")).
 		Background(hotPink).
-		Padding(0, 3).
-		MarginTop(1)
+		Padding(0, 3)
 	s.inputFocused = lipgloss.NewStyle().
 		Foreground(hotPink)
 	s.inputUnfocused = lipgloss.NewStyle()
@@ -140,6 +139,7 @@ type model struct {
 type input struct {
 	textinput.Model
 	label string
+	style lipgloss.Style
 }
 
 func initialModel(cfg *types.Config) model {
@@ -246,6 +246,7 @@ func initialModel(cfg *types.Config) model {
 			// This should not be reached as maxFocusable defines the number of inputs.
 		}
 		t.Placeholder = m.inputs[i].label
+		m.inputs[i].style = m.styles.Label
 		m.inputs[i].Model = t
 	}
 
@@ -398,7 +399,7 @@ func (m model) updateInputs(msg tea.Msg) tea.Cmd {
 }
 
 func (i input) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, i.label, i.Model.View())
+	return lipgloss.JoinVertical(lipgloss.Left, i.style.Render(i.label), i.Model.View())
 }
 
 func (m model) View() string {
