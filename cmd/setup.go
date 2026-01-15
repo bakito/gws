@@ -132,6 +132,7 @@ type model struct {
 	help             string
 	fp               filepicker.Model
 	filePickerActive bool
+	filePickerField  focusable
 }
 
 type input struct {
@@ -164,7 +165,6 @@ func initialModel(cfg *types.Config) model {
 	}
 
 	fp := filepicker.New()
-	fp.AllowedTypes = []string{""}
 	startDir := ""
 	if context.PrivateKeyFile != "" {
 		startDir = filepath.Dir(context.PrivateKeyFile)
@@ -256,7 +256,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.fp, cmd = m.fp.Update(msg)
 
 		if didSelect, path := m.fp.DidSelectFile(msg); didSelect {
-			m.inputs[privateKeyFile].SetValue(path)
+			m.inputs[m.filePickerField].SetValue(path)
 			m.filePickerActive = false
 			return m, nil
 		}
@@ -269,10 +269,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if msg, ok := msg.(tea.KeyMsg); ok {
-		if m.focused == privateKeyFile && msg.String() == "ctrl+f" {
+		if (m.focused == privateKeyFile || m.focused == knownHostsFile) && msg.String() == "ctrl+f" {
 			m.filePickerActive = true
+			m.filePickerField = m.focused
 			m.statusMessage = ""
-			currentFile := m.inputs[privateKeyFile].Value()
+			currentFile := m.inputs[m.focused].Value()
 			if currentFile != "" {
 				if info, err := os.Stat(currentFile); err == nil && !info.IsDir() {
 					m.fp.CurrentDirectory = filepath.Dir(currentFile)
@@ -320,15 +321,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				privateKeyFile := m.inputs[privateKeyFile].Value()
-				if _, err := os.Stat(privateKeyFile); os.IsNotExist(err) {
+				if st, err := os.Stat(privateKeyFile); os.IsNotExist(err) {
 					m.statusMessage = "Error: private key file does not exist: " + privateKeyFile
+					return m, nil
+				} else if st.IsDir() {
+					m.statusMessage = "Error: private key must not be directory: " + privateKeyFile
 					return m, nil
 				}
 
 				knownHostsFile := m.inputs[knownHostsFile].Value()
 				if knownHostsFile != "" {
-					if _, err := os.Stat(knownHostsFile); os.IsNotExist(err) {
+					if st, err := os.Stat(knownHostsFile); os.IsNotExist(err) {
 						m.statusMessage = "Error: known hosts file does not exist: " + knownHostsFile
+						return m, nil
+					} else if st.IsDir() {
+						m.statusMessage = "Error: known hosts must not be directory: " + knownHostsFile
 						return m, nil
 					}
 				}
@@ -411,7 +418,7 @@ func (m model) View() string {
 	}
 
 	help := m.help
-	if m.focused == privateKeyFile {
+	if m.focused == privateKeyFile || m.focused == knownHostsFile {
 		help = help + " / ctrl+f: file picker"
 	}
 	b.WriteString(m.styles.Help.Render(help))
