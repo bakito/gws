@@ -8,7 +8,7 @@ A command-line tool to manage Google Cloud Workstations.
 
 ## Installation
 
-You can install `gws` using `go install`:
+You can install `gws` by downloading a binary from the [latest release]( https://github.com/bakito/gws/releases/tag/v0.2.0) or via go by using `go install`:
 
 ```bash
 go install github.com/bakito/gws@latest
@@ -24,7 +24,7 @@ go install github.com/bakito/gws@latest
 - `gws restart [context]`: Restart the workstation for the given or current context.
 - `gws up`: Uploads files and directories to the workstation as defined in the context configuration.
 - `gws tunnel [context]`: Create an SSH tunnel to the workstation.
-- `gws patch`: Patch local files as defined in the `filePatches` configuration.
+- `gws patch`: Patch local gcloud cli files as defined in the `filePatches` configuration.
 - `gws ctx [context]`: Switch the current context. If no context is provided, an interactive selection is shown.
   - `--current`: Print the current active context.
 
