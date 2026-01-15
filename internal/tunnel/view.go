@@ -34,7 +34,7 @@ func (m Model) View() string {
 	b.WriteString(m.Styles.Info.Render("Logs:"))
 	b.WriteString("\n")
 
-	logView := ""
+	var logView string
 	if len(m.Logs) > 0 {
 		start := 0
 		if len(m.Logs) > 10 {

@@ -16,7 +16,7 @@ type Model struct {
 	Err      error
 	Quitting bool
 
-	ctx    context.Context
+	ctx    context.Context //nolint:containedctx
 	cancel context.CancelFunc
 
 	LogChan chan string
@@ -34,5 +34,7 @@ func NewModel(ctx context.Context, cfg *types.Config, port int) Model {
 	}
 }
 
-type logMsg string
-type errMsg struct{ err error }
+type (
+	logMsg string
+	errMsg struct{ err error }
+)

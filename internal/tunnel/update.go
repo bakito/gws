@@ -1,8 +1,9 @@
 package tunnel
 
 import (
-	"github.com/bakito/gws/internal/gcloud"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/bakito/gws/internal/gcloud"
 )
 
 func (m Model) Init() tea.Cmd {
@@ -32,8 +33,7 @@ func (m Model) waitForLog() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c":
+		if msg.String() == "ctrl+c" {
 			m.Quitting = true
 			m.cancel()
 			return m, tea.Quit
