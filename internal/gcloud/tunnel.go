@@ -84,7 +84,7 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	}()
 
 	if sshContext.KnownHostsFile != "" {
-		go updateKnownHosts(sshContext, sshAddress, p)
+		go updateKnownHosts(sshContext, sshAddress, p, cfg.SSHTimeout())
 	}
 
 	// Wait for either context cancellation or error
@@ -99,11 +99,11 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	}
 }
 
-func updateKnownHosts(sshContext *types.Context, address string, port int) {
+func updateKnownHosts(sshContext *types.Context, address string, port int, timeout time.Duration) {
 	if sshContext.KnownHostsFile == "" {
 		return
 	}
-	c, err := ssh.NewClient(address, sshContext.User, sshContext.PrivateKeyFile)
+	c, err := ssh.NewClient(address, sshContext.User, sshContext.PrivateKeyFile, timeout)
 	if err != nil {
 		fmt.Printf("Error creating ssh client: %v\n", err)
 		return

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
@@ -16,7 +17,7 @@ import (
 	"github.com/bakito/gws/internal/passwd"
 )
 
-func NewClient(addr, user, privateKeyFile string) (Client, error) {
+func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client, error) {
 	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)
@@ -48,10 +49,16 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 		},
 	}
 
-	// Connect to the SSH server
-	sshClient, err := ssh.Dial("tcp", addr, clientConfig)
+	var sshClient *ssh.Client
+	if timeout > 0 {
+		fmt.Printf("⏳ Using ssh client with timeout %s\n", timeout.String())
+		clientConfig.Timeout = timeout
+		sshClient, err = clientWithTimeout(addr, timeout, clientConfig)
+	} else {
+		sshClient, err = defaultClient(addr, clientConfig)
+	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to SSH server: %w", err)
+		return nil, err
 	}
 
 	// For other authentication methods see ssh.ClientConfig and ssh.AuthMethod
@@ -70,6 +77,35 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 		scpClient:       scpClient,
 		knownHostsEntry: knownHostsEntry,
 	}, nil
+}
+
+func clientWithTimeout(addr string, timeout time.Duration, clientConfig *ssh.ClientConfig) (*ssh.Client, error) {
+	// Use a dialer with TCP KeepAlive enabled to prevent connection drops
+	dialer := net.Dialer{
+		Timeout:   timeout,
+		KeepAlive: timeout,
+	}
+	conn, err := dialer.Dial("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial: %w", err)
+	}
+
+	// Connect to the SSH server using the existing TCP connection
+	sshConn, chans, reqs, err := ssh.NewClientConn(conn, addr, clientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SSH connection: %w", err)
+	}
+	sshClient := ssh.NewClient(sshConn, chans, reqs)
+	return sshClient, nil
+}
+
+func defaultClient(addr string, clientConfig *ssh.ClientConfig) (*ssh.Client, error) {
+	// Connect to the SSH server
+	sshClient, err := ssh.Dial("tcp", addr, clientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to SSH server: %w", err)
+	}
+	return sshClient, nil
 }
 
 type Client interface {

@@ -20,7 +20,7 @@ var upCmd = &cobra.Command{
 		fmt.Printf("Running context %s\n", cfg.CurrentContextName)
 
 		sshCtx := cfg.CurrentContext()
-		cl, err := ssh.NewClient(sshCtx.HostAddr(), sshCtx.User, sshCtx.PrivateKeyFile)
+		cl, err := ssh.NewClient(sshCtx.HostAddr(), sshCtx.User, sshCtx.PrivateKeyFile, cfg.SSHTimeout())
 		if err != nil {
 			return err
 		}

@@ -24,6 +24,7 @@ type Config struct {
 	FilePath           string               `yaml:"-"`
 	TokenCheck         bool                 `yaml:"-"`
 	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
+	SSHTimeoutSeconds  int                  `yaml:"sshTimeoutSeconds,omitempty"`
 	currentContext     *Context
 	Token              *TokenStorage `yaml:"-"`
 }
@@ -64,6 +65,10 @@ func (c *Config) Load(fileName string) error {
 		c.Token.Token = *tk
 	}
 	return c.SwitchContext(c.CurrentContextName)
+}
+
+func (c *Config) SSHTimeout() time.Duration {
+	return time.Duration(c.SSHTimeoutSeconds) * time.Second
 }
 
 func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) {
