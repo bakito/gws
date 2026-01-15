@@ -12,6 +12,7 @@ var (
 type Styles struct {
 	Border         lipgloss.Style
 	Label          lipgloss.Style
+	Title          lipgloss.Style
 	Help           lipgloss.Style
 	Err            lipgloss.Style
 	ErrText        lipgloss.Style
@@ -32,6 +33,10 @@ func DefaultStyles() *Styles {
 	s.Label = lipgloss.NewStyle().
 		Bold(true).
 		Foreground(DarkGray).
+		Padding(0, 2)
+	s.Title = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(Indigo).
 		Padding(0, 2)
 	s.Help = lipgloss.NewStyle().
 		Foreground(LightGray)

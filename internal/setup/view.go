@@ -19,7 +19,7 @@ func (m Model) View() string {
 	}
 	var b strings.Builder
 
-	b.WriteString(m.Styles.Label.Render(">_ Modify the gws context"))
+	b.WriteString(m.Styles.Title.Render(">_ Modify the gws context"))
 	b.WriteString("\n\n")
 
 	for i := range m.Inputs {
