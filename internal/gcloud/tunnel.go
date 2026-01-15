@@ -21,13 +21,14 @@ import (
 )
 
 type tunnel struct {
-	headers http.Header
-	wsName  string
-	wsHost  string
-	client  *workstations.Client
+	headers  http.Header
+	wsName   string
+	wsHost   string
+	client   *workstations.Client
+	reporter func(string)
 }
 
-func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
+func TCPTunnel(ctx context.Context, cfg *types.Config, port int, reporter func(string)) error {
 	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
@@ -35,10 +36,11 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	defer closeIt(c)
 
 	t := &tunnel{
-		headers: http.Header{},
-		wsHost:  ws.GetHost(),
-		wsName:  ws.GetName(),
-		client:  c,
+		headers:  http.Header{},
+		wsHost:   ws.GetHost(),
+		wsName:   ws.GetName(),
+		client:   c,
+		reporter: reporter,
 	}
 	go t.refreshAuthToken(ctx)
 	t.setAuthToken(ctx)
@@ -52,12 +54,20 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	sshAddress := net.JoinHostPort("127.0.0.1", strconv.Itoa(p))
 	listener, err := lc.Listen(ctx, "tcp", sshAddress)
 	if err != nil {
-		fmt.Printf("Failed to start TCP listener: %v\n", err)
+		if reporter != nil {
+			reporter(fmt.Sprintf("Failed to start TCP listener: %v", err))
+		} else {
+			fmt.Printf("Failed to start TCP listener: %v\n", err)
+		}
 		return err
 	}
 	defer closeIt(listener)
 
-	fmt.Printf("🕳️ Opening tunnel to %s and listening on local ssh port %d ...\n", sshContext.GCloud.Name, p)
+	if reporter != nil {
+		reporter(fmt.Sprintf("🕳️ Opening tunnel to %s and listening on local ssh port %d ...", sshContext.GCloud.Name, p))
+	} else {
+		fmt.Printf("🕳️ Opening tunnel to %s and listening on local ssh port %d ...\n", sshContext.GCloud.Name, p)
+	}
 
 	// Create an error channel to handle errors from goroutines
 	errChan := make(chan error, 1)
@@ -73,18 +83,27 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 				clientConn, err := listener.Accept()
 				if err != nil {
 					if !errors.Is(err, net.ErrClosed) {
-						fmt.Printf("Failed to accept connection: %v\n", err)
+						msg := fmt.Sprintf("Failed to accept connection: %v", err)
+						if reporter != nil {
+							reporter(msg)
+						} else {
+							fmt.Println(msg)
+						}
 					}
 					continue
 				}
-				fmt.Println("🤝 Accepted TCP connection")
+				if reporter != nil {
+					reporter("🤝 Accepted TCP connection")
+				} else {
+					fmt.Println("🤝 Accepted TCP connection")
+				}
 				go t.handleConnection(clientConn)
 			}
 		}
 	}()
 
 	if sshContext.KnownHostsFile != "" {
-		go updateKnownHosts(sshContext, sshAddress, p, cfg.SSHTimeout())
+		go updateKnownHosts(sshContext, sshAddress, p, cfg.SSHTimeout(), reporter)
 	}
 
 	// Wait for either context cancellation or error
@@ -99,20 +118,30 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	}
 }
 
-func updateKnownHosts(sshContext *types.Context, address string, port int, timeout time.Duration) {
+func updateKnownHosts(sshContext *types.Context, address string, port int, timeout time.Duration, reporter func(string)) {
 	if sshContext.KnownHostsFile == "" {
 		return
 	}
 	c, err := ssh.NewClient(address, sshContext.User, sshContext.PrivateKeyFile, timeout)
 	if err != nil {
-		fmt.Printf("Error creating ssh client: %v\n", err)
+		msg := fmt.Sprintf("Error creating ssh client: %v", err)
+		if reporter != nil {
+			reporter(msg)
+		} else {
+			fmt.Println(msg)
+		}
 		return
 	}
 	defer c.Close()
 
 	f, err := os.ReadFile(sshContext.KnownHostsFile)
 	if err != nil {
-		fmt.Printf("Error reading known_hosts %s file: %v\n", sshContext.KnownHostsFile, err)
+		msg := fmt.Sprintf("Error reading known_hosts %s file: %v", sshContext.KnownHostsFile, err)
+		if reporter != nil {
+			reporter(msg)
+		} else {
+			fmt.Println(msg)
+		}
 		return
 	}
 
@@ -138,10 +167,20 @@ func updateKnownHosts(sshContext *types.Context, address string, port int, timeo
 	if changed {
 		err = os.WriteFile(sshContext.KnownHostsFile, []byte(strings.Join(lines, "\n")), 0o644)
 		if err != nil {
-			fmt.Printf("Error writing known_hosts file: %v\n", err)
+			msg := fmt.Sprintf("Error writing known_hosts file: %v", err)
+			if reporter != nil {
+				reporter(msg)
+			} else {
+				fmt.Println(msg)
+			}
 			return
 		}
-		fmt.Printf("📝 KnownHosts file %s updated for %s\n", sshContext.KnownHostsFile, linePrefix)
+		msg := fmt.Sprintf("📝 KnownHosts file %s updated for %s", sshContext.KnownHostsFile, linePrefix)
+		if reporter != nil {
+			reporter(msg)
+		} else {
+			fmt.Println(msg)
+		}
 	}
 }
 
