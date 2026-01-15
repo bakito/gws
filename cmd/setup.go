@@ -194,7 +194,7 @@ func initialModel() model {
 		case gcloudConfig:
 			m.inputs[i].label = "gcloud: Config"
 		case gcloudName:
-			m.inputs[i].label = "gcloud: Name"
+			m.inputs[i].label = "gcloud: Workstation ID"
 		default:
 			// This should not be reached as maxFocusable defines the number of inputs.
 		}
