@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
@@ -31,8 +32,9 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 	// Define SSH connection details
 	var knownHostsEntry string
 	clientConfig := &ssh.ClientConfig{
-		User: user,                   // Remote SSH username
-		Auth: []ssh.AuthMethod{auth}, // Auth method
+		User:    user,                   // Remote SSH username
+		Auth:    []ssh.AuthMethod{auth}, // Auth method
+		Timeout: 30 * time.Second,       // Add a connection timeout
 		HostKeyCallback: func(_ string, remote net.Addr, key ssh.PublicKey) error {
 			// #nosec G106: Insecure, as we always get a new cert with gcloud
 			if tcpAddr, ok := remote.(*net.TCPAddr); ok {
@@ -48,11 +50,22 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 		},
 	}
 
-	// Connect to the SSH server
-	sshClient, err := ssh.Dial("tcp", addr, clientConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to SSH server: %w", err)
+	// Use a dialer with TCP KeepAlive enabled to prevent connection drops
+	dialer := net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
 	}
+	conn, err := dialer.Dial("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial: %w", err)
+	}
+
+	// Connect to the SSH server using the existing TCP connection
+	sshConn, chans, reqs, err := ssh.NewClientConn(conn, addr, clientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SSH connection: %w", err)
+	}
+	sshClient := ssh.NewClient(sshConn, chans, reqs)
 
 	// For other authentication methods see ssh.ClientConfig and ssh.AuthMethod
 
