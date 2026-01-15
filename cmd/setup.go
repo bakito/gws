@@ -164,10 +164,10 @@ func initialModel() model {
 			t.PromptStyle = m.styles.inputFocused
 			t.TextStyle = m.styles.inputFocused
 		case port:
-			m.inputs[i].label = "Port"
+			m.inputs[i].label = "Local SSH Port"
 			t.CharLimit = 5
 		case user:
-			m.inputs[i].label = "User"
+			m.inputs[i].label = "Cloud Workstation User"
 			t.SetValue("user")
 		case privateKeyFile:
 			m.inputs[i].label = "Private Key File"

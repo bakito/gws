@@ -51,7 +51,7 @@ func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client
 
 	var sshClient *ssh.Client
 	if timeout > 0 {
-		fmt.Printf("⏳ Using ssh client with timeout %s\n", timeout.String())
+		fmt.Printf("⏲ Using ssh client with timeout %s\n", timeout.String())
 		clientConfig.Timeout = timeout
 		sshClient, err = clientWithTimeout(addr, timeout, clientConfig)
 	} else {
