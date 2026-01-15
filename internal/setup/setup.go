@@ -11,7 +11,7 @@ import (
 
 func Run(cfg *types.Config, context string) error {
 	cfg.CurrentContextName = context
-	p := tea.NewProgram(InitialModel(cfg))
+	p := tea.NewProgram(InitialModel(cfg), tea.WithAltScreen())
 	m, err := p.Run()
 	if err != nil {
 		return err
