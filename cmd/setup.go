@@ -12,7 +12,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 
 	"github.com/bakito/gws/internal/types"
 )
@@ -97,7 +96,14 @@ func init() {
 }
 
 func setup(_ *cobra.Command, _ []string) error {
-	p := tea.NewProgram(initialModel())
+	cfg, err := loadConfig()
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+
+	cfg.CurrentContextName = flagContext
+
+	p := tea.NewProgram(initialModel(cfg))
 	m, err := p.Run()
 	if err != nil {
 		return err
@@ -130,23 +136,26 @@ type input struct {
 	label string
 }
 
-func initialModel() model {
+func initialModel(cfg *types.Config) model {
 	m := model{
 		inputs: make([]input, maxFocusable-1),
-		config: &types.Config{
-			Contexts: make(map[string]*types.Context),
-		},
+		config: cfg,
 		styles: defaultStyles(),
 		help:   "tab: next field / up: prev field / esc: quit / enter: confirm",
 	}
 
-	userHomeDir, err := os.UserHomeDir()
-	if err == nil {
-		configPath := filepath.Join(userHomeDir, types.ConfigDir, types.ConfigFileName)
-		if _, err := os.Stat(configPath); err == nil {
-			data, err := os.ReadFile(configPath)
-			if err == nil {
-				_ = yaml.Unmarshal(data, m.config)
+	configDir, userHomeDir := types.DefaultConfigDir()
+
+	if m.config.FilePath == "" {
+		m.config.FilePath = configDir
+	}
+
+	context := &types.Context{GCloud: &types.GCloud{}}
+	if m.config.CurrentContextName != "" {
+		if m.config.Contexts != nil {
+			c := m.config.Contexts[m.config.CurrentContextName]
+			if c != nil {
+				context = c
 			}
 		}
 	}
@@ -163,34 +172,51 @@ func initialModel() model {
 			t.Focus()
 			t.PromptStyle = m.styles.inputFocused
 			t.TextStyle = m.styles.inputFocused
+			t.SetValue(m.config.CurrentContextName)
 		case port:
 			m.inputs[i].label = "Local SSH Port"
 			t.CharLimit = 5
+			if context.Port > 0 {
+				t.SetValue(strconv.Itoa(context.Port))
+			}
 		case user:
 			m.inputs[i].label = "Cloud Workstation User"
-			t.SetValue("user")
+			if context.User != "" {
+				t.SetValue(context.User)
+			} else {
+				t.SetValue("user")
+			}
 		case privateKeyFile:
 			m.inputs[i].label = "Private Key File"
 			t.CharLimit = 128
-			if userHomeDir != "" {
+			if context.PrivateKeyFile != "" {
+				t.SetValue(context.PrivateKeyFile)
+			} else if userHomeDir != "" {
 				t.SetValue(filepath.Join(userHomeDir, ".ssh", "id_rsa"))
 			}
 		case knownHostsFile:
 			m.inputs[i].label = "Known Hosts File (optional)"
 			t.CharLimit = 128
-			if userHomeDir != "" {
+			if context.KnownHostsFile != "" {
+				t.SetValue(context.KnownHostsFile)
+			} else if userHomeDir != "" {
 				t.SetValue(filepath.Join(userHomeDir, ".ssh", "known_hosts"))
 			}
 		case gcloudProject:
 			m.inputs[i].label = "gcloud: Project ID"
+			t.SetValue(context.GCloud.Project)
 		case gcloudRegion:
 			m.inputs[i].label = "gcloud: Region"
+			t.SetValue(context.GCloud.Region)
 		case gcloudCluster:
 			m.inputs[i].label = "gcloud: Cluster"
+			t.SetValue(context.GCloud.Cluster)
 		case gcloudConfig:
 			m.inputs[i].label = "gcloud: Config"
+			t.SetValue(context.GCloud.Config)
 		case gcloudName:
 			m.inputs[i].label = "gcloud: Workstation ID"
+			t.SetValue(context.GCloud.Name)
 		default:
 			// This should not be reached as maxFocusable defines the number of inputs.
 		}
@@ -219,11 +245,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if s == "enter" && m.focused == submit {
 				// Final validation before quitting
 				ctxName := m.inputs[contextName].Value()
-				if _, ok := m.config.Contexts[ctxName]; ok {
-					m.statusMessage = fmt.Sprintf("Error: Context name %q already exists.", ctxName)
-					return m, nil
-				}
-
 				portVal, err := strconv.Atoi(m.inputs[port].Value())
 				if err != nil || portVal < 1000 || portVal > 65535 {
 					m.statusMessage = fmt.Sprintf(
@@ -234,7 +255,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				for name, ctx := range m.config.Contexts {
-					if ctx.Port == portVal {
+					if ctx.Port == portVal && name != ctxName {
 						m.statusMessage = fmt.Sprintf("Error: Port %d is already used by context %q.", portVal, name)
 						return m, nil
 					}
@@ -282,6 +303,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i := range len(m.inputs) {
 				if i == int(m.focused) {
 					m.inputs[i].Focus()
+					m.inputs[i].Focus()
 					m.inputs[i].PromptStyle = m.styles.inputFocused
 					m.inputs[i].TextStyle = m.styles.inputFocused
 				} else {
@@ -315,7 +337,7 @@ func (i input) View() string {
 func (m model) View() string {
 	var b strings.Builder
 
-	b.WriteString(m.styles.Label.Render("Create a new gws context"))
+	b.WriteString(m.styles.Label.Render(">_ Modify the gws context"))
 	b.WriteString("\n\n")
 
 	for i := range m.inputs {
@@ -342,35 +364,28 @@ func (m model) View() string {
 }
 
 func saveConfig(m model) error {
-	portVal, err := strconv.Atoi(m.inputs[port].Value())
-	if err != nil {
-		portVal = 22
-	}
-	newCtx := &types.Context{
-		Host:           "localhost",
-		Port:           portVal,
-		User:           m.inputs[user].Value(),
-		PrivateKeyFile: m.inputs[privateKeyFile].Value(),
-		KnownHostsFile: m.inputs[knownHostsFile].Value(),
-	}
-
-	gcloudProject := m.inputs[gcloudProject].Value()
-	gcloudRegion := m.inputs[gcloudRegion].Value()
-	gcloudCluster := m.inputs[gcloudCluster].Value()
-	gcloudConfig := m.inputs[gcloudConfig].Value()
-	gcloudName := m.inputs[gcloudName].Value()
-
-	if gcloudProject != "" || gcloudRegion != "" || gcloudCluster != "" || gcloudConfig != "" || gcloudName != "" {
-		newCtx.GCloud = &types.GCloud{
-			Project: gcloudProject,
-			Region:  gcloudRegion,
-			Cluster: gcloudCluster,
-			Config:  gcloudConfig,
-			Name:    gcloudName,
+	portVal, _ := strconv.Atoi(m.inputs[port].Value())
+	ctxName := m.inputs[contextName].Value()
+	newCtx := m.config.Contexts[ctxName]
+	if newCtx == nil {
+		newCtx = &types.Context{
+			Host: "localhost",
 		}
 	}
+	newCtx.Port = portVal
+	newCtx.User = m.inputs[user].Value()
+	newCtx.PrivateKeyFile = m.inputs[privateKeyFile].Value()
+	newCtx.KnownHostsFile = m.inputs[knownHostsFile].Value()
 
-	ctxName := m.inputs[contextName].Value()
+	if newCtx.GCloud == nil {
+		newCtx.GCloud = &types.GCloud{}
+	}
+
+	newCtx.GCloud.Project = m.inputs[gcloudProject].Value()
+	newCtx.GCloud.Region = m.inputs[gcloudRegion].Value()
+	newCtx.GCloud.Cluster = m.inputs[gcloudCluster].Value()
+	newCtx.GCloud.Config = m.inputs[gcloudConfig].Value()
+	newCtx.GCloud.Name = m.inputs[gcloudName].Value()
 
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -382,17 +397,11 @@ func saveConfig(m model) error {
 	config := m.config
 	config.Contexts[ctxName] = newCtx
 	config.CurrentContextName = ctxName
-	config.FilePath = configPath
 
 	if err := os.MkdirAll(configDir, 0o755); err != nil {
 		return err
 	}
 
-	data, err := yaml.Marshal(config)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Writing new config to %s\n", configPath)
-	return os.WriteFile(configPath, data, 0o600)
+	fmt.Printf("\n💾 Writing config to %s\n", configPath)
+	return config.SwitchContext(ctxName, true)
 }

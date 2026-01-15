@@ -30,7 +30,7 @@ var ctxCmd = &cobra.Command{
 		}
 
 		if len(args) == 1 {
-			return cfg.SwitchContext(args[0])
+			return cfg.SwitchContext(args[0], false)
 		}
 		selected, err := selectContext(cfg)
 		if err != nil {
@@ -39,7 +39,7 @@ var ctxCmd = &cobra.Command{
 
 		if selected != "" {
 			cmd.Printf("Switching to context %q\n", selected)
-			return cfg.SwitchContext(selected)
+			return cfg.SwitchContext(selected, false)
 		}
 
 		return nil

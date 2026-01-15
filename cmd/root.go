@@ -33,16 +33,20 @@ func init() {
 }
 
 func readConfig() (*types.Config, error) {
-	var err error
-	config := &types.Config{}
-
-	if err := config.Load(flagConfig); err != nil {
+	config, err := loadConfig()
+	if err != nil {
 		return nil, err
 	}
 
 	if flagContext != "" {
-		err = config.SwitchContext(flagContext)
+		err = config.SwitchContext(flagContext, false)
 	}
 
+	return config, err
+}
+
+func loadConfig() (*types.Config, error) {
+	config := &types.Config{Contexts: make(map[string]*types.Context)}
+	err := config.Load(flagConfig)
 	return config, err
 }
