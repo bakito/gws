@@ -133,6 +133,8 @@ type model struct {
 	fp               filepicker.Model
 	filePickerActive bool
 	filePickerField  focusable
+	width            int
+	height           int
 }
 
 type input struct {
@@ -215,7 +217,7 @@ func initialModel(cfg *types.Config) model {
 			if context.PrivateKeyFile != "" {
 				t.SetValue(context.PrivateKeyFile)
 			} else if userHomeDir != "" {
-				t.SetValue(filepath.Join(userHomeDir, ".ssh", "id_rsa"))
+				t.SetValue(filepath.Join(userHomeDir, ".ssh"))
 			}
 		case knownHostsFile:
 			m.inputs[i].label = "Known Hosts File (optional)"
@@ -223,7 +225,7 @@ func initialModel(cfg *types.Config) model {
 			if context.KnownHostsFile != "" {
 				t.SetValue(context.KnownHostsFile)
 			} else if userHomeDir != "" {
-				t.SetValue(filepath.Join(userHomeDir, ".ssh", "known_hosts"))
+				t.SetValue(filepath.Join(userHomeDir, ".ssh"))
 			}
 		case gcloudProject:
 			m.inputs[i].label = "gcloud: Project ID"
@@ -272,7 +274,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
-	if msg, ok := msg.(tea.KeyMsg); ok {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
 		if (m.focused == privateKeyFile || m.focused == knownHostsFile) && msg.String() == "ctrl+f" {
 			m.filePickerActive = true
 			m.filePickerField = m.focused
@@ -376,6 +379,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, nil
 		}
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
 	}
 
 	cmd := m.updateInputs(msg)
@@ -427,7 +434,7 @@ func (m model) View() string {
 	}
 	b.WriteString(m.styles.Help.Render(help))
 
-	return m.styles.Border.Render(b.String())
+	return m.styles.Border.Width(m.width - 4).Render(b.String())
 }
 
 func saveConfig(m model) error {
