@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"maps"
 	"os"
@@ -64,7 +63,7 @@ func (c *Config) Load(fileName string) error {
 	if tk != nil {
 		c.Token.Token = *tk
 	}
-	return c.SwitchContext(c.CurrentContextName)
+	return c.SwitchContext(c.CurrentContextName, false)
 }
 
 func (c *Config) SSHTimeout() time.Duration {
@@ -80,20 +79,15 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 	}
 
 	if file == "" {
-		userHomeDir, err := os.UserHomeDir()
-		if err != nil {
-			return "", nil, err
-		}
-
 		// Try new location first
-		newConfigPath := filepath.Join(userHomeDir, ConfigDir, ConfigFileName)
+		newConfigPath, userHomeDir := DefaultConfigDir()
 		if _, err := os.Stat(newConfigPath); err == nil {
 			file = newConfigPath
 		} else {
 			// Fallback to legacy location for backward compatibility
 			legacyPath := filepath.Join(userHomeDir, ".gws.yaml")
 			if _, err := os.Stat(legacyPath); err != nil {
-				return "", nil, errors.New("config file not found")
+				return "", nil, fmt.Errorf("%w: config file not found", os.ErrNotExist)
 			}
 			file = legacyPath
 			fmt.Printf("⚠️  Using legacy config location. Consider moving to: %s\n", newConfigPath)
@@ -109,12 +103,19 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 	return abs, data, err
 }
 
-func (c *Config) SwitchContext(newContext string) error {
+func DefaultConfigDir() (newConfigPath, userHomeDir string) {
+	userHomeDir, _ = os.UserHomeDir()
+
+	newConfigPath = filepath.Join(userHomeDir, ConfigDir, ConfigFileName)
+	return newConfigPath, userHomeDir
+}
+
+func (c *Config) SwitchContext(newContext string, force bool) error {
 	if _, ok := c.Contexts[newContext]; !ok {
 		return fmt.Errorf("context with name %q not defined", newContext)
 	}
 
-	if c.CurrentContextName != newContext {
+	if force || c.CurrentContextName != newContext {
 		c.CurrentContextName = newContext
 
 		if err := c.save(); err != nil {
