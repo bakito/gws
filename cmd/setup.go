@@ -19,7 +19,6 @@ import (
 
 const (
 	contextName focusable = iota
-	host
 	port
 	user
 	privateKeyFile
@@ -164,9 +163,6 @@ func initialModel() model {
 			t.Focus()
 			t.PromptStyle = m.styles.inputFocused
 			t.TextStyle = m.styles.inputFocused
-		case host:
-			m.inputs[i].label = "Host"
-			t.SetValue("localhost")
 		case port:
 			m.inputs[i].label = "Port"
 			t.CharLimit = 5
@@ -186,7 +182,7 @@ func initialModel() model {
 				t.SetValue(filepath.Join(userHomeDir, ".ssh", "known_hosts"))
 			}
 		case gcloudProject:
-			m.inputs[i].label = "gcloud: Project"
+			m.inputs[i].label = "gcloud: Project ID"
 		case gcloudRegion:
 			m.inputs[i].label = "gcloud: Region"
 		case gcloudCluster:
@@ -194,7 +190,7 @@ func initialModel() model {
 		case gcloudConfig:
 			m.inputs[i].label = "gcloud: Config"
 		case gcloudName:
-			m.inputs[i].label = "gcloud: Name"
+			m.inputs[i].label = "gcloud: Workstation ID"
 		default:
 			// This should not be reached as maxFocusable defines the number of inputs.
 		}
@@ -351,7 +347,7 @@ func saveConfig(m model) error {
 		portVal = 22
 	}
 	newCtx := &types.Context{
-		Host:           m.inputs[host].Value(),
+		Host:           "localhost",
 		Port:           portVal,
 		User:           m.inputs[user].Value(),
 		PrivateKeyFile: m.inputs[privateKeyFile].Value(),

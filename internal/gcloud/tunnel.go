@@ -105,7 +105,7 @@ func updateKnownHosts(sshContext *types.Context, address string, port int) {
 	}
 	c, err := ssh.NewClient(address, sshContext.User, sshContext.PrivateKeyFile)
 	if err != nil {
-		fmt.Println("Error creating ssh client")
+		fmt.Printf("Error creating ssh client: %v\n", err)
 		return
 	}
 	defer c.Close()
