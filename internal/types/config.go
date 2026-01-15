@@ -24,6 +24,7 @@ type Config struct {
 	FilePath           string               `yaml:"-"`
 	TokenCheck         bool                 `yaml:"-"`
 	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
+	SSHTimeout         time.Duration        `yaml:"sshTimeout,omitempty"`
 	currentContext     *Context
 	Token              *TokenStorage `yaml:"-"`
 }

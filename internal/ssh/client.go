@@ -17,7 +17,13 @@ import (
 	"github.com/bakito/gws/internal/passwd"
 )
 
-func NewClient(addr, user, privateKeyFile string) (Client, error) {
+const defaultTimeout = 30 * time.Second
+
+func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client, error) {
+	if timeout == 0 {
+		timeout = defaultTimeout
+	}
+
 	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)
@@ -34,7 +40,7 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 	clientConfig := &ssh.ClientConfig{
 		User:    user,                   // Remote SSH username
 		Auth:    []ssh.AuthMethod{auth}, // Auth method
-		Timeout: 30 * time.Second,       // Add a connection timeout
+		Timeout: timeout,                // Add a connection timeout
 		HostKeyCallback: func(_ string, remote net.Addr, key ssh.PublicKey) error {
 			// #nosec G106: Insecure, as we always get a new cert with gcloud
 			if tcpAddr, ok := remote.(*net.TCPAddr); ok {
@@ -52,8 +58,8 @@ func NewClient(addr, user, privateKeyFile string) (Client, error) {
 
 	// Use a dialer with TCP KeepAlive enabled to prevent connection drops
 	dialer := net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
+		Timeout:   timeout,
+		KeepAlive: timeout,
 	}
 	conn, err := dialer.Dial("tcp", addr)
 	if err != nil {
