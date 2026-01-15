@@ -84,7 +84,7 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	}()
 
 	if sshContext.KnownHostsFile != "" {
-		go updateKnownHosts(sshContext, sshAddress, p, cfg.SSHTimeout)
+		go updateKnownHosts(sshContext, sshAddress, p, cfg.SSHTimeout())
 	}
 
 	// Wait for either context cancellation or error

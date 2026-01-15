@@ -17,13 +17,7 @@ import (
 	"github.com/bakito/gws/internal/passwd"
 )
 
-const defaultTimeout = 30 * time.Second
-
 func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client, error) {
-	if timeout == 0 {
-		timeout = defaultTimeout
-	}
-
 	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)
@@ -38,9 +32,8 @@ func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client
 	// Define SSH connection details
 	var knownHostsEntry string
 	clientConfig := &ssh.ClientConfig{
-		User:    user,                   // Remote SSH username
-		Auth:    []ssh.AuthMethod{auth}, // Auth method
-		Timeout: timeout,                // Add a connection timeout
+		User: user,                   // Remote SSH username
+		Auth: []ssh.AuthMethod{auth}, // Auth method
 		HostKeyCallback: func(_ string, remote net.Addr, key ssh.PublicKey) error {
 			// #nosec G106: Insecure, as we always get a new cert with gcloud
 			if tcpAddr, ok := remote.(*net.TCPAddr); ok {
@@ -56,22 +49,17 @@ func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client
 		},
 	}
 
-	// Use a dialer with TCP KeepAlive enabled to prevent connection drops
-	dialer := net.Dialer{
-		Timeout:   timeout,
-		KeepAlive: timeout,
+	var sshClient *ssh.Client
+	if timeout > 0 {
+		fmt.Printf("⏳ Using ssh client with timeout %s\n", timeout.String())
+		clientConfig.Timeout = timeout
+		sshClient, err = clientWithTimeout(addr, timeout, clientConfig)
+	} else {
+		sshClient, err = defaultClient(addr, clientConfig)
 	}
-	conn, err := dialer.Dial("tcp", addr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to dial: %w", err)
+		return nil, err
 	}
-
-	// Connect to the SSH server using the existing TCP connection
-	sshConn, chans, reqs, err := ssh.NewClientConn(conn, addr, clientConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create SSH connection: %w", err)
-	}
-	sshClient := ssh.NewClient(sshConn, chans, reqs)
 
 	// For other authentication methods see ssh.ClientConfig and ssh.AuthMethod
 
@@ -89,6 +77,35 @@ func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client
 		scpClient:       scpClient,
 		knownHostsEntry: knownHostsEntry,
 	}, nil
+}
+
+func clientWithTimeout(addr string, timeout time.Duration, clientConfig *ssh.ClientConfig) (*ssh.Client, error) {
+	// Use a dialer with TCP KeepAlive enabled to prevent connection drops
+	dialer := net.Dialer{
+		Timeout:   timeout,
+		KeepAlive: timeout,
+	}
+	conn, err := dialer.Dial("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial: %w", err)
+	}
+
+	// Connect to the SSH server using the existing TCP connection
+	sshConn, chans, reqs, err := ssh.NewClientConn(conn, addr, clientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SSH connection: %w", err)
+	}
+	sshClient := ssh.NewClient(sshConn, chans, reqs)
+	return sshClient, nil
+}
+
+func defaultClient(addr string, clientConfig *ssh.ClientConfig) (*ssh.Client, error) {
+	// Connect to the SSH server
+	sshClient, err := ssh.Dial("tcp", addr, clientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to SSH server: %w", err)
+	}
+	return sshClient, nil
 }
 
 type Client interface {
