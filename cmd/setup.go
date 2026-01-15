@@ -165,7 +165,7 @@ func initialModel() model {
 			t.PromptStyle = m.styles.inputFocused
 			t.TextStyle = m.styles.inputFocused
 		case host:
-			m.inputs[i].label = "Host"
+			m.inputs[i].label = "Host (to open ssh tunnel on - localhost)"
 			t.SetValue("localhost")
 		case port:
 			m.inputs[i].label = "Port"
@@ -186,7 +186,7 @@ func initialModel() model {
 				t.SetValue(filepath.Join(userHomeDir, ".ssh", "known_hosts"))
 			}
 		case gcloudProject:
-			m.inputs[i].label = "gcloud: Project"
+			m.inputs[i].label = "gcloud: Project ID"
 		case gcloudRegion:
 			m.inputs[i].label = "gcloud: Region"
 		case gcloudCluster:
