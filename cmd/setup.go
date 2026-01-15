@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/filepicker"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -122,13 +123,15 @@ func setup(_ *cobra.Command, _ []string) error {
 type focusable int
 
 type model struct {
-	inputs        []input
-	focused       focusable
-	aborted       bool
-	statusMessage string
-	config        *types.Config
-	styles        *styles
-	help          string
+	inputs           []input
+	focused          focusable
+	aborted          bool
+	statusMessage    string
+	config           *types.Config
+	styles           *styles
+	help             string
+	fp               filepicker.Model
+	filePickerActive bool
 }
 
 type input struct {
@@ -159,6 +162,22 @@ func initialModel(cfg *types.Config) model {
 			}
 		}
 	}
+
+	fp := filepicker.New()
+	fp.AllowedTypes = []string{""}
+	startDir := ""
+	if context.PrivateKeyFile != "" {
+		startDir = filepath.Dir(context.PrivateKeyFile)
+	} else if userHomeDir != "" {
+		startDir = filepath.Join(userHomeDir, ".ssh")
+	}
+
+	if startDir != "" {
+		if _, err := os.Stat(startDir); !os.IsNotExist(err) {
+			fp.CurrentDirectory = startDir
+		}
+	}
+	m.fp = fp
 
 	for i := range m.inputs {
 		t := textinput.New()
@@ -232,7 +251,37 @@ func (model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.filePickerActive {
+		var cmd tea.Cmd
+		m.fp, cmd = m.fp.Update(msg)
+
+		if didSelect, path := m.fp.DidSelectFile(msg); didSelect {
+			m.inputs[privateKeyFile].SetValue(path)
+			m.filePickerActive = false
+			return m, nil
+		}
+		if key, ok := msg.(tea.KeyMsg); ok && (key.String() == "esc" || key.String() == "q") {
+			m.filePickerActive = false
+			return m, nil
+		}
+
+		return m, cmd
+	}
+
 	if msg, ok := msg.(tea.KeyMsg); ok {
+		if m.focused == privateKeyFile && msg.String() == "ctrl+f" {
+			m.filePickerActive = true
+			m.statusMessage = ""
+			currentFile := m.inputs[privateKeyFile].Value()
+			if currentFile != "" {
+				if info, err := os.Stat(currentFile); err == nil && !info.IsDir() {
+					m.fp.CurrentDirectory = filepath.Dir(currentFile)
+				} else if err == nil && info.IsDir() {
+					m.fp.CurrentDirectory = currentFile
+				}
+			}
+			return m, m.fp.Init()
+		}
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			m.aborted = true
@@ -254,10 +303,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-				for name, ctx := range m.config.Contexts {
-					if ctx.Port == portVal && name != ctxName {
-						m.statusMessage = fmt.Sprintf("Error: Port %d is already used by context %q.", portVal, name)
-						return m, nil
+				if m.config.Contexts != nil {
+					for name, ctx := range m.config.Contexts {
+						if ctx.Port == portVal && name != ctxName {
+							m.statusMessage = fmt.Sprintf("Error: Port %d is already used by context %q.", portVal, name)
+							return m, nil
+						}
 					}
 				}
 
@@ -300,9 +351,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focused = submit
 			}
 
-			for i := range len(m.inputs) {
+			for i := range m.inputs {
 				if i == int(m.focused) {
-					m.inputs[i].Focus()
 					m.inputs[i].Focus()
 					m.inputs[i].PromptStyle = m.styles.inputFocused
 					m.inputs[i].TextStyle = m.styles.inputFocused
@@ -321,11 +371,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
-	var cmds []tea.Cmd
+func (m model) updateInputs(msg tea.Msg) tea.Cmd {
+	cmds := make([]tea.Cmd, len(m.inputs))
 	for i := range m.inputs {
-		m.inputs[i].Model, _ = m.inputs[i].Update(msg)
-		cmds = append(cmds, nil) // no-op to satisfy the interface
+		m.inputs[i].Model, cmds[i] = m.inputs[i].Update(msg)
 	}
 	return tea.Batch(cmds...)
 }
@@ -335,6 +384,9 @@ func (i input) View() string {
 }
 
 func (m model) View() string {
+	if m.filePickerActive {
+		return m.styles.Border.Render(m.fp.View())
+	}
 	var b strings.Builder
 
 	b.WriteString(m.styles.Label.Render(">_ Modify the gws context"))
@@ -358,7 +410,11 @@ func (m model) View() string {
 		b.WriteString("\n\n")
 	}
 
-	b.WriteString(m.styles.Help.Render(m.help))
+	help := m.help
+	if m.focused == privateKeyFile {
+		help = help + " / ctrl+f: file picker"
+	}
+	b.WriteString(m.styles.Help.Render(help))
 
 	return m.styles.Border.Render(b.String())
 }
@@ -366,7 +422,11 @@ func (m model) View() string {
 func saveConfig(m model) error {
 	portVal, _ := strconv.Atoi(m.inputs[port].Value())
 	ctxName := m.inputs[contextName].Value()
-	newCtx := m.config.Contexts[ctxName]
+	config := m.config
+	if config.Contexts == nil {
+		config.Contexts = make(map[string]*types.Context)
+	}
+	newCtx := config.Contexts[ctxName]
 	if newCtx == nil {
 		newCtx = &types.Context{
 			Host: "localhost",
@@ -394,7 +454,6 @@ func saveConfig(m model) error {
 	configDir := filepath.Join(userHomeDir, types.ConfigDir)
 	configPath := filepath.Join(configDir, types.ConfigFileName)
 
-	config := m.config
 	config.Contexts[ctxName] = newCtx
 	config.CurrentContextName = ctxName
 
