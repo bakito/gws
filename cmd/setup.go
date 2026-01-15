@@ -165,6 +165,10 @@ func initialModel(cfg *types.Config) model {
 	}
 
 	fp := filepicker.New()
+	fp.SetHeight(20)
+	fp.ShowHidden = true                // Show hidden files (e.g., .ssh)
+	fp.KeyMap.Back.SetKeys("backspace") // Explicitly set key for going up a directory
+	fp.KeyMap.Open.SetKeys("enter")     // Explicitly set key for going down into a directory
 	startDir := ""
 	if context.PrivateKeyFile != "" {
 		startDir = filepath.Dir(context.PrivateKeyFile)
