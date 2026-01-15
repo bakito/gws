@@ -433,7 +433,7 @@ func (m model) View() string {
 
 	help := m.help
 	if m.focused == privateKeyFile || m.focused == knownHostsFile {
-		help = help + " / ctrl+f: file picker"
+		help += " / ctrl+f: file picker"
 	}
 	b.WriteString(m.styles.Help.Render(help))
 
