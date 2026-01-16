@@ -51,7 +51,7 @@ func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client
 
 	var sshClient *ssh.Client
 	if timeout > 0 {
-		fmt.Printf("⏲ Using ssh client with timeout %s\n", timeout.String())
+		fmt.Printf("⏲  Using ssh client with timeout %s\n", timeout.String())
 		clientConfig.Timeout = timeout
 		sshClient, err = clientWithTimeout(addr, timeout, clientConfig)
 	} else {
@@ -152,7 +152,7 @@ func (c *client) Execute(command string) (string, error) {
 }
 
 func (c *client) CopyFile(from, to, permissions string) error {
-	fmt.Printf("Copy file form %q to %q with perissions %s\n", from, to, permissions)
+	fmt.Printf("Copy file form %q to %q with permissions %s\n", from, to, permissions)
 	// Open a file
 	f, _ := os.Open(env.ExpandEnv(from))
 	// Close the file after it has been copied
@@ -182,17 +182,25 @@ func evaluateAuthMethod(privateKey []byte, privateKeyFile string) (ssh.AuthMetho
 	// try private key
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
-		// Check if the error is due to a missing passphrase
-		if !errors.Is(err, &ssh.PassphraseMissingError{}) {
+		var missingPassphraseErr *ssh.PassphraseMissingError
+		if !errors.As(err, &missingPassphraseErr) {
 			return nil, fmt.Errorf("failed to parse private key: %w", err)
 		}
-		pass, err := passwd.Prompt(fmt.Sprintf("Please enter the passphrase for private key (%s):", privateKeyFile))
+
+		pass, err := passwd.Prompt(fmt.Sprintf("🔐 Please enter the passphrase for private key (%s):", privateKeyFile))
 		if err != nil {
 			return nil, err
 		}
-		signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, []byte(pass))
+
+		passBytes := []byte(pass)
+		signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, passBytes)
+		// Zero out the passphrase immediately after use
+		for i := range passBytes {
+			passBytes[i] = 0
+		}
+
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse private key: %w", err)
+			return nil, fmt.Errorf("failed to parse private key with passphrase: %w", err)
 		}
 	}
 	return ssh.PublicKeys(signer), nil

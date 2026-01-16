@@ -25,7 +25,7 @@ fmt: tb.golines tb.gofumpt
 	$(TB_GOLINES) --base-formatter="$(TB_GOFUMPT)" --max-len=120 --write-output .
 
 build-win:
-	GOOS=windows GOARCH=amd64 go build -o gws.exe .
+	GOOS=windows GOARCH=amd64 go build -o gws.exe -ldflags="-s -w -X github.com/bakito/gws/version.Version=dev-$$(date +%Y%m%d-%H%M)" .
 
 extract-oauth-vars:
 	docker build -t auth_config.go --no-cache py
