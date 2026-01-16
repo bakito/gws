@@ -3,13 +3,14 @@ package types
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
+
+	"github.com/bakito/gws/internal/log"
 )
 
 const TokenFileName = "token.yaml"
@@ -72,7 +73,7 @@ func SaveToken(token oauth2.Token) error {
 		return err
 	}
 
-	fmt.Printf("🎟️ Got new Google Access Token (expires: %s)\n", token.Expiry.Format(time.RFC822))
+	log.Logf("🎟️ Got new Google Access Token (expires: %s)\n", token.Expiry.Format(time.RFC822))
 	return os.WriteFile(tokenPath, buf.Bytes(), 0o600)
 }
 
