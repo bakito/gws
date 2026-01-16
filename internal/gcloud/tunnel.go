@@ -16,43 +16,30 @@ import (
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
 	"github.com/gorilla/websocket"
 
+	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/ssh"
 	"github.com/bakito/gws/internal/types"
 )
 
 type tunnel struct {
-	headers  http.Header
-	wsName   string
-	wsHost   string
-	client   *workstations.Client
-	reporter func(string)
+	headers http.Header
+	wsName  string
+	wsHost  string
+	client  *workstations.Client
 }
 
-func defaultReporter(s string) {
-	fmt.Println(s)
-}
-
-func TCPTunnel(ctx context.Context, cfg *types.Config, port int, reporter func(string)) error {
-	return TCPTunnelWithPassphrase(ctx, cfg, port, "", reporter)
-}
-
-func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int, passphrase string, reporter func(string)) error {
+func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int, passphrase string) error {
 	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
 	}
 	defer closeIt(c)
 
-	if reporter == nil {
-		reporter = defaultReporter
-	}
-
 	t := &tunnel{
-		headers:  http.Header{},
-		wsHost:   ws.GetHost(),
-		wsName:   ws.GetName(),
-		client:   c,
-		reporter: reporter,
+		headers: http.Header{},
+		wsHost:  ws.GetHost(),
+		wsName:  ws.GetName(),
+		client:  c,
 	}
 	go t.refreshAuthToken(ctx)
 	t.setAuthToken(ctx)
@@ -66,12 +53,12 @@ func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int, p
 	sshAddress := net.JoinHostPort("127.0.0.1", strconv.Itoa(p))
 	listener, err := lc.Listen(ctx, "tcp", sshAddress)
 	if err != nil {
-		reporter(fmt.Sprintf("🚨 Failed to start TCP listener: %v", err))
+		log.Logf("🚨 Failed to start TCP listener: %v", err)
 		return err
 	}
 	defer closeIt(listener)
 
-	reporter(fmt.Sprintf("🕳️ Opening tunnel to %s and listening on local ssh port %d ...", sshContext.GCloud.Name, p))
+	log.Logf("🕳️ Opening tunnel to %s and listening on local ssh port %d ...", sshContext.GCloud.Name, p)
 
 	// Create an error channel to handle errors from goroutines
 	errChan := make(chan error, 1)
@@ -87,18 +74,18 @@ func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int, p
 				clientConn, err := listener.Accept()
 				if err != nil {
 					if !errors.Is(err, net.ErrClosed) {
-						reporter(fmt.Sprintf("🚨 Failed to accept connection: %v", err))
+						log.Logf("🚨 Failed to accept connection: %v", err)
 					}
 					continue
 				}
-				reporter("🤝 Accepted TCP connection")
+				log.Log("🤝 Accepted TCP connection")
 				go t.handleConnection(clientConn)
 			}
 		}
 	}()
 
 	if sshContext.KnownHostsFile != "" {
-		go updateKnownHosts(sshContext, sshAddress, p, passphrase, cfg.SSHTimeout(), reporter)
+		go updateKnownHosts(sshContext, sshAddress, p, passphrase, cfg.SSHTimeout())
 	}
 
 	// Wait for either context cancellation or error
@@ -119,7 +106,6 @@ func updateKnownHosts(
 	port int,
 	passphrase string,
 	timeout time.Duration,
-	reporter func(string),
 ) {
 	if sshContext.KnownHostsFile == "" {
 		return
@@ -130,14 +116,14 @@ func updateKnownHosts(
 	}
 	c, err := ssh.NewClientWithPassphrase(address, sshContext.User, sshContext.PrivateKeyFile, timeout, passBytes)
 	if err != nil {
-		reporter(fmt.Sprintf("🚨 Error creating ssh client: %v", err))
+		log.Logf("🚨 Error creating ssh client: %v", err)
 		return
 	}
 	defer c.Close()
 
 	f, err := os.ReadFile(sshContext.KnownHostsFile)
 	if err != nil {
-		reporter(fmt.Sprintf("🚨 Error reading known_hosts %s file: %v", sshContext.KnownHostsFile, err))
+		log.Logf("🚨 Error reading known_hosts %s file: %v", sshContext.KnownHostsFile, err)
 		return
 	}
 
@@ -163,10 +149,10 @@ func updateKnownHosts(
 	if changed {
 		err = os.WriteFile(sshContext.KnownHostsFile, []byte(strings.Join(lines, "\n")), 0o644)
 		if err != nil {
-			reporter(fmt.Sprintf("🚨 Error writing known_hosts file: %v", err))
+			log.Logf("🚨 Error writing known_hosts file: %v", err)
 			return
 		}
-		reporter(fmt.Sprintf("📝 KnownHosts file %s updated for %s", sshContext.KnownHostsFile, linePrefix))
+		log.Logf("📝 KnownHosts file %s updated for %s", sshContext.KnownHostsFile, linePrefix)
 	}
 }
 
@@ -178,9 +164,9 @@ func (t *tunnel) connectWebsocket() (*websocket.Conn, error) {
 		if resp != nil {
 			body, _ := io.ReadAll(resp.Body)
 			defer closeIt(resp.Body)
-			t.reporter(string(body))
+			log.Log(string(body))
 		}
-		t.reporter(fmt.Sprintf("🚨 Failed to connect to WebSocket %q: %v\n", wsURL, err))
+		log.Logf("🚨 Failed to connect to WebSocket %q: %v\n", wsURL, err)
 		return nil, err
 	}
 	return conn, nil
@@ -232,7 +218,7 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 			if err != nil {
 				var ce *websocket.CloseError
 				if !errors.As(err, &ce) && !errors.Is(err, net.ErrClosed) {
-					t.reporter(fmt.Sprintf("🚨 Error reading from WebSocket: %v\n", err))
+					log.Logf("🚨 Error reading from WebSocket: %v\n", err)
 				}
 				return
 			}
@@ -242,7 +228,7 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 			if err != nil {
 				// Prevent logging expected errors when the connection is closed or aborted by the host
 				if !errors.Is(err, net.ErrClosed) && !strings.Contains(err.Error(), "wsasend") {
-					t.reporter(fmt.Sprintf("🚨 Error writing to TCP connection: %v\n", err))
+					log.Logf("🚨 Error writing to TCP connection: %v\n", err)
 				}
 				return
 			}
@@ -267,11 +253,11 @@ func (t *tunnel) refreshAuthToken(ctx context.Context) {
 func (t *tunnel) setAuthToken(ctx context.Context) {
 	tr, err := t.client.GenerateAccessToken(ctx, &workstationspb.GenerateAccessTokenRequest{Workstation: t.wsName})
 	if err != nil {
-		t.reporter(fmt.Sprintf("🚨 Error generating token: %v\n", err))
+		log.Logf("🚨 Error generating token: %v\n", err)
 		return
 	}
 	t.headers["Authorization"] = []string{"Bearer " + tr.GetAccessToken()}
-	t.reporter("🎫 Got new Tunnel Auth Token")
+	log.Log("🎫 Got new Tunnel Auth Token")
 }
 
 func closeIt(cl io.Closer) {

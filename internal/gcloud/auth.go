@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
+	golog "log"
 	"net"
 	"net/http"
 	"strconv"
@@ -17,6 +17,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
+	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/types"
 )
 
@@ -39,7 +40,7 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 	verifierBytes := make([]byte, 32)
 	_, err := rand.Read(verifierBytes)
 	if err != nil {
-		log.Fatalf("Failed to generate PKCE verifier: %v", err)
+		golog.Fatalf("🚨 Failed to generate PKCE verifier: %v", err)
 	}
 	codeVerifier = base64.RawURLEncoding.EncodeToString(verifierBytes)
 
@@ -82,7 +83,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	)
 
 	// Open URL in browser
-	fmt.Println("Opening URL:", authURL)
+	log.Log("Opening URL: " + authURL)
 	openBrowser(authURL)
 
 	// Create a channel for shutdown signaling
@@ -106,7 +107,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		)
 		if err != nil {
 			http.Error(w, "Failed to get token", http.StatusInternalServerError)
-			log.Fatalf("OAuth Exchange error: %v", err)
+			golog.Fatalf("🚨 OAuth Exchange error: %v", err)
 		}
 
 		// Save token
@@ -121,14 +122,14 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("Failed to start server: %v", err)
+			golog.Fatalf("🚨Failed to start server: %v", err)
 		}
 	}()
 
-	fmt.Println("Waiting for authentication...")
+	log.Log("Waiting for authentication...")
 	// Block until we receive a shutdown signal
 	token := <-shutdownChan
-	fmt.Println("Authenticated...")
+	log.Log("Authenticated...")
 	_ = server.Shutdown(ctx)
 	return newTokenSourceWithRefreshCheck(ctx, token, cfg), nil
 }

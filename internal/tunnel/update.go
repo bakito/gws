@@ -5,6 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/bakito/gws/internal/gcloud"
+	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/ssh"
 )
 
@@ -25,13 +26,15 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) startTunnel(passphrase string) tea.Cmd {
+	log.SetLogger(func(log string) {
+		select {
+		case m.LogChan <- log:
+		default:
+		}
+	})
+
 	return func() tea.Msg {
-		err := gcloud.TCPTunnelWithPassphrase(m.ctx, m.Config, m.Port, passphrase, func(log string) {
-			select {
-			case m.LogChan <- log:
-			default:
-			}
-		})
+		err := gcloud.TCPTunnelWithPassphrase(m.ctx, m.Config, m.Port, passphrase)
 		if err != nil {
 			return errMsg{err}
 		}

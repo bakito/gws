@@ -1,11 +1,11 @@
 package setup
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 
+	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/types"
 )
 
@@ -51,6 +51,6 @@ func SaveConfig(m Model) error {
 		return err
 	}
 
-	fmt.Printf("\n💾 Writing config to %s\n", configPath)
+	log.Logf("\n💾 Writing config to %s\n", configPath)
 	return config.SwitchContext(ctxName, true)
 }

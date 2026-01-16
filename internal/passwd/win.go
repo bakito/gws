@@ -3,14 +3,15 @@
 package passwd
 
 import (
-	"fmt"
 	"os"
 
 	"golang.org/x/term"
+
+	"github.com/bakito/gws/internal/log"
 )
 
 func Prompt(prompt string) (string, error) {
-	fmt.Printf("%s \n", prompt)
+	log.Logf("%s \n", prompt)
 	key, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
