@@ -33,6 +33,10 @@ func defaultReporter(s string) {
 }
 
 func TCPTunnel(ctx context.Context, cfg *types.Config, port int, reporter func(string)) error {
+	return TCPTunnelWithPassphrase(ctx, cfg, port, "", reporter)
+}
+
+func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int, passphrase string, reporter func(string)) error {
 	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
@@ -94,7 +98,7 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int, reporter func(s
 	}()
 
 	if sshContext.KnownHostsFile != "" {
-		go updateKnownHosts(sshContext, sshAddress, p, cfg.SSHTimeout(), reporter)
+		go updateKnownHosts(sshContext, sshAddress, p, passphrase, cfg.SSHTimeout(), reporter)
 	}
 
 	// Wait for either context cancellation or error
@@ -109,11 +113,22 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int, reporter func(s
 	}
 }
 
-func updateKnownHosts(sshContext *types.Context, address string, port int, timeout time.Duration, reporter func(string)) {
+func updateKnownHosts(
+	sshContext *types.Context,
+	address string,
+	port int,
+	passphrase string,
+	timeout time.Duration,
+	reporter func(string),
+) {
 	if sshContext.KnownHostsFile == "" {
 		return
 	}
-	c, err := ssh.NewClient(address, sshContext.User, sshContext.PrivateKeyFile, timeout)
+	var passBytes []byte
+	if passphrase != "" {
+		passBytes = []byte(passphrase)
+	}
+	c, err := ssh.NewClientWithPassphrase(address, sshContext.User, sshContext.PrivateKeyFile, timeout, passBytes)
 	if err != nil {
 		reporter(fmt.Sprintf("🚨 Error creating ssh client: %v", err))
 		return

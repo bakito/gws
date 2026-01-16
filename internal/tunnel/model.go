@@ -3,18 +3,23 @@ package tunnel
 import (
 	"context"
 
+	"github.com/charmbracelet/bubbles/textinput"
+
 	"github.com/bakito/gws/internal/types"
 )
 
 type Model struct {
-	Config   *types.Config
-	Port     int
-	Styles   *Styles
-	Width    int
-	Height   int
-	Logs     []string
-	Err      error
-	Quitting bool
+	Config            *types.Config
+	Port              int
+	Styles            *Styles
+	Width             int
+	Height            int
+	Logs              []string
+	Err               error
+	Quitting          bool
+	AskingPassphrase  bool
+	PassphraseInput   textinput.Model
+	PassphraseChecked bool
 
 	ctx    context.Context //nolint:containedctx
 	cancel context.CancelFunc
@@ -24,13 +29,20 @@ type Model struct {
 
 func NewModel(ctx context.Context, cfg *types.Config, port int) Model {
 	c, cancel := context.WithCancel(ctx)
+	ti := textinput.New()
+	ti.Placeholder = "Passphrase"
+	ti.EchoMode = textinput.EchoPassword
+	ti.EchoCharacter = '•'
+	ti.Focus()
+
 	return Model{
-		Config:  cfg,
-		Port:    port,
-		Styles:  DefaultStyles(),
-		ctx:     c,
-		cancel:  cancel,
-		LogChan: make(chan string, 10),
+		Config:          cfg,
+		Port:            port,
+		Styles:          DefaultStyles(),
+		ctx:             c,
+		cancel:          cancel,
+		LogChan:         make(chan string, 10),
+		PassphraseInput: ti,
 	}
 }
 

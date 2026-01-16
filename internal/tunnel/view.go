@@ -26,6 +26,13 @@ func (m Model) View() string {
 	b.WriteString(fmt.Sprintf("  Local Port: %d\n", port))
 	b.WriteString("\n")
 
+	if m.AskingPassphrase {
+		b.WriteString(m.Styles.Info.Render(" 🔐 SSH Key Passphrase"))
+		b.WriteString("\n")
+		b.WriteString(m.PassphraseInput.View())
+		b.WriteString("\n\n")
+	}
+
 	if m.Err != nil {
 		b.WriteString(m.Styles.ErrText.Render(fmt.Sprintf("Error: %v", m.Err)))
 		b.WriteString("\n\n")
