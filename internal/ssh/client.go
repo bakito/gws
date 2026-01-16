@@ -18,13 +18,17 @@ import (
 )
 
 func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client, error) {
+	return NewClientWithPassphrase(addr, user, privateKeyFile, timeout, nil)
+}
+
+func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Duration, passphrase []byte) (Client, error) {
 	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)
 	}
 
 	// Parse the private key
-	auth, err := evaluateAuthMethod(privateKey, privateKeyFile)
+	auth, err := evaluateAuthMethodWithPassphrase(privateKey, privateKeyFile, passphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +156,7 @@ func (c *client) Execute(command string) (string, error) {
 }
 
 func (c *client) CopyFile(from, to, permissions string) error {
-	fmt.Printf("Copy file form %q to %q with perissions %s\n", from, to, permissions)
+	fmt.Printf("Copy file form %q to %q with permissions %s\n", from, to, permissions)
 	// Open a file
 	f, _ := os.Open(env.ExpandEnv(from))
 	// Close the file after it has been copied
@@ -170,7 +174,23 @@ func (c *client) CopyFile(from, to, permissions string) error {
 	return nil
 }
 
-func evaluateAuthMethod(privateKey []byte, privateKeyFile string) (ssh.AuthMethod, error) {
+func NeedsPassphrase(privateKeyFile string) (bool, error) {
+	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
+	if err != nil {
+		return false, fmt.Errorf("failed to read private key: %w", err)
+	}
+
+	_, err = ssh.ParsePrivateKey(privateKey)
+	if err != nil {
+		var missingPassphraseErr *ssh.PassphraseMissingError
+		if errors.As(err, &missingPassphraseErr) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func evaluateAuthMethodWithPassphrase(privateKey []byte, privateKeyFile string, passphrase []byte) (ssh.AuthMethod, error) {
 	auth, err := getSSHAgentAuthMethod()
 	if err != nil {
 		return nil, err
@@ -187,9 +207,12 @@ func evaluateAuthMethod(privateKey []byte, privateKeyFile string) (ssh.AuthMetho
 			return nil, fmt.Errorf("failed to parse private key: %w", err)
 		}
 
-		pass, err := passwd.Prompt(fmt.Sprintf("🔐 Please enter the passphrase for private key (%s):", privateKeyFile))
-		if err != nil {
-			return nil, err
+		pass := string(passphrase)
+		if len(passphrase) == 0 {
+			pass, err = passwd.Prompt(fmt.Sprintf("🔐 Please enter the passphrase for private key (%s):", privateKeyFile))
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		passBytes := []byte(pass)

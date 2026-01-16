@@ -1,13 +1,10 @@
 package cmd
 
 import (
-	"context"
-	"os/signal"
-	"syscall"
-
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/internal/gcloud"
+	"github.com/bakito/gws/internal/tunnel"
 )
 
 var (
@@ -19,7 +16,7 @@ var (
 var tunnelCmd = &cobra.Command{
 	Use:   "tunnel",
 	Short: "tunnel a workstation",
-	RunE: func(_ *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if flagContext == "" && len(args) == 1 {
 			flagContext = args[0]
 		}
@@ -29,9 +26,10 @@ var tunnelCmd = &cobra.Command{
 			return err
 		}
 
-		ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-		defer stop()
-		return gcloud.TCPTunnel(ctx, cfg, flagLocalPort)
+		m := tunnel.NewModel(cmd.Context(), cfg, flagLocalPort)
+		p := tea.NewProgram(m, tea.WithAltScreen())
+		_, err = p.Run()
+		return err
 	},
 }
 

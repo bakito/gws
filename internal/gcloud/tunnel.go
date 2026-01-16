@@ -21,24 +21,38 @@ import (
 )
 
 type tunnel struct {
-	headers http.Header
-	wsName  string
-	wsHost  string
-	client  *workstations.Client
+	headers  http.Header
+	wsName   string
+	wsHost   string
+	client   *workstations.Client
+	reporter func(string)
 }
 
-func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
+func defaultReporter(s string) {
+	fmt.Println(s)
+}
+
+func TCPTunnel(ctx context.Context, cfg *types.Config, port int, reporter func(string)) error {
+	return TCPTunnelWithPassphrase(ctx, cfg, port, "", reporter)
+}
+
+func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int, passphrase string, reporter func(string)) error {
 	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
 	}
 	defer closeIt(c)
 
+	if reporter == nil {
+		reporter = defaultReporter
+	}
+
 	t := &tunnel{
-		headers: http.Header{},
-		wsHost:  ws.GetHost(),
-		wsName:  ws.GetName(),
-		client:  c,
+		headers:  http.Header{},
+		wsHost:   ws.GetHost(),
+		wsName:   ws.GetName(),
+		client:   c,
+		reporter: reporter,
 	}
 	go t.refreshAuthToken(ctx)
 	t.setAuthToken(ctx)
@@ -52,12 +66,12 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	sshAddress := net.JoinHostPort("127.0.0.1", strconv.Itoa(p))
 	listener, err := lc.Listen(ctx, "tcp", sshAddress)
 	if err != nil {
-		fmt.Printf("Failed to start TCP listener: %v\n", err)
+		reporter(fmt.Sprintf("🚨 Failed to start TCP listener: %v", err))
 		return err
 	}
 	defer closeIt(listener)
 
-	fmt.Printf("🕳️ Opening tunnel to %s and listening on local ssh port %d ...\n", sshContext.GCloud.Name, p)
+	reporter(fmt.Sprintf("🕳️ Opening tunnel to %s and listening on local ssh port %d ...", sshContext.GCloud.Name, p))
 
 	// Create an error channel to handle errors from goroutines
 	errChan := make(chan error, 1)
@@ -73,18 +87,18 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 				clientConn, err := listener.Accept()
 				if err != nil {
 					if !errors.Is(err, net.ErrClosed) {
-						fmt.Printf("Failed to accept connection: %v\n", err)
+						reporter(fmt.Sprintf("🚨 Failed to accept connection: %v", err))
 					}
 					continue
 				}
-				fmt.Println("🤝 Accepted TCP connection")
+				reporter("🤝 Accepted TCP connection")
 				go t.handleConnection(clientConn)
 			}
 		}
 	}()
 
 	if sshContext.KnownHostsFile != "" {
-		go updateKnownHosts(sshContext, sshAddress, p, cfg.SSHTimeout())
+		go updateKnownHosts(sshContext, sshAddress, p, passphrase, cfg.SSHTimeout(), reporter)
 	}
 
 	// Wait for either context cancellation or error
@@ -99,20 +113,31 @@ func TCPTunnel(ctx context.Context, cfg *types.Config, port int) error {
 	}
 }
 
-func updateKnownHosts(sshContext *types.Context, address string, port int, timeout time.Duration) {
+func updateKnownHosts(
+	sshContext *types.Context,
+	address string,
+	port int,
+	passphrase string,
+	timeout time.Duration,
+	reporter func(string),
+) {
 	if sshContext.KnownHostsFile == "" {
 		return
 	}
-	c, err := ssh.NewClient(address, sshContext.User, sshContext.PrivateKeyFile, timeout)
+	var passBytes []byte
+	if passphrase != "" {
+		passBytes = []byte(passphrase)
+	}
+	c, err := ssh.NewClientWithPassphrase(address, sshContext.User, sshContext.PrivateKeyFile, timeout, passBytes)
 	if err != nil {
-		fmt.Printf("Error creating ssh client: %v\n", err)
+		reporter(fmt.Sprintf("🚨 Error creating ssh client: %v", err))
 		return
 	}
 	defer c.Close()
 
 	f, err := os.ReadFile(sshContext.KnownHostsFile)
 	if err != nil {
-		fmt.Printf("Error reading known_hosts %s file: %v\n", sshContext.KnownHostsFile, err)
+		reporter(fmt.Sprintf("🚨 Error reading known_hosts %s file: %v", sshContext.KnownHostsFile, err))
 		return
 	}
 
@@ -138,10 +163,10 @@ func updateKnownHosts(sshContext *types.Context, address string, port int, timeo
 	if changed {
 		err = os.WriteFile(sshContext.KnownHostsFile, []byte(strings.Join(lines, "\n")), 0o644)
 		if err != nil {
-			fmt.Printf("Error writing known_hosts file: %v\n", err)
+			reporter(fmt.Sprintf("🚨 Error writing known_hosts file: %v", err))
 			return
 		}
-		fmt.Printf("📝 KnownHosts file %s updated for %s\n", sshContext.KnownHostsFile, linePrefix)
+		reporter(fmt.Sprintf("📝 KnownHosts file %s updated for %s", sshContext.KnownHostsFile, linePrefix))
 	}
 }
 
@@ -153,9 +178,9 @@ func (t *tunnel) connectWebsocket() (*websocket.Conn, error) {
 		if resp != nil {
 			body, _ := io.ReadAll(resp.Body)
 			defer closeIt(resp.Body)
-			fmt.Println(string(body))
+			t.reporter(string(body))
 		}
-		fmt.Printf("Failed to connect to WebSocket %q: %v\n", wsURL, err)
+		t.reporter(fmt.Sprintf("🚨 Failed to connect to WebSocket %q: %v\n", wsURL, err))
 		return nil, err
 	}
 	return conn, nil
@@ -207,7 +232,7 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 			if err != nil {
 				var ce *websocket.CloseError
 				if !errors.As(err, &ce) && !errors.Is(err, net.ErrClosed) {
-					fmt.Printf("Error reading from WebSocket: %v\n", err)
+					t.reporter(fmt.Sprintf("🚨 Error reading from WebSocket: %v\n", err))
 				}
 				return
 			}
@@ -217,7 +242,7 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 			if err != nil {
 				// Prevent logging expected errors when the connection is closed or aborted by the host
 				if !errors.Is(err, net.ErrClosed) && !strings.Contains(err.Error(), "wsasend") {
-					fmt.Printf("Error writing to TCP connection: %v\n", err)
+					t.reporter(fmt.Sprintf("🚨 Error writing to TCP connection: %v\n", err))
 				}
 				return
 			}
@@ -242,11 +267,11 @@ func (t *tunnel) refreshAuthToken(ctx context.Context) {
 func (t *tunnel) setAuthToken(ctx context.Context) {
 	tr, err := t.client.GenerateAccessToken(ctx, &workstationspb.GenerateAccessTokenRequest{Workstation: t.wsName})
 	if err != nil {
-		fmt.Printf("Error generating token: %v\n", err)
+		t.reporter(fmt.Sprintf("🚨 Error generating token: %v\n", err))
 		return
 	}
 	t.headers["Authorization"] = []string{"Bearer " + tr.GetAccessToken()}
-	fmt.Println("🎫 Got new Tunnel Auth Token")
+	t.reporter("🎫 Got new Tunnel Auth Token")
 }
 
 func closeIt(cl io.Closer) {
