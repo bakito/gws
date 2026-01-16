@@ -40,7 +40,7 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 	verifierBytes := make([]byte, 32)
 	_, err := rand.Read(verifierBytes)
 	if err != nil {
-		log.Logf("🚨 Failed to generate PKCE verifier: %v", err)
+		golog.Fatalf("🚨 Failed to generate PKCE verifier: %v", err)
 	}
 	codeVerifier = base64.RawURLEncoding.EncodeToString(verifierBytes)
 
@@ -107,7 +107,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		)
 		if err != nil {
 			http.Error(w, "Failed to get token", http.StatusInternalServerError)
-			log.Logf("🚨 OAuth Exchange error: %v", err)
+			golog.Fatalf("🚨 OAuth Exchange error: %v", err)
 		}
 
 		// Save token
@@ -126,10 +126,10 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		}
 	}()
 
-	fmt.Println("Waiting for authentication...")
+	log.Log("Waiting for authentication...")
 	// Block until we receive a shutdown signal
 	token := <-shutdownChan
-	fmt.Println("Authenticated...")
+	log.Log("Authenticated...")
 	_ = server.Shutdown(ctx)
 	return newTokenSourceWithRefreshCheck(ctx, token, cfg), nil
 }

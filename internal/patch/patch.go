@@ -2,16 +2,16 @@ package patch
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/bakito/gws/internal/env"
+	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/types"
 )
 
 func Patch(id string, filePatch types.FilePatch) error {
-	fmt.Printf("Patching file %q\n", id)
+	log.Logf("Patching file %q\n", id)
 	// Read the content of the file
 	lines, err := readLines(filePatch.File)
 	if err != nil {
@@ -37,8 +37,8 @@ func Patch(id string, filePatch types.FilePatch) error {
 
 		// Backup the original file
 		backupFileName := filePatch.File + ".bak"
-		fmt.Printf("Backup created: %s\n", backupFileName)
-		fmt.Printf("Original file %q back-upped to %s\n", id, backupFileName)
+		log.Logf("Backup created: %s\n", backupFileName)
+		log.Logf("Original file %q back-upped to %s\n", id, backupFileName)
 		err = backupFile(filePatch.File, backupFileName)
 		if err != nil {
 			return err
@@ -50,9 +50,9 @@ func Patch(id string, filePatch types.FilePatch) error {
 			return err
 		}
 
-		fmt.Printf("Successfully patched %q\n", id)
+		log.Logf("Successfully patched %q\n", id)
 	} else {
-		fmt.Printf("No patching required %q\n", id)
+		log.Logf("No patching required %q\n", id)
 	}
 	return nil
 }

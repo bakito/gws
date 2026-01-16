@@ -14,6 +14,7 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 
 	"github.com/bakito/gws/internal/env"
+	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/passwd"
 )
 
@@ -55,7 +56,7 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 
 	var sshClient *ssh.Client
 	if timeout > 0 {
-		fmt.Printf("⏲  Using ssh client with timeout %s\n", timeout.String())
+		log.Logf("⏲  Using ssh client with timeout %s\n", timeout.String())
 		clientConfig.Timeout = timeout
 		sshClient, err = clientWithTimeout(addr, timeout, clientConfig)
 	} else {
@@ -138,7 +139,7 @@ func (c *client) KnownHostsEntry() string {
 }
 
 func (c *client) Execute(command string) (string, error) {
-	fmt.Printf("Executing ssh %q\n", command)
+	log.Logf("Executing ssh %q\n", command)
 
 	// Start a new SSH session
 	session, err := c.sshClient.NewSession()
@@ -156,7 +157,7 @@ func (c *client) Execute(command string) (string, error) {
 }
 
 func (c *client) CopyFile(from, to, permissions string) error {
-	fmt.Printf("Copy file form %q to %q with permissions %s\n", from, to, permissions)
+	log.Logf("Copy file form %q to %q with permissions %s\n", from, to, permissions)
 	// Open a file
 	f, _ := os.Open(env.ExpandEnv(from))
 	// Close the file after it has been copied

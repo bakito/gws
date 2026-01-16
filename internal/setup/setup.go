@@ -2,10 +2,10 @@ package setup
 
 import (
 	"errors"
-	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/types"
 )
 
@@ -19,7 +19,7 @@ func Run(cfg *types.Config, context string) error {
 
 	if model, ok := m.(Model); ok {
 		if model.Aborted {
-			fmt.Println("Setup aborted.")
+			log.Log("Setup aborted.")
 			return nil
 		}
 		return SaveConfig(model)

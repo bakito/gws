@@ -40,7 +40,7 @@ func (c *Config) Load(fileName string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Using config: %s\n", file)
+	log.Logf("Using config: %s\n", file)
 
 	err = yaml.Unmarshal(data, c)
 	if err != nil {
@@ -92,7 +92,7 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 				return "", nil, fmt.Errorf("%w: config file not found", os.ErrNotExist)
 			}
 			file = legacyPath
-			fmt.Printf("⚠️  Using legacy config location. Consider moving to: %s\n", newConfigPath)
+			log.Logf("⚠️  Using legacy config location. Consider moving to: %s\n", newConfigPath)
 		}
 	}
 
