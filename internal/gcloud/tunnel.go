@@ -168,47 +168,59 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 		return
 	}
 
+	// Create a local context to coordinate the shutdown of both goroutines
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	defer closeIt(clientConn)
 	defer closeIt(wsConn)
 
 	// Create a goroutine to send data from TCP client to WebSocket
 	go func() {
+		defer cancel() // Trigger cancel if the TCP client disconnects
+		buf := make([]byte, 32*1024)
 		for {
-			buf := make([]byte, 1024)
-			n, err := clientConn.Read(buf)
-			if err != nil {
-				if !errors.Is(err, io.EOF) {
-					fmt.Printf("Error reading from TCP connection: %v\n", err)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				n, err := clientConn.Read(buf)
+				if err != nil {
+					return // EOF or closed connection is handled by the defer cancel()
 				}
-				return
-			}
 
-			// Send TCP data over WebSocket
-			if err := wsConn.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
-				fmt.Printf("Error sending data over WebSocket: %v\n", err)
-				return
+				// Send TCP data over WebSocket
+				if err := wsConn.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
+					return
+				}
 			}
 		}
 	}()
 
 	// Read data from WebSocket and send to the TCP client
 	for {
-		_, msg, err := wsConn.ReadMessage()
-		var ce *websocket.CloseError
-		if err != nil {
-			if errors.As(err, &ce) {
-				fmt.Println("👋 Connection closed")
-			} else {
-				fmt.Printf("Error reading from WebSocket: %v\n", err)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			_, msg, err := wsConn.ReadMessage()
+			if err != nil {
+				var ce *websocket.CloseError
+				if !errors.As(err, &ce) && !errors.Is(err, net.ErrClosed) {
+					fmt.Printf("Error reading from WebSocket: %v\n", err)
+				}
+				return
 			}
-			return
-		}
 
-		// Send WebSocket data to the TCP client
-		_, err = clientConn.Write(msg)
-		if err != nil {
-			fmt.Printf("Error writing to TCP connection: %v\n", err)
-			return
+			// Send WebSocket data to the TCP client
+			_, err = clientConn.Write(msg)
+			if err != nil {
+				// Prevent logging expected errors when the connection is closed or aborted by the host
+				if !errors.Is(err, net.ErrClosed) && !strings.Contains(err.Error(), "wsasend") {
+					fmt.Printf("Error writing to TCP connection: %v\n", err)
+				}
+				return
+			}
 		}
 	}
 }
