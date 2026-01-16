@@ -7,6 +7,7 @@ var (
 	HotPink   = lipgloss.Color("205")
 	DarkGray  = lipgloss.Color("240")
 	LightGray = lipgloss.Color("244")
+	Green     = lipgloss.Color("42")
 )
 
 type Styles struct {
@@ -32,7 +33,7 @@ func DefaultStyles() *Styles {
 		Padding(1, 2)
 	s.Label = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(DarkGray).
+		Foreground(Green).
 		Padding(0, 2)
 	s.Title = lipgloss.NewStyle().
 		Bold(true).

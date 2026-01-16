@@ -7,7 +7,6 @@ import (
 var (
 	Indigo    = lipgloss.Color("63")
 	HotPink   = lipgloss.Color("205")
-	DarkGray  = lipgloss.Color("240")
 	LightGray = lipgloss.Color("244")
 	Green     = lipgloss.Color("42")
 )
