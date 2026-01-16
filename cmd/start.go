@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/gcloud"
+	"github.com/bakito/gws/internal/types"
 )
 
 // startCmd represents the start command.
@@ -24,10 +25,14 @@ var startCmd = &cobra.Command{
 			return err
 		}
 
-		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-		defer stop()
-		return gcloud.StartWorkstation(ctx, cfg)
+		return startWorkstation(cfg)
 	},
+}
+
+func startWorkstation(cfg *types.Config) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	return gcloud.StartWorkstation(ctx, cfg)
 }
 
 func init() {

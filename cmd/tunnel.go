@@ -26,6 +26,10 @@ var tunnelCmd = &cobra.Command{
 			return err
 		}
 
+		if err := startWorkstation(cfg); err != nil {
+			return err
+		}
+
 		m := tunnel.NewModel(cmd.Context(), cfg, flagLocalPort)
 		p := tea.NewProgram(m, tea.WithAltScreen())
 		_, err = p.Run()
