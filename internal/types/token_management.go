@@ -73,7 +73,7 @@ func SaveToken(token oauth2.Token) error {
 		return err
 	}
 
-	log.Logf("🎟️ Got new Google Access Token (expires: %s)\n", token.Expiry.Format(time.RFC822))
+	log.Logf("🎟️ Got new Google Access Token (expires: %s)", token.Expiry.Format(time.RFC822))
 	return os.WriteFile(tokenPath, buf.Bytes(), 0o600)
 }
 
