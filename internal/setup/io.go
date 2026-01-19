@@ -51,6 +51,6 @@ func SaveConfig(m Model) error {
 		return err
 	}
 
-	log.Logf("\n💾 Writing config to %s\n", configPath)
+	log.Logf("\n💾 Writing config to %s", configPath)
 	return config.SwitchContext(ctxName, true)
 }
