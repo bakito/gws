@@ -36,7 +36,7 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 	case workstationspb.Workstation_STATE_STOPPED:
 		op, err := c.StartWorkstation(ctx, &workstationspb.StartWorkstationRequest{Name: ws.GetName()})
 		if err != nil {
-			log.Logf("Error starting workstation: %v\n", err)
+			log.Logf("Error starting workstation: %v", err)
 			return err
 		}
 		spinny := spinner.Start(fmt.Sprintf(" Waiting for workstation %s to start...", sshContext.GCloud.Name))
@@ -44,12 +44,12 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 		_, err = op.Wait(ctx)
 		spinny.Stop()
 		if err != nil {
-			log.Logf("Error waiting for workstation to start: %v\n", err)
+			log.Logf("Error waiting for workstation to start: %v", err)
 			return err
 		}
-		log.Logf("Workstation started in %s %q\n", time.Since(start).String(), sshContext.GCloud.Name)
+		log.Logf("Workstation started in %s %q", time.Since(start).String(), sshContext.GCloud.Name)
 	case workstationspb.Workstation_STATE_RUNNING:
-		log.Logf("Workstation running %q\n", sshContext.GCloud.Name)
+		log.Logf("Workstation running %q", sshContext.GCloud.Name)
 	case workstationspb.Workstation_STATE_STARTING:
 		spinny := spinner.Start(fmt.Sprintf(" Workstation %s is already starting ...", sshContext.GCloud.Name))
 		defer spinny.Stop() // reset the terminal in case of a panic
@@ -62,9 +62,9 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 		}
 
 		if ws.GetState() == workstationspb.Workstation_STATE_RUNNING {
-			log.Logf("Workstation started in %s %q\n", time.Since(start).String(), sshContext.GCloud.Name)
+			log.Logf("Workstation started in %s %q", time.Since(start).String(), sshContext.GCloud.Name)
 		} else {
-			log.Logf("Workstation is in unexpected state: %s\n", ws.GetState())
+			log.Logf("Workstation is in unexpected state: %s", ws.GetState())
 		}
 	default:
 	}
@@ -117,13 +117,13 @@ func setup(ctx context.Context, cfg *types.Config) (*types.Context, *workstation
 	// Default credentials: ${HOME}/.config/gcloud/application_default_credentials.json
 	tokenSource, err := Login(ctx, cfg)
 	if err != nil {
-		log.Logf("Error getting OAUTH token: %v\n", err)
+		log.Logf("Error getting OAUTH token: %v", err)
 		return nil, nil, nil, err
 	}
 
 	c, err := workstations.NewClient(ctx, option.WithTokenSource(tokenSource))
 	if err != nil {
-		log.Logf("Error creating workstations client: %v\n", err)
+		log.Logf("Error creating workstations client: %v", err)
 		return nil, nil, nil, err
 	}
 	wsName := fmt.Sprintf("projects/%s/locations/%s/workstationClusters/%s/workstationConfigs/%s/workstations/%s",
@@ -136,7 +136,7 @@ func setup(ctx context.Context, cfg *types.Config) (*types.Context, *workstation
 
 	ws, err := c.GetWorkstation(ctx, &workstationspb.GetWorkstationRequest{Name: wsName})
 	if err != nil {
-		log.Logf("Error getting workstation: %v\n", err)
+		log.Logf("Error getting workstation: %v", err)
 		return nil, nil, nil, err
 	}
 	return sshContext, c, ws, err
@@ -153,7 +153,7 @@ func StopWorkstation(ctx context.Context, cfg *types.Config) error {
 	if ws.GetState() != workstationspb.Workstation_STATE_STOPPED {
 		op, err := c.StopWorkstation(ctx, &workstationspb.StopWorkstationRequest{Name: ws.GetName()})
 		if err != nil {
-			log.Logf("Error stopping workstation: %v\n", err)
+			log.Logf("Error stopping workstation: %v", err)
 			return err
 		}
 		spinny := spinner.Start(fmt.Sprintf(" Waiting for workstation %s to stop...", sshContext.GCloud.Name))
@@ -161,12 +161,12 @@ func StopWorkstation(ctx context.Context, cfg *types.Config) error {
 
 		_, err = op.Wait(ctx)
 		if err != nil {
-			log.Logf("Error waiting for workstation to stop: %v\n", err)
+			log.Logf("Error waiting for workstation to stop: %v", err)
 			return err
 		}
 		spinny.Stop()
 	}
-	log.Logf("Workstation stopped %q\n", sshContext.GCloud.Name)
+	log.Logf("Workstation stopped %q", sshContext.GCloud.Name)
 	return nil
 }
 
@@ -204,7 +204,7 @@ func DeleteWorkstation(ctx context.Context, cfg *types.Config) error {
 
 	op, err := c.DeleteWorkstation(ctx, &workstationspb.DeleteWorkstationRequest{Name: ws.GetName()})
 	if err != nil {
-		log.Logf("Error deleting workstation: %v\n", err)
+		log.Logf("Error deleting workstation: %v", err)
 		return err
 	}
 	spinny := spinner.Start(fmt.Sprintf(" Deleting workstation %s to stop...", sshContext.GCloud.Name))
@@ -212,7 +212,7 @@ func DeleteWorkstation(ctx context.Context, cfg *types.Config) error {
 
 	_, err = op.Wait(ctx)
 	if err != nil {
-		log.Logf("Error waiting for workstation to be deleted: %v\n", err)
+		log.Logf("Error waiting for workstation to be deleted: %v", err)
 		return err
 	}
 	spinny.Stop()

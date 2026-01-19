@@ -11,7 +11,7 @@ import (
 )
 
 func Patch(id string, filePatch types.FilePatch) error {
-	log.Logf("Patching file %q\n", id)
+	log.Logf("Patching file %q", id)
 	// Read the content of the file
 	lines, err := readLines(filePatch.File)
 	if err != nil {
@@ -37,8 +37,8 @@ func Patch(id string, filePatch types.FilePatch) error {
 
 		// Backup the original file
 		backupFileName := filePatch.File + ".bak"
-		log.Logf("Backup created: %s\n", backupFileName)
-		log.Logf("Original file %q back-upped to %s\n", id, backupFileName)
+		log.Logf("Backup created: %s", backupFileName)
+		log.Logf("Original file %q back-upped to %s", id, backupFileName)
 		err = backupFile(filePatch.File, backupFileName)
 		if err != nil {
 			return err
@@ -50,9 +50,9 @@ func Patch(id string, filePatch types.FilePatch) error {
 			return err
 		}
 
-		log.Logf("Successfully patched %q\n", id)
+		log.Logf("Successfully patched %q", id)
 	} else {
-		log.Logf("No patching required %q\n", id)
+		log.Logf("No patching required %q", id)
 	}
 	return nil
 }
