@@ -11,7 +11,7 @@ func SetLogger(l Logger) {
 }
 
 var logger = func(s string) {
-	fmt.Println(s)
+	fmt.Print(s)
 }
 
 func Log(s string) {
