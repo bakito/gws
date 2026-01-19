@@ -147,7 +147,7 @@ func (c *Config) SetToken(token oauth2.Token) error {
 	}
 
 	if c.Token.Token.AccessToken != token.AccessToken {
-		log.Logf("🎟️ Got new Google Access Token (expires: %s)\n", token.Expiry.Format(time.RFC822))
+		log.Logf("🎟️ Got new Google Access Token (expires: %s)", token.Expiry.Format(time.RFC822))
 		c.Token.Token = token
 		return SaveToken(c.Token.Token)
 	}
