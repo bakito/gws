@@ -40,7 +40,7 @@ func (c *Config) Load(fileName string) error {
 	if err != nil {
 		return err
 	}
-	log.Logf("Using config: %s\n", file)
+	log.Logf("Using config: %s", file)
 
 	err = yaml.Unmarshal(data, c)
 	if err != nil {
@@ -86,13 +86,13 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 		if _, err := os.Stat(newConfigPath); err == nil {
 			file = newConfigPath
 		} else {
-			// Fallback to legacy location for backward compatibility
+			// Fallback to the legacy location for backward compatibility
 			legacyPath := filepath.Join(userHomeDir, ".gws.yaml")
 			if _, err := os.Stat(legacyPath); err != nil {
 				return "", nil, fmt.Errorf("%w: config file not found", os.ErrNotExist)
 			}
 			file = legacyPath
-			log.Logf("⚠️  Using legacy config location. Consider moving to: %s\n", newConfigPath)
+			log.Logf("⚠️  Using legacy config location. Consider moving to: %s", newConfigPath)
 		}
 	}
 
@@ -147,7 +147,7 @@ func (c *Config) SetToken(token oauth2.Token) error {
 	}
 
 	if c.Token.Token.AccessToken != token.AccessToken {
-		log.Logf("🎟️ Got new Google Access Token (expires: %s)\n", token.Expiry.Format(time.RFC822))
+		log.Logf("🎟️ Got new Google Access Token (expires: %s)", token.Expiry.Format(time.RFC822))
 		c.Token.Token = token
 		return SaveToken(c.Token.Token)
 	}

@@ -139,7 +139,7 @@ func (c *client) KnownHostsEntry() string {
 }
 
 func (c *client) Execute(command string) (string, error) {
-	log.Logf("Executing ssh %q\n", command)
+	log.Logf("Executing ssh %q", command)
 
 	// Start a new SSH session
 	session, err := c.sshClient.NewSession()
@@ -157,7 +157,7 @@ func (c *client) Execute(command string) (string, error) {
 }
 
 func (c *client) CopyFile(from, to, permissions string) error {
-	log.Logf("Copy file form %q to %q with permissions %s\n", from, to, permissions)
+	log.Logf("Copy file form %q to %q with permissions %s", from, to, permissions)
 	// Open a file
 	f, _ := os.Open(env.ExpandEnv(from))
 	// Close the file after it has been copied
