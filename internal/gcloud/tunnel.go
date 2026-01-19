@@ -166,7 +166,7 @@ func (t *tunnel) connectWebsocket() (*websocket.Conn, error) {
 			defer closeIt(resp.Body)
 			log.Log(string(body))
 		}
-		log.Logf("🚨 Failed to connect to WebSocket %q: %v\n", wsURL, err)
+		log.Logf("🚨 Failed to connect to WebSocket %q: %v", wsURL, err)
 		return nil, err
 	}
 	return conn, nil
@@ -218,7 +218,7 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 			if err != nil {
 				var ce *websocket.CloseError
 				if !errors.As(err, &ce) && !errors.Is(err, net.ErrClosed) {
-					log.Logf("🚨 Error reading from WebSocket: %v\n", err)
+					log.Logf("🚨 Error reading from WebSocket: %v", err)
 				}
 				return
 			}
@@ -228,7 +228,7 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 			if err != nil {
 				// Prevent logging expected errors when the connection is closed or aborted by the host
 				if !errors.Is(err, net.ErrClosed) && !strings.Contains(err.Error(), "wsasend") {
-					log.Logf("🚨 Error writing to TCP connection: %v\n", err)
+					log.Logf("🚨 Error writing to TCP connection: %v", err)
 				}
 				return
 			}
@@ -253,7 +253,7 @@ func (t *tunnel) refreshAuthToken(ctx context.Context) {
 func (t *tunnel) setAuthToken(ctx context.Context) {
 	tr, err := t.client.GenerateAccessToken(ctx, &workstationspb.GenerateAccessTokenRequest{Workstation: t.wsName})
 	if err != nil {
-		log.Logf("🚨 Error generating token: %v\n", err)
+		log.Logf("🚨 Error generating token: %v", err)
 		return
 	}
 	t.headers["Authorization"] = []string{"Bearer " + tr.GetAccessToken()}
