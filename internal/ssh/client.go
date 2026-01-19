@@ -56,7 +56,7 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 
 	var sshClient *ssh.Client
 	if timeout > 0 {
-		log.Logf("⏲  Using ssh client with timeout %s\n", timeout.String())
+		log.Logf("⏲  Using ssh client with timeout %s", timeout.String())
 		clientConfig.Timeout = timeout
 		sshClient, err = clientWithTimeout(addr, timeout, clientConfig)
 	} else {
