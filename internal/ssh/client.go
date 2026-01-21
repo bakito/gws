@@ -42,7 +42,7 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 		HostKeyCallback: func(_ string, remote net.Addr, key ssh.PublicKey) error {
 			// #nosec G106: Insecure, as we always get a new cert with gcloud
 			if tcpAddr, ok := remote.(*net.TCPAddr); ok {
-				knownHostsEntry = FormatHostKey(tcpAddr, key)
+				knownHostsEntry = formatHostKey(tcpAddr, key)
 			}
 			return nil
 		},
@@ -74,7 +74,7 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 	}, nil
 }
 
-func FormatHostKey(tcpAddr *net.TCPAddr, key ssh.PublicKey) string {
+func formatHostKey(tcpAddr *net.TCPAddr, key ssh.PublicKey) string {
 	return fmt.Sprintf(
 		"[%s]:%d %s %s",
 		tcpAddr.IP,
@@ -85,7 +85,7 @@ func FormatHostKey(tcpAddr *net.TCPAddr, key ssh.PublicKey) string {
 }
 
 // GetHostKey fetches the host public key without authenticating.
-func GetHostKey(addr string, timeout time.Duration) (ssh.PublicKey, *net.TCPAddr, error) {
+func GetHostKey(addr string, timeout time.Duration) (string, error) {
 	var hostKey ssh.PublicKey
 
 	config := &ssh.ClientConfig{
@@ -101,7 +101,7 @@ func GetHostKey(addr string, timeout time.Duration) (ssh.PublicKey, *net.TCPAddr
 	dialer := net.Dialer{Timeout: timeout}
 	conn, err := dialer.Dial("tcp", addr)
 	if err != nil {
-		return nil, nil, err
+		return "", err
 	}
 	defer conn.Close()
 
@@ -113,13 +113,14 @@ func GetHostKey(addr string, timeout time.Duration) (ssh.PublicKey, *net.TCPAddr
 	}
 
 	if hostKey == nil {
-		return nil, nil, errors.New("failed to extract host key")
+		return "", errors.New("failed to extract host key")
 	}
 	tcpAddr, ok := conn.RemoteAddr().(*net.TCPAddr)
 	if !ok {
-		return nil, nil, errors.New("failed to extract tcp address")
+		return "", errors.New("failed to extract tcp address")
 	}
-	return hostKey, tcpAddr, nil
+
+	return formatHostKey(tcpAddr, hostKey), nil
 }
 
 func clientWithTimeout(addr string, timeout time.Duration, clientConfig *ssh.ClientConfig) (*ssh.Client, error) {

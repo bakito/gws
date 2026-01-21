@@ -111,13 +111,11 @@ func updateKnownHosts(
 	}
 
 	// Get host key by connecting to the address
-	hostKey, addr, err := ssh.GetHostKey(address, timeout)
+	knownHost, err := ssh.GetHostKey(address, timeout)
 	if err != nil {
 		log.Logf("🚨 Error getting host key: %v", err)
 		return
 	}
-
-	knownHost := ssh.FormatHostKey(addr, hostKey)
 
 	f, err := os.ReadFile(sshContext.KnownHostsFile)
 	if err != nil {
