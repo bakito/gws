@@ -55,13 +55,9 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 	}
 
 	var sshClient *ssh.Client
-	if timeout > 0 {
-		log.Logf("⏲  Using ssh client with timeout %s", timeout.String())
-		clientConfig.Timeout = timeout
-		sshClient, err = clientWithTimeout(addr, timeout, clientConfig)
-	} else {
-		sshClient, err = defaultClient(addr, clientConfig)
-	}
+	log.Logf("⏲  Using ssh client with timeout %s", timeout.String())
+	clientConfig.Timeout = timeout
+	sshClient, err = clientWithTimeout(addr, timeout, clientConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -101,15 +97,6 @@ func clientWithTimeout(addr string, timeout time.Duration, clientConfig *ssh.Cli
 		return nil, fmt.Errorf("failed to create SSH connection: %w", err)
 	}
 	sshClient := ssh.NewClient(sshConn, chans, reqs)
-	return sshClient, nil
-}
-
-func defaultClient(addr string, clientConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	// Connect to the SSH server
-	sshClient, err := ssh.Dial("tcp", addr, clientConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to SSH server: %w", err)
-	}
 	return sshClient, nil
 }
 
