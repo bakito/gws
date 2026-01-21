@@ -69,6 +69,9 @@ func (c *Config) Load(fileName string) error {
 }
 
 func (c *Config) SSHTimeout() time.Duration {
+	if c.SSHTimeoutSeconds <= 0 {
+		return 30 * time.Second
+	}
 	return time.Duration(c.SSHTimeoutSeconds) * time.Second
 }
 
