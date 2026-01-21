@@ -42,13 +42,7 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 		HostKeyCallback: func(_ string, remote net.Addr, key ssh.PublicKey) error {
 			// #nosec G106: Insecure, as we always get a new cert with gcloud
 			if tcpAddr, ok := remote.(*net.TCPAddr); ok {
-				knownHostsEntry = fmt.Sprintf(
-					"[%s]:%d %s %s",
-					tcpAddr.IP,
-					tcpAddr.Port,
-					key.Type(),
-					base64.StdEncoding.EncodeToString(key.Marshal()),
-				)
+				knownHostsEntry = FormatHostKey(tcpAddr, key)
 			}
 			return nil
 		},
@@ -78,6 +72,54 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 		scpClient:       scpClient,
 		knownHostsEntry: knownHostsEntry,
 	}, nil
+}
+
+func FormatHostKey(tcpAddr *net.TCPAddr, key ssh.PublicKey) string {
+	return fmt.Sprintf(
+		"[%s]:%d %s %s",
+		tcpAddr.IP,
+		tcpAddr.Port,
+		key.Type(),
+		base64.StdEncoding.EncodeToString(key.Marshal()),
+	)
+}
+
+// GetHostKey fetches the host public key without authenticating.
+func GetHostKey(addr string, timeout time.Duration) (ssh.PublicKey, *net.TCPAddr, error) {
+	var hostKey ssh.PublicKey
+
+	config := &ssh.ClientConfig{
+		// We provide no Auth methods, so authentication will fail,
+		// but the HostKeyCallback happens before authentication.
+		HostKeyCallback: func(_ string, _ net.Addr, key ssh.PublicKey) error {
+			hostKey = key
+			return nil
+		},
+		Timeout: timeout,
+	}
+
+	dialer := net.Dialer{Timeout: timeout}
+	conn, err := dialer.Dial("tcp", addr)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer conn.Close()
+
+	// This performs the handshake. It will return an error because
+	// no Auth methods are provided, but the HostKeyCallback will have been triggered.
+	sshConn, _, _, err := ssh.NewClientConn(conn, addr, config)
+	if err == nil {
+		_ = sshConn.Close()
+	}
+
+	if hostKey == nil {
+		return nil, nil, errors.New("failed to extract host key")
+	}
+	tcpAddr, ok := conn.RemoteAddr().(*net.TCPAddr)
+	if !ok {
+		return nil, nil, errors.New("failed to extract tcp address")
+	}
+	return hostKey, tcpAddr, nil
 }
 
 func clientWithTimeout(addr string, timeout time.Duration, clientConfig *ssh.ClientConfig) (*ssh.Client, error) {
