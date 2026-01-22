@@ -9,17 +9,14 @@ import (
 )
 
 type Model struct {
-	Config            *types.Config
-	Port              int
-	Styles            *Styles
-	Width             int
-	Height            int
-	Logs              []string
-	Err               error
-	Quitting          bool
-	AskingPassphrase  bool
-	PassphraseInput   textinput.Model
-	PassphraseChecked bool
+	Config   *types.Config
+	Port     int
+	Styles   *Styles
+	Width    int
+	Height   int
+	Logs     []string
+	Err      error
+	Quitting bool
 
 	ctx    context.Context //nolint:containedctx
 	cancel context.CancelFunc
@@ -36,13 +33,12 @@ func NewModel(ctx context.Context, cfg *types.Config, port int) Model {
 	ti.Focus()
 
 	return Model{
-		Config:          cfg,
-		Port:            port,
-		Styles:          DefaultStyles(),
-		ctx:             c,
-		cancel:          cancel,
-		LogChan:         make(chan string, 10),
-		PassphraseInput: ti,
+		Config:  cfg,
+		Port:    port,
+		Styles:  DefaultStyles(),
+		ctx:     c,
+		cancel:  cancel,
+		LogChan: make(chan string, 10),
 	}
 }
 

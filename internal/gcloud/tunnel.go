@@ -28,7 +28,7 @@ type tunnel struct {
 	client  *workstations.Client
 }
 
-func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int, passphrase string) error {
+func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int) error {
 	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int, p
 	}()
 
 	if sshContext.KnownHostsFile != "" {
-		go updateKnownHosts(sshContext, sshAddress, p, passphrase, cfg.SSHTimeout())
+		go updateKnownHosts(sshContext, sshAddress, p, cfg.SSHTimeout())
 	}
 
 	// Wait for either context cancellation or error
@@ -104,22 +104,18 @@ func updateKnownHosts(
 	sshContext *types.Context,
 	address string,
 	port int,
-	passphrase string,
 	timeout time.Duration,
 ) {
 	if sshContext.KnownHostsFile == "" {
 		return
 	}
-	var passBytes []byte
-	if passphrase != "" {
-		passBytes = []byte(passphrase)
-	}
-	c, err := ssh.NewClientWithPassphrase(address, sshContext.User, sshContext.PrivateKeyFile, timeout, passBytes)
+
+	// Get host key by connecting to the address
+	knownHost, err := ssh.GetHostKey(address, timeout)
 	if err != nil {
-		log.Logf("🚨 Error creating ssh client: %v", err)
+		log.Logf("🚨 Error getting host key: %v", err)
 		return
 	}
-	defer c.Close()
 
 	f, err := os.ReadFile(sshContext.KnownHostsFile)
 	if err != nil {
@@ -133,8 +129,8 @@ func updateKnownHosts(
 	linePrefix := fmt.Sprintf("[127.0.0.1]:%d", port)
 	for i, line := range lines {
 		if strings.HasPrefix(line, linePrefix) {
-			if line != c.KnownHostsEntry() {
-				lines[i] = c.KnownHostsEntry()
+			if line != knownHost {
+				lines[i] = knownHost
 				changed = true
 			}
 			found = true
@@ -142,7 +138,7 @@ func updateKnownHosts(
 		}
 	}
 	if !found {
-		lines = append(lines, c.KnownHostsEntry())
+		lines = append(lines, knownHost)
 		changed = true
 	}
 
