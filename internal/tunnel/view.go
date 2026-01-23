@@ -22,10 +22,10 @@ func (m Model) View() string {
 	if port == 0 {
 		port = currCtx.Port
 	}
-	b.WriteString(fmt.Sprintf("  Version: %s\n", version.Version))
-	b.WriteString(fmt.Sprintf("  Context: %s\n", m.Styles.Success.Render(m.Config.CurrentContextName)))
+	b.WriteString(fmt.Sprintf("  Version:     %s\n", version.Version))
+	b.WriteString(fmt.Sprintf("  Context:     %s\n", m.Styles.Success.Render(m.Config.CurrentContextName)))
 	b.WriteString(fmt.Sprintf("  Workstation: %s\n", m.Styles.Success.Render(currCtx.GCloud.Name)))
-	b.WriteString(fmt.Sprintf("  Local Port: %d\n", port))
+	b.WriteString(fmt.Sprintf("  Local Port:  %d\n", port))
 	b.WriteString("\n")
 
 	if m.Err != nil {
