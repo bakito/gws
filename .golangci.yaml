@@ -154,6 +154,8 @@ linters:
           disabled: true
         - name: var-naming
           disabled: true
+        - name: enforce-switch-style
+          disabled: true
         - name: unhandled-error
           arguments:
             - '^fmt\.(Fp|P)?rint(f|ln)?$'
