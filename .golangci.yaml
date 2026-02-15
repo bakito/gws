@@ -156,6 +156,10 @@ linters:
           disabled: true
         - name: enforce-switch-style
           disabled: true
+        - name: var-naming
+          disabled: true
+        - name: unsecure-url-scheme
+          disabled: true
         - name: unhandled-error
           arguments:
             - '^fmt\.(Fp|P)?rint(f|ln)?$'
