@@ -57,8 +57,8 @@ func InitialModel(cfg *types.Config) Model {
 	for i := range m.Inputs {
 		t := textinput.New()
 		t.Cursor.Style = m.Styles.InputFocused
-		t.CharLimit = 32
-		t.Width = 50
+		t.CharLimit = 100
+		t.Width = 120
 
 		switch focusable(i) {
 		case ContextName:
