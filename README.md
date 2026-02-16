@@ -30,12 +30,12 @@ go install github.com/bakito/gws@latest
 
 ### Global Flags
 
-- `--config, -c`: Path to the configuration file (default: `~/.config\gws\config.yaml`).
+- `--config, -c`: Path to the configuration file (default: `~/.config/gws/config.yaml`).
 - `--ctx`: The context to use.
 
 ## Configuration
 
-`gws` is configured using a YAML file (default: `~/.config\gws\config.yaml`). You can use the `gws setup` command to create an initial configuration.
+`gws` is configured using a YAML file (default: `~/.config/gws/config.yaml`). You can use the `gws setup` command to create an initial configuration.
 
 The configuration file can contain multiple contexts. Each context defines the connection details for a specific workstation.
 
