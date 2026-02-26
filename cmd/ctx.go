@@ -100,15 +100,15 @@ func (m *ctxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *ctxModel) View() string {
 	s := "Choose an option:\n\n"
-	var sSb102 strings.Builder
+	var sb strings.Builder
 	for i, choice := range m.choices {
 		cursor := " "
 		if m.cursor == i {
 			cursor = ">"
 		}
-		sSb102.WriteString(fmt.Sprintf("%s %s\n", cursor, choice))
+		fmt.Fprintf(&sb, "%s %s\n", cursor, choice)
 	}
-	s += sSb102.String()
+	s += sb.String()
 	s += "\nPress ↑/↓ to move, Enter to select, Q to quit.\n"
 	return s
 }

@@ -33,7 +33,7 @@ func (m Model) View() string {
 	} else {
 		button = fmt.Sprintf("[ %s ]", m.Styles.Blurred.Render("Submit"))
 	}
-	b.WriteString(fmt.Sprintf("\n%s\n\n", button))
+	fmt.Fprintf(&b, "\n%s\n\n", button)
 
 	if m.StatusMessage != "" {
 		b.WriteString(m.Styles.ErrText.Render(m.StatusMessage))
