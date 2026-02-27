@@ -23,6 +23,7 @@ go install github.com/bakito/gws@latest
 - `gws stop [context]`: Stop the workstation for the given or current context.
 - `gws restart [context]`: Restart the workstation for the given or current context.
 - `gws up`: Uploads files and directories to the workstation as defined in the context configuration.
+- `gws down`: Download files and directories from the workstation as defined in the context configuration.
 - `gws tunnel [context]`: Create an SSH tunnel to the workstation.
 - `gws patch`: Patch local gcloud cli files as defined in the `filePatches` configuration.
 - `gws ctx [context]`: Switch the current context. If no context is provided, an interactive selection is shown.
