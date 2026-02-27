@@ -7,11 +7,12 @@ import (
 
 	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/ssh"
+	"github.com/bakito/gws/internal/types"
 )
 
 // upCmd represents the up command.
 var upCmd = &cobra.Command{
-	Use:   "up",
+	Use:   types.DirectionUp,
 	Short: "Upload files and dirs",
 	RunE: func(*cobra.Command, []string) error {
 		cfg, err := readConfig()
@@ -47,9 +48,13 @@ var upCmd = &cobra.Command{
 		if len(sshCtx.Files) > 0 {
 			log.Log("Uploading files")
 			for _, file := range sshCtx.Files {
+				if file.Direction != types.DirectionUp {
+					continue
+				}
+
 				if file.Permissions == "0400" {
 					log.Logf(
-						"Add writable file permission for upload %q with permissions %s",
+						"Add writable file permission for upload  %q with permissions %s",
 						file.Path,
 						file.Permissions,
 					)
@@ -59,12 +64,13 @@ var upCmd = &cobra.Command{
 					}
 				}
 				log.Logf(
-					"Uploading file for %q to %q with permissions %s",
+					"Uploading file from %q to %q with permissions %s [%s]",
 					file.SourcePath,
 					file.Path,
 					file.Permissions,
+					file.Direction,
 				)
-				err = cl.CopyFile(file.SourcePath, file.Path, file.Permissions)
+				err = cl.UploadFile(file.SourcePath, file.Path, file.Permissions)
 				if err != nil {
 					return err
 				}

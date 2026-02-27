@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/bramvdbogaerde/go-scp"
@@ -146,7 +147,8 @@ func clientWithTimeout(addr string, timeout time.Duration, clientConfig *ssh.Cli
 type Client interface {
 	Close()
 	Execute(command string) (output string, err error)
-	CopyFile(from, to, permissions string) (err error)
+	UploadFile(from, to, permissions string) (err error)
+	DownloadFile(from, to, permissions string) (err error)
 	KnownHostsEntry() string
 }
 
@@ -186,8 +188,8 @@ func (c *client) Execute(command string) (string, error) {
 	return string(output), nil
 }
 
-func (c *client) CopyFile(from, to, permissions string) error {
-	log.Logf("Copy file form %q to %q with permissions %s", from, to, permissions)
+func (c *client) UploadFile(from, to, permissions string) error {
+	log.Logf("Copy file from %q to %q with permissions %s", from, to, permissions)
 	// Open a file
 	f, err := os.Open(env.ExpandEnv(from))
 	if err != nil {
@@ -209,6 +211,44 @@ func (c *client) CopyFile(from, to, permissions string) error {
 	return nil
 }
 
+func (c *client) DownloadFile(from, to, permissions string) error {
+	log.Logf("Copy file from %q to %q", from, to)
+
+	localPath := env.ExpandEnv(to)
+
+	perm, _ := strconv.ParseUint(permissions, 8, 32)
+
+	f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, os.FileMode(perm))
+	if err != nil {
+		return fmt.Errorf("error while opening file: %w", err)
+	}
+
+	defer f.Close()
+
+	err = c.scpClient.CopyFromRemote(context.Background(), f, from)
+	if err != nil {
+		return fmt.Errorf("error while copying file: %w", err)
+	}
+
+	return nil
+}
+
+func NeedsPassphrase(privateKeyFile string) (bool, error) {
+	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
+	if err != nil {
+		return false, fmt.Errorf("failed to read private key: %w", err)
+	}
+
+	_, err = ssh.ParsePrivateKey(privateKey)
+	if err != nil {
+		var missingPassphraseErr *ssh.PassphraseMissingError
+		if errors.As(err, &missingPassphraseErr) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func evaluateAuthMethodWithPassphrase(privateKey []byte, privateKeyFile string, passphrase []byte) (ssh.AuthMethod, error) {
 	auth, err := getSSHAgentAuthMethod()
 	if err != nil {
@@ -221,7 +261,8 @@ func evaluateAuthMethodWithPassphrase(privateKey []byte, privateKeyFile string, 
 	// try private key
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
-		if _, ok := errors.AsType[*ssh.PassphraseMissingError](err); !ok {
+		var missingPassphraseErr *ssh.PassphraseMissingError
+		if !errors.As(err, &missingPassphraseErr) {
 			return nil, fmt.Errorf("failed to parse private key: %w", err)
 		}
 
