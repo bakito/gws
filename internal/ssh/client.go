@@ -30,7 +30,7 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 	}
 
 	// Parse the private key
-	auth, err := evaluateAuthMethodWithPassphrase(privateKey, privateKeyFile, passphrase)
+	auths, err := evaluateAuthMethodWithPassphrase(privateKey, privateKeyFile, passphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +38,8 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 	// Define SSH connection details
 	var knownHostsEntry string
 	clientConfig := &ssh.ClientConfig{
-		User: user,                   // Remote SSH username
-		Auth: []ssh.AuthMethod{auth}, // Auth method
+		User: user,
+		Auth: auths,
 		HostKeyCallback: func(_ string, remote net.Addr, key ssh.PublicKey) error {
 			// #nosec G106: Insecure, as we always get a new cert with gcloud
 			if tcpAddr, ok := remote.(*net.TCPAddr); ok {
@@ -234,6 +234,14 @@ func (c *client) DownloadFile(from, to, permissions string) error {
 }
 
 func NeedsPassphrase(privateKeyFile string) (bool, error) {
+	auth, err := getSSHAgentAuthMethod()
+	if err != nil {
+		return false, err
+	}
+	if auth != nil {
+		return false, nil
+	}
+
 	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
 	if err != nil {
 		return false, fmt.Errorf("failed to read private key: %w", err)
@@ -248,42 +256,58 @@ func NeedsPassphrase(privateKeyFile string) (bool, error) {
 	return false, nil
 }
 
-func evaluateAuthMethodWithPassphrase(privateKey []byte, privateKeyFile string, passphrase []byte) (ssh.AuthMethod, error) {
-	auth, err := getSSHAgentAuthMethod()
-	if err != nil {
+func evaluateAuthMethodWithPassphrase(privateKey []byte, privateKeyFile string, passphrase []byte) ([]ssh.AuthMethod, error) {
+	var auths []ssh.AuthMethod
+
+	// Try SSH agent first if available
+	if agentAuth, err := getSSHAgentAuthMethod(); err != nil {
 		return nil, err
-	}
-	if auth != nil {
-		return auth, nil
+	} else if agentAuth != nil {
+		auths = append(auths, agentAuth)
 	}
 
-	// try private key
+	// Try to parse the private key without a passphrase
 	signer, err := ssh.ParsePrivateKey(privateKey)
-	if err != nil {
-		if _, ok := errors.AsType[*ssh.PassphraseMissingError](err); !ok {
-			return nil, fmt.Errorf("failed to parse private key: %w", err)
-		}
+	if err == nil {
+		auths = append(auths, ssh.PublicKeys(signer))
+		return auths, nil
+	}
+	if _, ok := errors.AsType[*ssh.PassphraseMissingError](err); !ok {
+		// Parsing failed for another reason
+		return nil, fmt.Errorf("failed to parse private key: %w", err)
+	}
 
-		pass := string(passphrase)
-		if len(passphrase) == 0 {
-			pass, err = passwd.Prompt(fmt.Sprintf("🔐 Please enter the passphrase for private key (%s):", privateKeyFile))
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		passBytes := []byte(pass)
-		signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, passBytes)
-		// Zero out the passphrase immediately after use
-		for i := range passBytes {
-			passBytes[i] = 0
-		}
-
+	// Key is encrypted
+	if len(passphrase) > 0 {
+		signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, passphrase)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse private key with passphrase: %w", err)
 		}
+		auths = append(auths, ssh.PublicKeys(signer))
+		return auths, nil
 	}
-	return ssh.PublicKeys(signer), nil
+
+	// Defer prompting for passphrase until after other methods (like agent) fail
+	auths = append(auths, ssh.PublicKeysCallback(func() ([]ssh.Signer, error) {
+		pass, err := passwd.Prompt(fmt.Sprintf("🔐 Please enter the passphrase for private key (%s):", privateKeyFile))
+		if err != nil {
+			return nil, err
+		}
+		passBytes := []byte(pass)
+		s, err := ssh.ParsePrivateKeyWithPassphrase(privateKey, passBytes)
+		for i := range passBytes {
+			passBytes[i] = 0
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse private key with passphrase: %w", err)
+		}
+		return []ssh.Signer{s}, nil
+	}))
+
+	if len(auths) == 0 {
+		return nil, errors.New("no authentication methods available")
+	}
+	return auths, nil
 }
 
 func getSSHAgentAuthMethod() (ssh.AuthMethod, error) {
@@ -298,5 +322,15 @@ func getSSHAgentAuthMethod() (ssh.AuthMethod, error) {
 	}
 
 	agentClient := agent.NewClient(conn)
+
+	signers, err := agentClient.Signers()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get signers from SSH agent: %w", err)
+	}
+
+	if len(signers) == 0 {
+		return nil, nil
+	}
+
 	return ssh.PublicKeysCallback(agentClient.Signers), nil
 }
