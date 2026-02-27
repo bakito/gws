@@ -19,6 +19,8 @@ import (
 const (
 	ConfigFileName = "config.yaml"
 	ConfigDir      = ".config/gws"
+	DirectionUp    = "up"
+	DirectionDown  = "down"
 )
 
 type Config struct {
@@ -34,6 +36,42 @@ type Config struct {
 
 func (c *Config) Validate() error {
 	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	validate.RegisterStructValidation(func(sl validator.StructLevel) {
+		f, ok := sl.Current().Interface().(File)
+		if !ok {
+			return
+		}
+
+		switch f.Direction {
+		case "", DirectionUp:
+			info, err := os.Stat(f.SourcePath)
+			if err != nil {
+				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
+				return
+			}
+			if !info.Mode().IsRegular() {
+				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
+				return
+			}
+
+		case DirectionDown:
+			info, err := os.Stat(f.SourcePath)
+			if err != nil {
+				if os.IsNotExist(err) {
+					return // ok if file not exists
+				}
+				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
+				return
+			}
+			if !info.Mode().IsRegular() {
+				// if exists it must be a file
+				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
+				return
+			}
+		}
+	}, File{})
+
 	err := validate.Struct(c)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -87,10 +125,25 @@ func (c *Config) Load(fileName string) error {
 		c.Token.Token = *tk
 	}
 
+	c.applyDefaults()
+
 	if err := c.Validate(); err != nil {
 		return err
 	}
 	return c.SwitchContext(c.CurrentContextName, false)
+}
+
+func (c *Config) applyDefaults() {
+	for _, ctx := range c.Contexts {
+		if ctx == nil {
+			continue
+		}
+		for i := range ctx.Files {
+			if ctx.Files[i].Direction == "" {
+				ctx.Files[i].Direction = DirectionUp
+			}
+		}
+	}
 }
 
 func (c *Config) SSHTimeout() time.Duration {

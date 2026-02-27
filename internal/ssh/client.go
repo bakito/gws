@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/bramvdbogaerde/go-scp"
@@ -146,7 +147,8 @@ func clientWithTimeout(addr string, timeout time.Duration, clientConfig *ssh.Cli
 type Client interface {
 	Close()
 	Execute(command string) (output string, err error)
-	CopyFile(from, to, permissions string) (err error)
+	UploadFile(from, to, permissions string) (err error)
+	DownloadFile(from, to, permissions string) (err error)
 	KnownHostsEntry() string
 }
 
@@ -186,8 +188,8 @@ func (c *client) Execute(command string) (string, error) {
 	return string(output), nil
 }
 
-func (c *client) CopyFile(from, to, permissions string) error {
-	log.Logf("Copy file form %q to %q with permissions %s", from, to, permissions)
+func (c *client) UploadFile(from, to, permissions string) error {
+	log.Logf("Copy file from %q to %q with permissions %s", from, to, permissions)
 	// Open a file
 	f, _ := os.Open(env.ExpandEnv(from))
 	// Close the file after it has been copied
@@ -200,6 +202,25 @@ func (c *client) CopyFile(from, to, permissions string) error {
 	_, err = c.Execute(fmt.Sprintf("chmod %s %s", permissions, to))
 	if err != nil {
 		return fmt.Errorf("%w", err)
+	}
+
+	return nil
+}
+
+func (c *client) DownloadFile(from, to, permissions string) error {
+	log.Logf("Copy file from %q to %q", from, to)
+
+	localPath := env.ExpandEnv(to)
+
+	perm, _ := strconv.ParseUint(permissions, 8, 32)
+
+	f, _ := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, os.FileMode(perm))
+
+	defer f.Close()
+
+	err := c.scpClient.CopyFromRemote(context.Background(), f, from)
+	if err != nil {
+		return fmt.Errorf("error while copying file: %w", err)
 	}
 
 	return nil

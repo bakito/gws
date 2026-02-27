@@ -35,9 +35,10 @@ type Dir struct {
 }
 
 type File struct {
-	SourcePath  string `validate:"required,file" yaml:"sourcePath"`
-	Path        string `validate:"required"      yaml:"path"`
-	Permissions string `                         yaml:"permissions"`
+	SourcePath  string `validate:"required"                yaml:"sourcePath"`
+	Path        string `validate:"required"                yaml:"path"`
+	Permissions string `                                   yaml:"permissions"`
+	Direction   string `validate:"omitempty,oneof=up down" yaml:"direction"`
 }
 
 type FilePatch struct {
