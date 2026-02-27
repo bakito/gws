@@ -122,15 +122,14 @@ xxx
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup temp directory
-			tempDir, err := os.MkdirTemp("", "gws_patch_test_")
-			require.NoError(t, err)
+			tempDir := t.TempDir()
 			defer os.RemoveAll(tempDir)
 
 			testFile := filepath.Join(tempDir, tt.fileName)
 			bakFile := testFile + ".bak"
 
 			// Copy source file to temp directory
-			err = copyFile(tt.sourceFile, testFile)
+			err := copyFile(tt.sourceFile, testFile)
 			require.NoError(t, err)
 
 			// Read expected content
@@ -140,9 +139,8 @@ xxx
 			// Create patch
 			filePath := testFile
 			if tt.useEnvVar {
-				err = os.Setenv("GWS_TEST_DIR", tempDir)
+				t.Setenv("GWS_TEST_DIR", tempDir)
 				require.NoError(t, err)
-				defer os.Unsetenv("GWS_TEST_DIR")
 				filePath = filepath.Join("${GWS_TEST_DIR}", tt.fileName)
 			}
 
