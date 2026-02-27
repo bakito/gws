@@ -47,6 +47,10 @@ var upCmd = &cobra.Command{
 		if len(sshCtx.Files) > 0 {
 			log.Log("Uploading files")
 			for _, file := range sshCtx.Files {
+				if file.Direction != "up" {
+					continue
+				}
+
 				if file.Permissions == "0400" {
 					log.Logf(
 						"Add writable file permission for upload %q with permissions %s",
@@ -59,12 +63,12 @@ var upCmd = &cobra.Command{
 					}
 				}
 				log.Logf(
-					"Uploading file for %q to %q with permissions %s",
+					"Uploading file from %q to %q with permissions %s",
 					file.SourcePath,
 					file.Path,
 					file.Permissions,
 				)
-				err = cl.CopyFile(file.SourcePath, file.Path, file.Permissions)
+				err = cl.UploadFile(file.SourcePath, file.Path, file.Permissions)
 				if err != nil {
 					return err
 				}

@@ -29,12 +29,17 @@ var downCmd = &cobra.Command{
 		if len(sshCtx.Files) > 0 {
 			log.Log("Downloading files")
 			for _, file := range sshCtx.Files {
+				if file.Direction != "down" {
+					continue
+				}
+
 				log.Logf(
-					"Downloading file for %q to %q",
-					file.SourcePath,
+					"Downloading file from %q to %q with permissions %s",
 					file.Path,
+					file.SourcePath,
+					file.Permissions,
 				)
-				err = cl.CopyFile(file.Path, file.SourcePath, file.Permissions)
+				err = cl.DownloadFile(file.Path, file.SourcePath, file.Permissions)
 				if err != nil {
 					return err
 				}
