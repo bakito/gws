@@ -7,7 +7,7 @@ require (
 	github.com/bramvdbogaerde/go-scp v1.6.0
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/bubbles v1.0.0
-	github.com/charmbracelet/bubbletea v1.3.10
+	github.com/charmbracelet/bubbletea/v2 v2.0.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/onsi/ginkgo/v2 v2.28.1
