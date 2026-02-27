@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/types"
@@ -77,7 +77,7 @@ func (*ctxModel) Init() tea.Cmd {
 }
 
 func (m *ctxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if msgType, ok := msg.(tea.KeyMsg); ok {
+	if msgType, ok := msg.(tea.KeyPressMsg); ok {
 		switch msgType.String() {
 		case "q":
 			return m, tea.Quit
@@ -98,7 +98,7 @@ func (m *ctxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *ctxModel) View() string {
+func (m *ctxModel) View() tea.View {
 	s := "Choose an option:\n\n"
 	var sb strings.Builder
 	for i, choice := range m.choices {
@@ -110,5 +110,5 @@ func (m *ctxModel) View() string {
 	}
 	s += sb.String()
 	s += "\nPress ↑/↓ to move, Enter to select, Q to quit.\n"
-	return s
+	return tea.NewView(s)
 }

@@ -3,7 +3,7 @@ package tunnel
 import (
 	"context"
 
-	"github.com/charmbracelet/bubbles/textinput"
+	"charm.land/bubbles/v2/textinput"
 
 	"github.com/bakito/gws/internal/types"
 )

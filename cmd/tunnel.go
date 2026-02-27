@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/tunnel"
@@ -31,7 +31,7 @@ var tunnelCmd = &cobra.Command{
 		}
 
 		m := tunnel.NewModel(cmd.Context(), cfg, flagLocalPort)
-		p := tea.NewProgram(m, tea.WithAltScreen())
+		p := tea.NewProgram(m)
 		_, err = p.Run()
 		return err
 	},

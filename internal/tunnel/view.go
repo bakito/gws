@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/bakito/gws/version"
 )
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	if m.Quitting {
-		return ""
+		return tea.NewView("")
 	}
 
 	var b strings.Builder
@@ -52,5 +54,7 @@ func (m Model) View() string {
 	help := m.Styles.Help.Render("ctrl+c: quit")
 	b.WriteString(help)
 
-	return m.Styles.Border.Width(m.Width - 4).Render(b.String())
+	v := tea.NewView(m.Styles.Border.Width(m.Width - 4).Render(b.String()))
+	v.AltScreen = true
+	return v
 }
