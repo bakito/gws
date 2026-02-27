@@ -38,7 +38,10 @@ func (c *Config) Validate() error {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	validate.RegisterStructValidation(func(sl validator.StructLevel) {
-		f := sl.Current().Interface().(File)
+		f, ok := sl.Current().Interface().(File)
+		if !ok {
+			return
+		}
 
 		switch f.Direction {
 		case "", DirectionUp:

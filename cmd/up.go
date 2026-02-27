@@ -3,11 +3,11 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/bakito/gws/internal/types"
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/ssh"
+	"github.com/bakito/gws/internal/types"
 )
 
 // upCmd represents the up command.
