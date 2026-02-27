@@ -34,10 +34,11 @@ var downCmd = &cobra.Command{
 				}
 
 				log.Logf(
-					"Downloading file from %q to %q with permissions %s",
+					"Downloading file from %q to %q with permissions %s [%s]",
 					file.Path,
 					file.SourcePath,
 					file.Permissions,
+					file.Direction,
 				)
 				err = cl.DownloadFile(file.Path, file.SourcePath, file.Permissions)
 				if err != nil {

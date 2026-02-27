@@ -53,7 +53,7 @@ var upCmd = &cobra.Command{
 
 				if file.Permissions == "0400" {
 					log.Logf(
-						"Add writable file permission for upload %q with permissions %s",
+						"Add writable file permission for upload  %q with permissions %s",
 						file.Path,
 						file.Permissions,
 					)
@@ -63,10 +63,11 @@ var upCmd = &cobra.Command{
 					}
 				}
 				log.Logf(
-					"Uploading file from %q to %q with permissions %s",
+					"Uploading file from %q to %q with permissions %s [%s]",
 					file.SourcePath,
 					file.Path,
 					file.Permissions,
+					file.Direction,
 				)
 				err = cl.UploadFile(file.SourcePath, file.Path, file.Permissions)
 				if err != nil {
