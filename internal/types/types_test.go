@@ -26,7 +26,7 @@ func TestFile_Validate(t *testing.T) {
 				SourcePath:  tmpFile.Name(),
 				Path:        "/dest/path",
 				Permissions: "0644",
-				Direction:   "up",
+				Direction:   DirectionUp,
 			},
 			wantErr: false,
 		},
@@ -35,7 +35,7 @@ func TestFile_Validate(t *testing.T) {
 			file: File{
 				SourcePath: tmpFile.Name(),
 				Path:       "/dest/path",
-				Direction:  "up",
+				Direction:  DirectionUp,
 			},
 			wantErr: false,
 		},
@@ -44,7 +44,7 @@ func TestFile_Validate(t *testing.T) {
 			file: File{
 				SourcePath: tmpFile.Name(),
 				Path:       "/dest/path",
-				Direction:  "down",
+				Direction:  DirectionDown,
 			},
 			wantErr: false,
 		},
@@ -53,7 +53,7 @@ func TestFile_Validate(t *testing.T) {
 			file: File{
 				SourcePath: t.TempDir(),
 				Path:       "/dest/path",
-				Direction:  "down",
+				Direction:  DirectionDown,
 			},
 			wantErr: true,
 		},

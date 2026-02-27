@@ -19,6 +19,8 @@ import (
 const (
 	ConfigFileName = "config.yaml"
 	ConfigDir      = ".config/gws"
+	DirectionUp    = "up"
+	DirectionDown  = "down"
 )
 
 type Config struct {
@@ -39,7 +41,7 @@ func (c *Config) Validate() error {
 		f := sl.Current().Interface().(File)
 
 		switch f.Direction {
-		case "", "up":
+		case "", DirectionUp:
 			info, err := os.Stat(f.SourcePath)
 			if err != nil {
 				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
@@ -50,7 +52,7 @@ func (c *Config) Validate() error {
 				return
 			}
 
-		case "down":
+		case DirectionDown:
 			info, err := os.Stat(f.SourcePath)
 			if err != nil {
 				if os.IsNotExist(err) {
@@ -135,7 +137,7 @@ func (c *Config) applyDefaults() {
 		}
 		for i := range ctx.Files {
 			if ctx.Files[i].Direction == "" {
-				ctx.Files[i].Direction = "up"
+				ctx.Files[i].Direction = DirectionUp
 			}
 		}
 	}

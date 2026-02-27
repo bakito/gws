@@ -5,11 +5,12 @@ import (
 
 	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/ssh"
+	"github.com/bakito/gws/internal/types"
 )
 
 // downCmd represents the down command.
 var downCmd = &cobra.Command{
-	Use:   "down",
+	Use:   types.DirectionDown,
 	Short: "Download files and dirs",
 	RunE: func(*cobra.Command, []string) error {
 		cfg, err := readConfig()
@@ -29,7 +30,7 @@ var downCmd = &cobra.Command{
 		if len(sshCtx.Files) > 0 {
 			log.Log("Downloading files")
 			for _, file := range sshCtx.Files {
-				if file.Direction != "down" {
+				if file.Direction != types.DirectionDown {
 					continue
 				}
 

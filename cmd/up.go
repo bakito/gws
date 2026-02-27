@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/bakito/gws/internal/types"
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/log"
@@ -11,7 +12,7 @@ import (
 
 // upCmd represents the up command.
 var upCmd = &cobra.Command{
-	Use:   "up",
+	Use:   types.DirectionUp,
 	Short: "Upload files and dirs",
 	RunE: func(*cobra.Command, []string) error {
 		cfg, err := readConfig()
@@ -47,7 +48,7 @@ var upCmd = &cobra.Command{
 		if len(sshCtx.Files) > 0 {
 			log.Log("Uploading files")
 			for _, file := range sshCtx.Files {
-				if file.Direction != "up" {
+				if file.Direction != types.DirectionUp {
 					continue
 				}
 
