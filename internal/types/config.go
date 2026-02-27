@@ -87,10 +87,25 @@ func (c *Config) Load(fileName string) error {
 		c.Token.Token = *tk
 	}
 
+	c.applyDefaults()
+
 	if err := c.Validate(); err != nil {
 		return err
 	}
 	return c.SwitchContext(c.CurrentContextName, false)
+}
+
+func (c *Config) applyDefaults() {
+	for _, ctx := range c.Contexts {
+		if ctx == nil {
+			continue
+		}
+		for i := range ctx.Files {
+			if ctx.Files[i].Direction == "" {
+				ctx.Files[i].Direction = "up"
+			}
+		}
+	}
 }
 
 func (c *Config) SSHTimeout() time.Duration {

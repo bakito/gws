@@ -64,6 +64,7 @@ contexts:
     - sourcePath: /path/to/your/file
       path: /home/user/file
       permissions: "0644"
+      direction: up
 ```
 
 ### Configuration Options
@@ -89,3 +90,4 @@ contexts:
       - `source-path`: The path of the local file.
       - `path`: The path of the remote file.
       - `permissions`: The permissions of the remote file.
+      - `direction`: The direction (up / down) the file is copied.

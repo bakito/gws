@@ -26,6 +26,7 @@ func TestFile_Validate(t *testing.T) {
 				SourcePath:  tmpFile.Name(),
 				Path:        "/dest/path",
 				Permissions: "0644",
+				Direction:   "up",
 			},
 			wantErr: false,
 		},
@@ -34,6 +35,16 @@ func TestFile_Validate(t *testing.T) {
 			file: File{
 				SourcePath: tmpFile.Name(),
 				Path:       "/dest/path",
+				Direction:  "down",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid without Direction",
+			file: File{
+				SourcePath:  tmpFile.Name(),
+				Path:        "/dest/path",
+				Permissions: "0644",
 			},
 			wantErr: false,
 		},
@@ -79,6 +90,16 @@ func TestFile_Validate(t *testing.T) {
 		{
 			name:    "empty struct",
 			file:    File{},
+			wantErr: true,
+		},
+		{
+			name: "direction not up or down",
+			file: File{
+				SourcePath:  tmpFile.Name(),
+				Path:        "/dest/path",
+				Permissions: "0644",
+				Direction:   "none",
+			},
 			wantErr: true,
 		},
 		{
