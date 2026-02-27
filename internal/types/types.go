@@ -5,16 +5,16 @@ import (
 )
 
 type Context struct {
-	Host           string `yaml:"host"`
-	Port           int    `yaml:"port"`
-	User           string `yaml:"user"`
-	PrivateKeyFile string `yaml:"privateKeyFile"`
-	KnownHostsFile string `yaml:"knownHostsFile"`
+	Host           string `validate:"required"       yaml:"host"`
+	Port           int    `validate:"required"       yaml:"port"`
+	User           string `                          yaml:"user"`
+	PrivateKeyFile string `validate:"omitempty,file" yaml:"privateKeyFile"`
+	KnownHostsFile string `validate:"omitempty,file" yaml:"knownHostsFile"`
 
 	GCloud *GCloud `yaml:"gcloud"`
 
 	Dirs  []Dir  `yaml:"dirs,omitempty"`
-	Files []File `yaml:"files,omitempty"`
+	Files []File `yaml:"files,omitempty" validate:"dive,required"`
 }
 
 type GCloud struct {
@@ -35,9 +35,9 @@ type Dir struct {
 }
 
 type File struct {
-	SourcePath  string `yaml:"sourcePath"`
-	Path        string `yaml:"path"`
-	Permissions string `yaml:"permissions"`
+	SourcePath  string `validate:"required,file" yaml:"sourcePath"`
+	Path        string `validate:"required"      yaml:"path"`
+	Permissions string `                         yaml:"permissions"`
 }
 
 type FilePatch struct {

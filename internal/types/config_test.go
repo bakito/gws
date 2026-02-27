@@ -1,0 +1,85 @@
+package types
+
+import (
+	"os"
+	"testing"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestConfig_Validate(t *testing.T) {
+	tmpFile, err := os.CreateTemp(t.TempDir(), "test")
+	require.NoError(t, err)
+	require.NoError(t, tmpFile.Close())
+
+	tests := []struct {
+		name    string
+		config  *Config
+		wantErr bool
+	}{
+		{
+			name: "valid config with multiple contexts",
+			config: &Config{
+				Contexts: map[string]*Context{
+					"context1": {Host: "localhost", Port: 8080, Files: []File{
+						{SourcePath: tmpFile.Name(), Path: "/path/to/dest"},
+					}},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid config with missing contexts",
+			config: &Config{
+				Contexts: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid context fields",
+			config: &Config{
+				Contexts: map[string]*Context{
+					"context1": {Host: "", Port: 0, Files: nil},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing required file fields",
+			config: &Config{
+				Contexts: map[string]*Context{
+					"context1": {Host: "localhost", Port: 8080, Files: []File{
+						{SourcePath: "", Path: "/path/to/dest"},
+					}},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid config with one context",
+			config: &Config{
+				Contexts: map[string]*Context{
+					"context1": {Host: "example.com", Port: 22, User: "user", Files: []File{
+						{SourcePath: tmpFile.Name(), Path: "/valid/dest"},
+					}},
+				},
+				CurrentContextName: "context1",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			validate := validator.New()
+			err := validate.Struct(tt.config)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

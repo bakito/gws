@@ -1,0 +1,123 @@
+package types
+
+import (
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestFile_Validate(t *testing.T) {
+	tmpFile, err := os.CreateTemp(t.TempDir(), "test")
+	require.NoError(t, err)
+	require.NoError(t, tmpFile.Close())
+
+	tests := []struct {
+		name       string
+		file       File
+		privateKey string
+		knownHosts string
+		wantErr    bool
+	}{
+		{
+			name: "valid",
+			file: File{
+				SourcePath:  tmpFile.Name(),
+				Path:        "/dest/path",
+				Permissions: "0644",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid without permissions",
+			file: File{
+				SourcePath: tmpFile.Name(),
+				Path:       "/dest/path",
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing sourcePath",
+			file: File{
+				Path:        "/dest/path",
+				Permissions: "0644",
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing path",
+			file: File{
+				SourcePath:  tmpFile.Name(),
+				Permissions: "0644",
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing both required fields",
+			file: File{
+				Permissions: "0644",
+			},
+			wantErr: true,
+		},
+		{
+			name: "sourcePath not a file",
+			file: File{
+				SourcePath: "/nonexistent/file",
+				Path:       "/dest/path",
+			},
+			wantErr: true,
+		},
+		{
+			name: "sourcePath is directory",
+			file: File{
+				SourcePath: t.TempDir(),
+				Path:       "/dest/path",
+			},
+			wantErr: true,
+		},
+		{
+			name:    "empty struct",
+			file:    File{},
+			wantErr: true,
+		},
+		{
+			name:       "key is not file",
+			privateKey: "/nonexistent/file",
+			wantErr:    true,
+		},
+		{
+			name:       "known host is not file",
+			knownHosts: "/nonexistent/file",
+			wantErr:    true,
+		},
+		{
+			name:       "key and known host are files",
+			privateKey: tmpFile.Name(),
+			knownHosts: tmpFile.Name(),
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Contexts: map[string]*Context{
+					"test": {
+						Host:           "localhost",
+						Port:           22,
+						Files:          []File{tt.file},
+						PrivateKeyFile: tt.privateKey,
+						KnownHostsFile: tt.knownHosts,
+					},
+				},
+			}
+			err := config.Validate()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

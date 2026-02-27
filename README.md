@@ -42,14 +42,14 @@ The configuration file can contain multiple contexts. Each context defines the c
 ### `config.yaml` example
 
 ```yaml
-current-context: my-workstation
+currentContext: my-workstation
 contexts:
   my-workstation:
     host: localhost
     port: 2222
     user: user
-    private-key-file: /path/to/your/private/key
-    known-hosts-file: /path/to/your/known_hosts
+    privateKeyFile: /path/to/your/private/key
+    knownHostsFile: /path/to/your/known_hosts
     gcloud:
       project: my-project
       region: a-region
@@ -60,7 +60,7 @@ contexts:
     - path: /home/user/.ssh
       permissions: "0700"
     files:
-    - source-path: /path/to/your/file
+    - sourcePath: /path/to/your/file
       path: /home/user/file
       permissions: "0644"
 ```

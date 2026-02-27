@@ -2,12 +2,14 @@ package types
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"maps"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 
@@ -20,14 +22,33 @@ const (
 )
 
 type Config struct {
-	Contexts           map[string]*Context  `yaml:"contexts"`
-	CurrentContextName string               `yaml:"currentContext"`
-	FilePath           string               `yaml:"-"`
-	TokenCheck         bool                 `yaml:"-"`
-	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
-	SSHTimeoutSeconds  int                  `yaml:"sshTimeoutSeconds,omitempty"`
+	Contexts           map[string]*Context  `validate:"required,dive,required" yaml:"contexts"`
+	CurrentContextName string               `                                  yaml:"currentContext"`
+	FilePath           string               `                                  yaml:"-"`
+	TokenCheck         bool                 `                                  yaml:"-"`
+	FilePatches        map[string]FilePatch `                                  yaml:"filePatches,omitempty"`
+	SSHTimeoutSeconds  int                  `                                  yaml:"sshTimeoutSeconds,omitempty"`
 	currentContext     *Context
-	Token              *TokenStorage `yaml:"-"`
+	Token              *TokenStorage `                                  yaml:"-"`
+}
+
+func (c *Config) Validate() error {
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	err := validate.Struct(c)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			for _, e := range validationErrors {
+				switch e.Tag() {
+				case "file":
+					return fmt.Errorf("field '%s' with value '%v' must be a valid existing file path", e.Namespace(), e.Value())
+				case "required":
+					return fmt.Errorf("field '%s' is required", e.Namespace())
+				}
+			}
+			return err
+		}
+	}
+	return err
 }
 
 func (c *Config) CurrentContext() *Context {
@@ -64,6 +85,10 @@ func (c *Config) Load(fileName string) error {
 	c.Token = &TokenStorage{}
 	if tk != nil {
 		c.Token.Token = *tk
+	}
+
+	if err := c.Validate(); err != nil {
+		return err
 	}
 	return c.SwitchContext(c.CurrentContextName, false)
 }
