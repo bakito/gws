@@ -54,13 +54,13 @@ func (c *Config) Validate() error {
 			info, err := os.Stat(f.SourcePath)
 			if err != nil {
 				if os.IsNotExist(err) {
-					return // ok: darf nicht existieren
+					return // ok if file not exists
 				}
 				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
 				return
 			}
 			if !info.Mode().IsRegular() {
-				// existiert, aber ist Verzeichnis/kein reguläres File => Fehler
+				// if exists it must be a file
 				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
 				return
 			}
