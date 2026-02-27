@@ -189,11 +189,15 @@ func (c *client) Execute(command string) (string, error) {
 func (c *client) CopyFile(from, to, permissions string) error {
 	log.Logf("Copy file form %q to %q with permissions %s", from, to, permissions)
 	// Open a file
-	f, _ := os.Open(env.ExpandEnv(from))
+	f, err := os.Open(env.ExpandEnv(from))
+	if err != nil {
+		return fmt.Errorf("error while opening file: %w", err)
+	}
+
 	// Close the file after it has been copied
 	defer f.Close()
 
-	err := c.scpClient.CopyFromFile(context.Background(), *f, to, permissions)
+	err = c.scpClient.CopyFromFile(context.Background(), *f, to, permissions)
 	if err != nil {
 		return fmt.Errorf("error while copying file: %w", err)
 	}
@@ -203,22 +207,6 @@ func (c *client) CopyFile(from, to, permissions string) error {
 	}
 
 	return nil
-}
-
-func NeedsPassphrase(privateKeyFile string) (bool, error) {
-	privateKey, err := os.ReadFile(env.ExpandEnv(privateKeyFile))
-	if err != nil {
-		return false, fmt.Errorf("failed to read private key: %w", err)
-	}
-
-	_, err = ssh.ParsePrivateKey(privateKey)
-	if err != nil {
-		var missingPassphraseErr *ssh.PassphraseMissingError
-		if errors.As(err, &missingPassphraseErr) {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func evaluateAuthMethodWithPassphrase(privateKey []byte, privateKeyFile string, passphrase []byte) (ssh.AuthMethod, error) {
