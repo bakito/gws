@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func (Model) Init() tea.Cmd {
@@ -23,7 +23,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.FilePickerActive = false
 			return m, nil
 		}
-		if key, ok := msg.(tea.KeyMsg); ok && key.String() == "esc" {
+		if key, ok := msg.(tea.KeyPressMsg); ok && key.String() == "esc" {
 			m.FilePickerActive = false
 			return m, nil
 		}
@@ -32,7 +32,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if (m.Focused == PrivateKeyFile || m.Focused == KnownHostsFile) && msg.String() == "ctrl+f" {
 			m.FilePickerActive = true
 			m.FilePickerField = m.Focused
@@ -76,15 +76,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			for i := range m.Inputs {
+				s := m.Inputs[i].Styles()
 				if i == int(m.Focused) {
 					m.Inputs[i].Focus()
-					m.Inputs[i].PromptStyle = m.Styles.InputFocused
-					m.Inputs[i].TextStyle = m.Styles.InputFocused
+					s.Focused.Prompt = m.Styles.InputFocused
+					s.Focused.Text = m.Styles.InputFocused
+					s.Cursor.Color = m.Styles.InputFocused.GetForeground()
 				} else {
 					m.Inputs[i].Blur()
-					m.Inputs[i].PromptStyle = m.Styles.InputUnfocused
-					m.Inputs[i].TextStyle = m.Styles.InputUnfocused
+					s.Blurred.Prompt = m.Styles.InputUnfocused
+					s.Blurred.Text = m.Styles.InputUnfocused
+					s.Cursor.Color = m.Styles.InputUnfocused.GetForeground()
 				}
+				m.Inputs[i].SetStyles(s)
 			}
 
 			return m, nil
