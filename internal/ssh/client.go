@@ -241,8 +241,7 @@ func NeedsPassphrase(privateKeyFile string) (bool, error) {
 
 	_, err = ssh.ParsePrivateKey(privateKey)
 	if err != nil {
-		var missingPassphraseErr *ssh.PassphraseMissingError
-		if errors.As(err, &missingPassphraseErr) {
+		if _, ok := errors.AsType[*ssh.PassphraseMissingError](err); ok {
 			return true, nil
 		}
 	}
@@ -261,8 +260,7 @@ func evaluateAuthMethodWithPassphrase(privateKey []byte, privateKeyFile string, 
 	// try private key
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
-		var missingPassphraseErr *ssh.PassphraseMissingError
-		if !errors.As(err, &missingPassphraseErr) {
+		if _, ok := errors.AsType[*ssh.PassphraseMissingError](err); !ok {
 			return nil, fmt.Errorf("failed to parse private key: %w", err)
 		}
 
