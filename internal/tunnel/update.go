@@ -1,7 +1,7 @@
 package tunnel
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/bakito/gws/internal/gcloud"
 	"github.com/bakito/gws/internal/log"

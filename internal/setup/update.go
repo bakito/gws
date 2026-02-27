@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func (Model) Init() tea.Cmd {
@@ -78,12 +78,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i := range m.Inputs {
 				if i == int(m.Focused) {
 					m.Inputs[i].Focus()
-					m.Inputs[i].PromptStyle = m.Styles.InputFocused
-					m.Inputs[i].TextStyle = m.Styles.InputFocused
+					m.Inputs[i].Style.Prompt = m.Styles.InputFocused
+					m.Inputs[i].Style.Text = m.Styles.InputFocused
 				} else {
 					m.Inputs[i].Blur()
-					m.Inputs[i].PromptStyle = m.Styles.InputUnfocused
-					m.Inputs[i].TextStyle = m.Styles.InputUnfocused
+					m.Inputs[i].Style.Prompt = m.Styles.InputUnfocused
+					m.Inputs[i].Style.Text = m.Styles.InputUnfocused
 				}
 			}
 

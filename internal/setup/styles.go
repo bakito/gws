@@ -1,6 +1,6 @@
 package setup
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 var (
 	Indigo    = lipgloss.Color("63")

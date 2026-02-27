@@ -3,7 +3,7 @@ package setup
 import (
 	"errors"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/types"

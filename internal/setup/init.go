@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/charmbracelet/bubbles/filepicker"
-	"github.com/charmbracelet/bubbles/textinput"
+	"charm.land/bubbles/v2/filepicker"
+	"charm.land/bubbles/v2/textinput"
 
 	"github.com/bakito/gws/internal/types"
 )

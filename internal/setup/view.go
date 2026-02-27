@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
-func (i Input) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, i.Style.Render(i.Label), i.Model.View())
+func (i Input) View() tea.View {
+	return tea.NewView(lipgloss.JoinVertical(lipgloss.Left, i.Style.Render(i.Label), i.Model.View()))
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	if m.FilePickerActive {
 		help := m.Styles.Help.Render("enter: select / backspace: directory up / esc: quit")
 		fpView := lipgloss.JoinVertical(lipgloss.Left, m.Fp.View(), help)
-		return m.Styles.Border.Width(m.Width - 4).Render(fpView)
+		return tea.NewView(m.Styles.Border.Width(m.Width - 4).Render(fpView))
 	}
 	var b strings.Builder
 
@@ -23,7 +24,7 @@ func (m Model) View() string {
 	b.WriteString("\n\n")
 
 	for i := range m.Inputs {
-		b.WriteString(m.Inputs[i].View())
+		b.WriteString(m.Inputs[i].View().Content)
 		b.WriteString("\n")
 	}
 
@@ -46,5 +47,5 @@ func (m Model) View() string {
 	}
 	b.WriteString(m.Styles.Help.Render(help))
 
-	return m.Styles.Border.Width(m.Width - 4).Render(b.String())
+	return tea.NewView(m.Styles.Border.Width(m.Width - 4).Render(b.String()))
 }

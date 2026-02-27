@@ -1,10 +1,8 @@
 package setup
 
 import (
-	"github.com/charmbracelet/bubbles/filepicker"
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/lipgloss"
-
+	"charm.land/bubbles/v2/filepicker"
+	"charm.land/bubbles/v2/textinput"
 	"github.com/bakito/gws/internal/types"
 )
 
@@ -43,5 +41,5 @@ type Model struct {
 type Input struct {
 	textinput.Model
 	Label string
-	Style lipgloss.Style
+	Style textinput.StyleState
 }
