@@ -212,8 +212,7 @@ func (t *tunnel) handleConnection(clientConn net.Conn) {
 		default:
 			_, msg, err := wsConn.ReadMessage()
 			if err != nil {
-				var ce *websocket.CloseError
-				if !errors.As(err, &ce) && !errors.Is(err, net.ErrClosed) {
+				if _, ok := errors.AsType[*websocket.CloseError](err); !ok && !errors.Is(err, net.ErrClosed) {
 					log.Logf("🚨 Error reading from WebSocket: %v", err)
 				}
 				return

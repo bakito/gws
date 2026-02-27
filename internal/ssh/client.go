@@ -191,11 +191,15 @@ func (c *client) Execute(command string) (string, error) {
 func (c *client) UploadFile(from, to, permissions string) error {
 	log.Logf("Copy file from %q to %q with permissions %s", from, to, permissions)
 	// Open a file
-	f, _ := os.Open(env.ExpandEnv(from))
+	f, err := os.Open(env.ExpandEnv(from))
+	if err != nil {
+		return fmt.Errorf("error while opening file: %w", err)
+	}
+
 	// Close the file after it has been copied
 	defer f.Close()
 
-	err := c.scpClient.CopyFromFile(context.Background(), *f, to, permissions)
+	err = c.scpClient.CopyFromFile(context.Background(), *f, to, permissions)
 	if err != nil {
 		return fmt.Errorf("error while copying file: %w", err)
 	}
@@ -214,11 +218,14 @@ func (c *client) DownloadFile(from, to, permissions string) error {
 
 	perm, _ := strconv.ParseUint(permissions, 8, 32)
 
-	f, _ := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, os.FileMode(perm))
+	f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, os.FileMode(perm))
+	if err != nil {
+		return fmt.Errorf("error while opening file: %w", err)
+	}
 
 	defer f.Close()
 
-	err := c.scpClient.CopyFromRemote(context.Background(), f, from)
+	err = c.scpClient.CopyFromRemote(context.Background(), f, from)
 	if err != nil {
 		return fmt.Errorf("error while copying file: %w", err)
 	}
