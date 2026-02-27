@@ -34,6 +34,39 @@ type Config struct {
 
 func (c *Config) Validate() error {
 	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	validate.RegisterStructValidation(func(sl validator.StructLevel) {
+		f := sl.Current().Interface().(File)
+
+		switch f.Direction {
+		case "", "up":
+			info, err := os.Stat(f.SourcePath)
+			if err != nil {
+				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
+				return
+			}
+			if !info.Mode().IsRegular() {
+				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
+				return
+			}
+
+		case "down":
+			info, err := os.Stat(f.SourcePath)
+			if err != nil {
+				if os.IsNotExist(err) {
+					return // ok: darf nicht existieren
+				}
+				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
+				return
+			}
+			if !info.Mode().IsRegular() {
+				// existiert, aber ist Verzeichnis/kein reguläres File => Fehler
+				sl.ReportError(f.SourcePath, "SourcePath", "sourcePath", "file", "")
+				return
+			}
+		}
+	}, File{})
+
 	err := validate.Struct(c)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
