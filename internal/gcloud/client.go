@@ -1,11 +1,8 @@
 package gcloud
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os"
-	"strings"
 	"time"
 
 	workstations "cloud.google.com/go/workstations/apiv1"
@@ -167,54 +164,5 @@ func StopWorkstation(ctx context.Context, cfg *types.Config) error {
 		spinny.Stop()
 	}
 	log.Logf("Workstation stopped %q", sshContext.GCloud.Name)
-	return nil
-}
-
-func stringPrompt(label string) string {
-	var s string
-	r := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Fprintf(os.Stderr, "%s ", label)
-		s, _ = r.ReadString('\n')
-		if s != "" {
-			break
-		}
-	}
-	return strings.TrimSpace(s)
-}
-
-func DeleteWorkstation(ctx context.Context, cfg *types.Config) error {
-	name := stringPrompt(
-		fmt.Sprintf(
-			"Please confirm the deletion of workstation %q by entering the name again:",
-			cfg.CurrentContext().GCloud.Name,
-		),
-	)
-	if name != cfg.CurrentContext().GCloud.Name {
-		log.Log("Aborting ...")
-		return nil
-	}
-
-	sshContext, c, ws, err := setup(ctx, cfg)
-	if err != nil {
-		return err
-	}
-
-	defer c.Close()
-
-	op, err := c.DeleteWorkstation(ctx, &workstationspb.DeleteWorkstationRequest{Name: ws.GetName()})
-	if err != nil {
-		log.Logf("Error deleting workstation: %v", err)
-		return err
-	}
-	spinny := spinner.Start(fmt.Sprintf(" Deleting workstation %s to stop...", sshContext.GCloud.Name))
-	defer spinny.Stop() // reset the terminal in case of a panic
-
-	_, err = op.Wait(ctx)
-	if err != nil {
-		log.Logf("Error waiting for workstation to be deleted: %v", err)
-		return err
-	}
-	spinny.Stop()
 	return nil
 }
