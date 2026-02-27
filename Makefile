@@ -10,8 +10,8 @@ tidy:
 	go mod tidy
 
 # Run tests
-test: tb.ginkgo
-	$(TB_GINKGO) -r --cover --coverprofile=coverage.out
+test:
+	go test ./... -v -coverprofile=coverage.out
 
 release: tb.goreleaser tb.semver
 	@version=$$($(TB_SEMVER)); \
