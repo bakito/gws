@@ -60,7 +60,7 @@ contexts:
     - path: /home/user/.ssh
       permissions: "0700"
     files:
-    - source-path: /path/to/your/file
+    - sourcePath: /path/to/your/file
       path: /home/user/file
       permissions: "0644"
 ```
