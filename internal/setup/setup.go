@@ -3,7 +3,7 @@ package setup
 import (
 	"errors"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/types"
@@ -11,7 +11,7 @@ import (
 
 func Run(cfg *types.Config, context string) error {
 	cfg.CurrentContextName = context
-	p := tea.NewProgram(InitialModel(cfg), tea.WithAltScreen())
+	p := tea.NewProgram(InitialModel(cfg))
 	m, err := p.Run()
 	if err != nil {
 		return err

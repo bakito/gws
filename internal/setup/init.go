@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/charmbracelet/bubbles/filepicker"
-	"github.com/charmbracelet/bubbles/textinput"
+	"charm.land/bubbles/v2/filepicker"
+	"charm.land/bubbles/v2/textinput"
 
 	"github.com/bakito/gws/internal/types"
 )
@@ -56,16 +56,17 @@ func InitialModel(cfg *types.Config) Model {
 
 	for i := range m.Inputs {
 		t := textinput.New()
-		t.Cursor.Style = m.Styles.InputFocused
+		s := t.Styles()
+		s.Cursor.Color = m.Styles.InputFocused.GetForeground()
 		t.CharLimit = 100
-		t.Width = 120
+		t.SetWidth(120)
 
 		switch focusable(i) {
 		case ContextName:
 			m.Inputs[i].Label = "Context Name"
 			t.Focus()
-			t.PromptStyle = m.Styles.InputFocused
-			t.TextStyle = m.Styles.InputFocused
+			s.Focused.Prompt = m.Styles.InputFocused
+			s.Focused.Text = m.Styles.InputFocused
 			t.SetValue(m.Config.CurrentContextName)
 		case Port:
 			m.Inputs[i].Label = "Local SSH Port"
@@ -114,6 +115,7 @@ func InitialModel(cfg *types.Config) Model {
 		default:
 			// This should not be reached as maxFocusable defines the number of inputs.
 		}
+		t.SetStyles(s)
 		t.Placeholder = m.Inputs[i].Label
 		m.Inputs[i].Style = m.Styles.Label
 		m.Inputs[i].Model = t
