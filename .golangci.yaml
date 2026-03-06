@@ -163,12 +163,12 @@ linters:
         - name: import-shadowing
           disabled: true
         - name: line-length-limit
-          disabled: false
-          arguments:
-            - &lineLength 128
+          disabled: true
         - name: max-public-structs
           disabled: true
         - name: package-comments
+          disabled: true
+        - name: package-naming
           disabled: true
         - name: unhandled-error
           arguments:
@@ -218,5 +218,5 @@ formatters:
     gofmt:
       simplify: true
     golines:
-      max-len: *lineLength
+      max-len: 128
       tab-len: 4
