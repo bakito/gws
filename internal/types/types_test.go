@@ -3,15 +3,16 @@ package types
 import (
 	"os"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFile_Validate(t *testing.T) {
 	tmpFile, err := os.CreateTemp(t.TempDir(), "test")
-	require.NoError(t, err)
-	require.NoError(t, tmpFile.Close())
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		t.Fatalf("failed to close temp file: %v", err)
+	}
 
 	tests := []struct {
 		name       string
@@ -162,10 +163,8 @@ func TestFile_Validate(t *testing.T) {
 				},
 			}
 			err := config.Validate()
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

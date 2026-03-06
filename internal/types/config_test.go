@@ -5,14 +5,16 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestConfig_Validate(t *testing.T) {
 	tmpFile, err := os.CreateTemp(t.TempDir(), "test")
-	require.NoError(t, err)
-	require.NoError(t, tmpFile.Close())
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		t.Fatalf("failed to close temp file: %v", err)
+	}
 
 	tests := []struct {
 		name    string
@@ -75,10 +77,8 @@ func TestConfig_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			validate := validator.New()
 			err := validate.Struct(tt.config)
-			if tt.wantErr {
-				require.Error(t, err)
-			} else {
-				assert.NoError(t, err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

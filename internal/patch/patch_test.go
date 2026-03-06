@@ -1,12 +1,10 @@
 package patch_test
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/bakito/gws/internal/patch"
 	"github.com/bakito/gws/internal/types"
@@ -130,17 +128,20 @@ xxx
 
 			// Copy source file to temp directory
 			err := copyFile(tt.sourceFile, testFile)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("failed to copy file: %v", err)
+			}
 
 			// Read expected content
 			expected, err := os.ReadFile(tt.expectedFile)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("failed to read expected file: %v", err)
+			}
 
 			// Create patch
 			filePath := testFile
 			if tt.useEnvVar {
 				t.Setenv("GWS_TEST_DIR", tempDir)
-				require.NoError(t, err)
 				filePath = filepath.Join("${GWS_TEST_DIR}", tt.fileName)
 			}
 
@@ -153,19 +154,29 @@ xxx
 
 			// Apply patch
 			err = patch.Patch(tt.patchName, filePatch)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("failed to apply patch: %v", err)
+			}
 
 			// Verify patched content
 			patched, err := os.ReadFile(testFile)
-			require.NoError(t, err)
-			assert.Equal(t, string(expected), string(patched))
+			if err != nil {
+				t.Fatalf("failed to read patched file: %v", err)
+			}
+			if !bytes.Equal(expected, patched) {
+				t.Errorf("expected patched content:\n%s\nbut got:\n%s", string(expected), string(patched))
+			}
 
 			// Verify backup file existence
 			_, err = os.Stat(bakFile)
 			if tt.expectBackup {
-				assert.NoError(t, err, "backup file should exist")
+				if err != nil {
+					t.Errorf("backup file should exist: %v", err)
+				}
 			} else {
-				assert.True(t, os.IsNotExist(err), "backup file should not exist")
+				if !os.IsNotExist(err) {
+					t.Errorf("backup file should not exist, but got error: %v", err)
+				}
 			}
 		})
 	}
