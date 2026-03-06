@@ -35,8 +35,10 @@ extract-oauth-vars:
 	docker rm auth_config
 	docker rmi auth_config.go
 
+generate: dummy-oauth-vars
+
 dummy-oauth-vars:
-	cd py && 	go run main.go > ../internal/gcloud/auth_config.go
+	cd py && go run main.go > ../internal/gcloud/auth_config.go
 
 check-vulnerabilities:
 	go run golang.org/x/vuln/cmd/govulncheck@latest -show verbose,color ./...

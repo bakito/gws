@@ -1,3 +1,4 @@
+# managed by https://github.com/bakito/github-files sync action
 version: '2'
 linters:
   enable:
@@ -8,15 +9,14 @@ linters:
     - containedctx
     - copyloopvar
     - decorder
+    - depguard
     - dogsled
     - dupword
     - durationcheck
     - err113
-    - errchkjson
     - errname
     - errorlint
     - exptostd
-    - depguard
     - fatcontext
     - forcetypeassert
     - gocheckcompilerdirectives
@@ -68,6 +68,7 @@ linters:
     - contextcheck
     - cyclop
     - dupl
+    - errchkjson
     - exhaustive
     - exhaustruct
     - forbidigo
@@ -108,11 +109,11 @@ linters:
           files:
             - $test
           deny:
-            - pkg: github.com/stretchr/testify
-              desc: See https://go.dev/wiki/TestComments#assert-libraries
             - pkg: github.com/onsi/ginkgo
               desc: See https://go.dev/wiki/TestComments#assert-libraries
             - pkg: github.com/onsi/gomega
+              desc: See https://go.dev/wiki/TestComments#assert-libraries
+            - pkg: github.com/stretchr/testify
               desc: See https://go.dev/wiki/TestComments#assert-libraries
     gocritic:
       enable-all: true
@@ -123,10 +124,10 @@ linters:
         - unnamedResult
         - whyNoLint
     govet:
+      enable-all: true
       disable:
         - fieldalignment
         - shadow
-      enable-all: true
     misspell:
       locale: US
     revive:
@@ -141,11 +142,13 @@ linters:
         - name: deep-exit
           disabled: true
         - name: dot-imports
-          severity: warning
           disabled: false
+          severity: warning
           exclude: [""]
           arguments:
             - allowedPackages: ["github.com/onsi/ginkgo/v2", "github.com/onsi/gomega"]
+        - name: enforce-switch-style
+          disabled: true
         - name: exported
           disabled: true
         - name: filename-format
@@ -157,6 +160,8 @@ linters:
           disabled: true
         - name: function-result-limit
           disabled: true
+        - name: import-shadowing
+          disabled: true
         - name: line-length-limit
           disabled: false
           arguments:
@@ -165,18 +170,12 @@ linters:
           disabled: true
         - name: package-comments
           disabled: true
-        - name: var-naming
-          disabled: true
-        - name: enforce-switch-style
-          disabled: true
-        - name: var-naming
-          disabled: true
-        - name: unsecure-url-scheme
-          disabled: true
         - name: unhandled-error
           arguments:
             - '^fmt\.(Fp|P)?rint(f|ln)?$'
             - '^(bytes\.Buffer|string\.Writer|strings\.Builder)\.Write(Byte|Rune|String)?$'
+        - name: var-naming
+          disabled: true
     staticcheck:
       checks:
         - 'all'
@@ -195,11 +194,11 @@ linters:
           - forbidigo
         path: ^internal/cmds/
       - linters:
-          - forcetypeassert
-        path: _test\.go$
-      - linters:
           - forbidigo
         path: assets/scripts/generate-commit.go
+      - linters:
+          - forcetypeassert
+        path: _test\.go$
 formatters:
   enable:
     - gci
@@ -209,16 +208,15 @@ formatters:
     - golines
   settings:
     gci:
+      custom-order: true
       sections:
         - standard
         - default
-        - prefix(github.com/bakito/gws)
-    gofumpt:
-      module-path: github.com/bakito/gws
-      extra-rules: true
-    goimports:
-      local-prefixes:
-        - github.com/bakito/gws
+        - prefix(github.com/bakito)
+        - blank
+        - dot
+    gofmt:
+      simplify: true
     golines:
       max-len: *lineLength
       tab-len: 4
