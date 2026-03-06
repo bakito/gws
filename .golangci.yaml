@@ -16,6 +16,7 @@ linters:
     - errname
     - errorlint
     - exptostd
+    - depguard
     - fatcontext
     - forcetypeassert
     - gocheckcompilerdirectives
@@ -66,7 +67,6 @@ linters:
     - asasalint
     - contextcheck
     - cyclop
-    - depguard
     - dupl
     - exhaustive
     - exhaustruct
@@ -101,6 +101,19 @@ linters:
     - wrapcheck
     - wsl
   settings:
+    depguard:
+      rules:
+        no_third_party_test_libraries:
+          list-mode: lax
+          files:
+            - $test
+          deny:
+            - pkg: github.com/stretchr/testify
+              desc: See https://go.dev/wiki/TestComments#assert-libraries
+            - pkg: github.com/onsi/ginkgo
+              desc: See https://go.dev/wiki/TestComments#assert-libraries
+            - pkg: github.com/onsi/gomega
+              desc: See https://go.dev/wiki/TestComments#assert-libraries
     gocritic:
       enable-all: true
       disabled-checks:
