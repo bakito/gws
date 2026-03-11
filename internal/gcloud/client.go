@@ -148,6 +148,7 @@ func StopWorkstation(ctx context.Context, cfg *types.Config) error {
 	defer c.Close()
 
 	if ws.GetState() != workstationspb.Workstation_STATE_STOPPED {
+		start := time.Now()
 		op, err := c.StopWorkstation(ctx, &workstationspb.StopWorkstationRequest{Name: ws.GetName()})
 		if err != nil {
 			log.Logf("Error stopping workstation: %v", err)
@@ -162,7 +163,9 @@ func StopWorkstation(ctx context.Context, cfg *types.Config) error {
 			return err
 		}
 		spinny.Stop()
+		log.Logf("Workstation stopped in %s %q", time.Since(start).String(), sshContext.GCloud.Name)
+	} else {
+		log.Logf("Workstation already stopped %q", sshContext.GCloud.Name)
 	}
-	log.Logf("Workstation stopped %q", sshContext.GCloud.Name)
 	return nil
 }
