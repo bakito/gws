@@ -10,6 +10,7 @@ import (
 var (
 	flagLocalPort  int
 	flagTokenCheck bool
+	flagRestart    bool
 )
 
 // tunnelCmd represents the tunnel command.
@@ -26,8 +27,14 @@ var tunnelCmd = &cobra.Command{
 			return err
 		}
 
-		if err := startWorkstation(cfg); err != nil {
-			return err
+		if flagRestart {
+			if err := restartWorkstation(cfg); err != nil {
+				return err
+			}
+		} else {
+			if err := startWorkstation(cfg); err != nil {
+				return err
+			}
 		}
 
 		m := tunnel.NewModel(cmd.Context(), cfg, flagLocalPort)
@@ -43,4 +50,6 @@ func init() {
 		IntVarP(&flagLocalPort, "local-host-port", "p", 0, "The local host port to open (default ist the port from the config)")
 	tunnelCmd.PersistentFlags().
 		BoolVar(&flagTokenCheck, "check-token", true, "Enable periodic token check")
+	tunnelCmd.PersistentFlags().
+		BoolVar(&flagRestart, "restart", false, "Restart the workstation before opening the tunnel")
 }
