@@ -11,16 +11,12 @@ import (
 	"github.com/bakito/gws/internal/types"
 )
 
-// restartCmd represents the start command.
+// restartCmd represents the restart command.
 var restartCmd = &cobra.Command{
 	Use:   "restart",
 	Short: "Restart a workstation",
 	RunE: func(_ *cobra.Command, args []string) error {
-		if flagContext == "" && len(args) == 1 {
-			flagContext = args[0]
-		}
-
-		cfg, err := readConfig()
+		cfg, err := readConfig(args...)
 		if err != nil {
 			return err
 		}

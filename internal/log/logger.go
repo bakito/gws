@@ -1,6 +1,9 @@
 package log
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type Logger func(string)
 
@@ -10,9 +13,7 @@ func SetLogger(l Logger) {
 	}
 }
 
-var logger = func(s string) {
-	fmt.Println(s)
-}
+var logger = Stdout
 
 func Log(s string) {
 	logger(s)
@@ -20,4 +21,15 @@ func Log(s string) {
 
 func Logf(s string, args ...any) {
 	logger(fmt.Sprintf(s, args...))
+}
+
+var Stdout = func(s string) {
+	fmt.Fprintln(os.Stdout, s)
+}
+
+var Stderr = func(s string) {
+	fmt.Fprintln(os.Stderr, s)
+}
+
+var Null = func(string) {
 }

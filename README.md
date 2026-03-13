@@ -28,6 +28,7 @@ go install github.com/bakito/gws@latest
 - `gws patch`: Patch local gcloud cli files as defined in the `filePatches` configuration.
 - `gws ctx [context]`: Switch the current context. If no context is provided, an interactive selection is shown.
   - `--current`: Print the current active context.
+- `gws scripts win-reconnect-ssh`: Generate a Windows SSH reconnect script.
 
 ### Global Flags
 

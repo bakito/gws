@@ -32,7 +32,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&flagConfig, "config", "c", types.ConfigFileName, "The config file to be used")
 }
 
-func readConfig() (*types.Config, error) {
+func readConfig(args ...string) (*types.Config, error) {
+	if flagContext == "" && len(args) == 1 {
+		flagContext = args[0]
+	}
 	config, err := loadConfig()
 	if err != nil {
 		return nil, err

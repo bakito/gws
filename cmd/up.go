@@ -14,8 +14,8 @@ import (
 var upCmd = &cobra.Command{
 	Use:   types.DirectionUp,
 	Short: "Upload files and dirs",
-	RunE: func(*cobra.Command, []string) error {
-		cfg, err := readConfig()
+	RunE: func(_ *cobra.Command, args []string) error {
+		cfg, err := readConfig(args...)
 		if err != nil {
 			return err
 		}
