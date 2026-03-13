@@ -11,7 +11,7 @@ import (
 	"github.com/bakito/gws/internal/types"
 )
 
-// restartCmd represents the start command.
+// restartCmd represents the restart command.
 var restartCmd = &cobra.Command{
 	Use:   "restart",
 	Short: "Restart a workstation",
