@@ -9,7 +9,7 @@ REM The number of seconds to wait before retrying the connection.
 set "RETRY_SECONDS=3"
 
 :reconnect_loop
-ssh {{.User}}@{{.Host}} -p {{.Port}} {{ if .KnownHostsFile }}-o UserKnownHostsFile={{.KnownHostsFile}}{{ end }}
+ssh {{.User}}@{{.Host}} -p {{.Port}}{{ if .KnownHostsFile }} -o UserKnownHostsFile={{.KnownHostsFile}}{{ end }}
 if %errorlevel% == 0 goto end
 cls
 echo Disconnected. Reconnecting in %RETRY_SECONDS% seconds...
