@@ -18,9 +18,10 @@ const (
 
 func TestWindowsReconnectSSH(t *testing.T) {
 	tests := []struct {
-		name string
-		cfg  *types.Config
-		want string
+		name     string
+		fileName string
+		cfg      *types.Config
+		want     string
 	}{
 		{
 			name: "Basic Configuration",
@@ -89,13 +90,47 @@ goto reconnect_loop
 
 :end`,
 		},
+		{
+			name:     "With CustomFileName",
+			fileName: "/tmp/custom_file_name.cmd",
+			cfg: &types.Config{
+				CurrentContextName: "test-context-known-hosts",
+				Contexts: map[string]*types.Context{
+					"test-context-known-hosts": {
+						Host: "example.com",
+						Port: 22,
+						User: "user",
+					},
+				},
+			},
+			want: `REM custom_file_name.cmd
+@echo off
+setlocal
+
+REM This script automatically reconnects to an SSH server when the connection drops.
+REM It continuously attempts to establish an SSH connection and retries after a specified delay if disconnected.
+
+REM The number of seconds to wait before retrying the connection.
+set "RETRY_SECONDS=3"
+
+:reconnect_loop
+ssh user@example.com -p 22
+if %errorlevel% == 0 goto end
+cls
+echo Disconnected. Reconnecting in %RETRY_SECONDS% seconds...
+timeout /t %RETRY_SECONDS% /nobreak
+cls
+goto reconnect_loop
+
+:end`,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_ = tt.cfg.SwitchContext(tt.cfg.CurrentContextName, false)
 
-			got, err := WindowsReconnectSSH(tt.cfg)
+			got, err := WindowsReconnectSSH(tt.cfg, tt.fileName)
 			if err != nil {
 				t.Fatalf("WindowsReconnectSSH() error = %v", err)
 			}

@@ -37,7 +37,7 @@ var scriptsReconnectCmd = &cobra.Command{
 			return err
 		}
 
-		s, err := script.WindowsReconnectSSH(cfg)
+		s, err := script.WindowsReconnectSSH(cfg, flagOutput)
 		if err != nil {
 			return err
 		}
