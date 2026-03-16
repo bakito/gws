@@ -50,7 +50,7 @@ func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int) e
 	}
 
 	lc := net.ListenConfig{}
-	sshAddress := net.JoinHostPort("127.0.0.1", strconv.Itoa(p))
+	sshAddress := net.JoinHostPort(sshContext.Host, strconv.Itoa(p))
 	listener, err := lc.Listen(ctx, "tcp", sshAddress)
 	if err != nil {
 		log.Logf("🚨 Failed to start TCP listener: %v", err)
@@ -85,7 +85,16 @@ func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int) e
 	}()
 
 	if sshContext.KnownHostsFile != "" {
-		go updateKnownHosts(sshContext, sshAddress, p, cfg.SSHTimeout())
+		go func() {
+			// Get host key by connecting to the address
+			knownHost, err := ssh.GetHostKey(sshAddress, cfg.SSHTimeout())
+			if err != nil {
+				log.Logf("🚨 Error getting host key: %v", err)
+				return
+			}
+
+			updateKnownHosts(sshContext, knownHost, p)
+		}()
 	}
 
 	// Wait for either context cancellation or error
@@ -102,18 +111,10 @@ func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int) e
 
 func updateKnownHosts(
 	sshContext *types.Context,
-	address string,
+	knownHost string,
 	port int,
-	timeout time.Duration,
 ) {
 	if sshContext.KnownHostsFile == "" {
-		return
-	}
-
-	// Get host key by connecting to the address
-	knownHost, err := ssh.GetHostKey(address, timeout)
-	if err != nil {
-		log.Logf("🚨 Error getting host key: %v", err)
 		return
 	}
 
@@ -126,7 +127,7 @@ func updateKnownHosts(
 	lines := strings.Split(string(f), "\n")
 	found := false
 	changed := false
-	linePrefix := fmt.Sprintf("[127.0.0.1]:%d", port)
+	linePrefix := fmt.Sprintf("[%s]:%d", sshContext.Host, port)
 	for i, line := range lines {
 		if strings.HasPrefix(line, linePrefix) {
 			if line != knownHost {
