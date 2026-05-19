@@ -8,8 +8,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	workstations "cloud.google.com/go/workstations/apiv1"
@@ -60,6 +62,11 @@ func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int) e
 
 	log.Logf("🕳️ Opening tunnel to %s and listening on local ssh port %d ...", sshContext.GCloud.Name, p)
 
+	var postConnectOnce sync.Once
+	postConnectOnce.Do(func() {
+		postConnectCommand(ctx, sshContext)
+	})
+
 	// Create an error channel to handle errors from goroutines
 	errChan := make(chan error, 1)
 
@@ -106,6 +113,18 @@ func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int) e
 			return nil
 		}
 		return err
+	}
+}
+
+func postConnectCommand(ctx context.Context, sshContext *types.Context) {
+	if len(sshContext.PostConnectCommand) > 0 {
+		go func() {
+			log.Logf(">_ Starting post-connect command: %s", strings.Join(sshContext.PostConnectCommand, " "))
+			if err := exec.CommandContext(ctx, sshContext.PostConnectCommand[0], sshContext.PostConnectCommand[1:]...).
+				Start(); err != nil {
+				log.Logf("🚨 Failed to start post-connect command: %v", err)
+			}
+		}()
 	}
 }
 

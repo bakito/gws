@@ -70,14 +70,15 @@ contexts:
 
 ### Configuration Options
 
-- `current-context`: The name of the currently active context.
+- `currentContext`: The name of the currently active context.
 - `contexts`: A map of contexts.
   - `<context-name>`:
     - `host`: The hostname or IP address of the workstation.
     - `port`: The port to connect to.
     - `user`: The username to use for the SSH connection.
-    - `private-key-file`: The path to the private key for the SSH connection.
-    - `known-hosts-file`: The path to the known hosts file for the SSH connection.
+    - `privateKeyFile`: The path to the private key for the SSH connection.
+    - `knownHostsFile`: The path to the known hosts file for the SSH connection.
+    - `postConnectCommand`: Optional command and arguments to start after the tunnel is opened. The first item is the executable, and the remaining items are passed as arguments.
     - `gcloud`: The Google Cloud configuration.
       - `project`: The Google Cloud project.
       - `region`: The Google Cloud region.
@@ -88,7 +89,7 @@ contexts:
       - `path`: The path of the directory.
       - `permissions`: The permissions of the directory.
     - `files`: A list of files to upload to the workstation.
-      - `source-path`: The path of the local file.
+      - `sourcePath`: The path of the local file.
       - `path`: The path of the remote file.
       - `permissions`: The permissions of the remote file.
       - `direction`: The direction (up / down) the file is copied.
