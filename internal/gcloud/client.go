@@ -36,7 +36,7 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 			log.Logf("Error starting workstation: %v", err)
 			return err
 		}
-		spinny := spinner.Start(fmt.Sprintf(" Waiting for workstation %s to start...", sshContext.GCloud.Name))
+		spinny := spinner.Start(fmt.Sprintf("Waiting for workstation %s to start...", sshContext.GCloud.Name))
 		defer spinny.Stop() // reset the terminal in case of a panic
 		_, err = op.Wait(ctx)
 		spinny.Stop()
@@ -48,7 +48,7 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 	case workstationspb.Workstation_STATE_RUNNING:
 		log.Logf("Workstation running %q", sshContext.GCloud.Name)
 	case workstationspb.Workstation_STATE_STARTING:
-		spinny := spinner.Start(fmt.Sprintf(" Workstation %s is already starting ...", sshContext.GCloud.Name))
+		spinny := spinner.Start(fmt.Sprintf("Workstation %s is already starting ...", sshContext.GCloud.Name))
 		defer spinny.Stop() // reset the terminal in case of a panic
 
 		err = waitForWorkstationRunning(ctx, c, ws, defaultTimeout)
@@ -154,7 +154,7 @@ func StopWorkstation(ctx context.Context, cfg *types.Config) error {
 			log.Logf("Error stopping workstation: %v", err)
 			return err
 		}
-		spinny := spinner.Start(fmt.Sprintf(" Waiting for workstation %s to stop...", sshContext.GCloud.Name))
+		spinny := spinner.Start(fmt.Sprintf("Waiting for workstation %s to stop...", sshContext.GCloud.Name))
 		defer spinny.Stop() // reset the terminal in case of a panic
 
 		_, err = op.Wait(ctx)
