@@ -52,6 +52,10 @@ contexts:
     user: user
     privateKeyFile: /path/to/your/private/key
     knownHostsFile: /path/to/your/known_hosts
+    postConnectCommand: # open 'GWS' provile in a new Windos Terminal Tab
+     - 'wt'
+     - '--window=0'
+     - '--profile=GWS'
     gcloud:
       project: my-project
       region: a-region
