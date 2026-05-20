@@ -11,6 +11,8 @@ type Context struct {
 	PrivateKeyFile string `validate:"omitempty,file" yaml:"privateKeyFile"`
 	KnownHostsFile string `validate:"omitempty,file" yaml:"knownHostsFile"`
 
+	PostConnectCommand []string `yaml:"postConnectCommand,omitempty"`
+
 	GCloud *GCloud `yaml:"gcloud"`
 
 	Dirs  []Dir  `yaml:"dirs,omitempty"`
