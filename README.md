@@ -52,7 +52,7 @@ contexts:
     user: user
     privateKeyFile: /path/to/your/private/key
     knownHostsFile: /path/to/your/known_hosts
-    postConnectCommand: # open 'GWS' provile in a new Windos Terminal Tab
+    postConnectCommand: # open 'GWS' profile in a new Windos Terminal Tab
      - 'wt'
      - '--window=0'
      - '--profile=GWS'
