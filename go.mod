@@ -6,7 +6,7 @@ require (
 	charm.land/bubbles/v2 v2.1.0
 	charm.land/bubbletea/v2 v2.0.7
 	charm.land/lipgloss/v2 v2.0.4
-	cloud.google.com/go/workstations v1.6.0
+	cloud.google.com/go/workstations v1.7.0
 	github.com/bramvdbogaerde/go-scp v1.6.0
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/gorilla/websocket v1.5.3
