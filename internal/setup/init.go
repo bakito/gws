@@ -87,7 +87,7 @@ func InitialModel(cfg *types.Config) Model {
 			if context.PrivateKeyFile != "" {
 				t.SetValue(context.PrivateKeyFile)
 			} else if userHomeDir != "" {
-				t.SetValue(filepath.Join(userHomeDir, ".ssh"))
+				t.SetValue(filepath.Join(userHomeDir, ".ssh", "id_ecdsa"))
 			}
 		case KnownHostsFile:
 			m.Inputs[i].Label = "Known Hosts File (optional)"
@@ -95,7 +95,7 @@ func InitialModel(cfg *types.Config) Model {
 			if context.KnownHostsFile != "" {
 				t.SetValue(context.KnownHostsFile)
 			} else if userHomeDir != "" {
-				t.SetValue(filepath.Join(userHomeDir, ".ssh"))
+				t.SetValue(filepath.Join(userHomeDir, ".ssh", "known_hosts"))
 			}
 		case GcloudProject:
 			m.Inputs[i].Label = "gcloud: Project ID"
