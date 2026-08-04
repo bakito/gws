@@ -24,14 +24,14 @@ const (
 )
 
 type Config struct {
-	Contexts           map[string]*Context  `validate:"required,dive,required" yaml:"contexts"`
-	CurrentContextName string               `                                  yaml:"currentContext"`
-	FilePath           string               `                                  yaml:"-"`
-	TokenCheck         bool                 `                                  yaml:"-"`
-	FilePatches        map[string]FilePatch `                                  yaml:"filePatches,omitempty"`
-	SSHTimeoutSeconds  int                  `                                  yaml:"sshTimeoutSeconds,omitempty"`
+	Contexts           map[string]*Context  `validate:"required,dive,required"  yaml:"contexts"`
+	CurrentContextName string               `yaml:"currentContext"`
+	FilePath           string               `yaml:"-"`
+	TokenCheck         bool                 `yaml:"-"`
+	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
+	SSHTimeoutSeconds  int                  `yaml:"sshTimeoutSeconds,omitempty"`
 	currentContext     *Context
-	Token              *TokenStorage `                                  yaml:"-"`
+	Token              *TokenStorage `yaml:"-"`
 }
 
 func (c *Config) Validate() error {
