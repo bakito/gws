@@ -83,7 +83,6 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 		oauth2.SetAuthURLParam("prompt", "consent"),
-		oauth2.SetAuthURLParam("include_granted_scopes", "true"),
 	)
 
 	// Open URL in browser
