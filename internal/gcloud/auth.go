@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	golog "log"
 	"net"
 	"net/http"
 	"strconv"
@@ -35,12 +34,11 @@ var oauthConfig = &oauth2.Config{
 }
 
 // Generate PKCE Code Verifier and SHA-256 Code Challenge.
-func generatePKCE() (codeVerifier, codeChallenge string) {
-	// Create a random 43-128 character code verifier
+func generatePKCE() (codeVerifier, codeChallenge string, err error) {
 	verifierBytes := make([]byte, 32)
-	_, err := rand.Read(verifierBytes)
+	_, err = rand.Read(verifierBytes)
 	if err != nil {
-		golog.Fatalf("🚨 Failed to generate PKCE verifier: %v", err)
+		return "", "", fmt.Errorf("failed to generate PKCE verifier: %w", err)
 	}
 	codeVerifier = base64.RawURLEncoding.EncodeToString(verifierBytes)
 
@@ -49,8 +47,7 @@ func generatePKCE() (codeVerifier, codeChallenge string) {
 
 	// Base64 URL encode the hash to create the code challenge
 	codeChallenge = base64.RawURLEncoding.EncodeToString(hash[:])
-
-	return codeVerifier, codeChallenge
+	return codeVerifier, codeChallenge, nil
 }
 
 func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
@@ -66,72 +63,100 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		}
 	}
 
-	codeVerifier, codeChallenge := generatePKCE()
+	codeVerifier, codeChallenge, err := generatePKCE()
+	if err != nil {
+		return nil, err
+	}
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
 		return nil, err
 	}
 
+	// Use a per-request copy so we don't race other callers that may rely on oauthConfig
+	localOAuth := *oauthConfig
 	//nolint:revive // http is ok for a local callback
-	oauthConfig.RedirectURL = fmt.Sprintf("http://%s/callback", net.JoinHostPort("localhost", strconv.Itoa(port)))
+	localOAuth.RedirectURL = fmt.Sprintf("http://%s/callback", net.JoinHostPort("localhost", strconv.Itoa(port)))
 
-	// Add PKCE to auth URL
-	authURL := oauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline,
+	// Add PKCE to auth URL and request explicit consent so we reliably receive a refresh token.
+	authURL := localOAuth.AuthCodeURL("state", oauth2.AccessTypeOffline,
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+		oauth2.SetAuthURLParam("prompt", "consent"),
+		oauth2.SetAuthURLParam("include_granted_scopes", "true"),
 	)
 
 	// Open URL in browser
 	log.Log("Opening URL: " + authURL)
 	openBrowser(authURL)
 
-	// Create a channel for shutdown signaling
-	shutdownChan := make(chan *oauth2.Token)
+	// Create a channel for shutdown signaling that can carry a token or an error.
+	type authResult struct {
+		token *oauth2.Token
+		err   error
+	}
+	shutdownChan := make(chan authResult, 1)
 
-	server := &http.Server{Addr: fmt.Sprintf(":%d", port), ReadHeaderTimeout: 1 * time.Second}
-	// Start a local server to handle callback
-	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+	// Use a dedicated ServeMux to avoid interfering with global handlers.
+	mux := http.NewServeMux()
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		ReadHeaderTimeout: 1 * time.Second,
+		Handler:           mux,
+	}
+
+	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		code := query.Get("code")
 		if code == "" {
 			http.Error(w, "Missing code", http.StatusBadRequest)
+			shutdownChan <- authResult{nil, errors.New("missing code")}
 			return
 		}
 
-		// Exchange authorization code for token
-
-		token, err := oauthConfig.Exchange(ctx, code,
+		token, err := localOAuth.Exchange(ctx, code,
 			oauth2.SetAuthURLParam("code_verifier", codeVerifier),
-			oauth2.SetAuthURLParam("client_secret", oauthConfig.ClientSecret),
+			oauth2.SetAuthURLParam("client_secret", localOAuth.ClientSecret),
 		)
 		if err != nil {
 			http.Error(w, "Failed to get token", http.StatusInternalServerError)
-			golog.Fatalf("🚨 OAuth Exchange error: %v", err)
+			log.Logf("🚨 OAuth exchange error: %v", err)
+			shutdownChan <- authResult{nil, err}
+			return
 		}
 
-		// Save token
-		_ = cfg.SetToken(*token)
+		// Save token (may not contain a refresh token if consent not granted)
+		if err := cfg.SetToken(*token); err != nil {
+			// log save error but continue - we still return the token for in-memory usage
+			log.Logf("Failed to persist token: %v", err)
+		}
 
 		fmt.Fprint(w, "Authentication successful! You can close this window.")
-		// Signal shutdown using a channel
-		go func() {
-			shutdownChan <- token
-		}()
+		shutdownChan <- authResult{token, nil}
 	})
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			golog.Fatalf("🚨Failed to start server: %v", err)
+			// Report start-up failure back
+			shutdownChan <- authResult{nil, fmt.Errorf("failed to start server: %w", err)}
 		}
 	}()
 
 	log.Log("Waiting for authentication...")
 	// Block until we receive a shutdown signal
-	token := <-shutdownChan
-	log.Log("Authenticated...")
+	res := <-shutdownChan
 	_ = server.Shutdown(ctx)
-	return newTokenSourceWithRefreshCheck(ctx, token, cfg), nil
+	if res.err != nil {
+		return nil, res.err
+	}
+	log.Log("Authenticated...")
+
+	// Warn if the refresh token was not provided.
+	if res.token.RefreshToken == "" {
+		log.Log("Warning: no refresh token returned. You may need to re-auth with prompt=consent to get a refresh token.")
+	}
+
+	return newTokenSourceWithRefreshCheck(ctx, res.token, cfg), nil
 }
 
 type TokenSourceWithRefreshCheck struct {
@@ -144,18 +169,18 @@ type TokenSourceWithRefreshCheck struct {
 }
 
 func newTokenSourceWithRefreshCheck(ctx context.Context, token *oauth2.Token, cfg *types.Config) oauth2.TokenSource {
-	_, cancel := context.WithCancel(ctx)
+	newCtx, cancel := context.WithCancel(ctx)
 	ts := &TokenSourceWithRefreshCheck{
 		checkPeriod: 10 * time.Minute,
-		source:      oauthConfig.TokenSource(ctx, token),
+		source:      oauthConfig.TokenSource(newCtx, token),
 		cfg:         cfg,
 		done:        make(chan struct{}),
 		cancel:      cancel,
 	}
 
 	if cfg.TokenCheck {
-		// Start periodic check
-		go ts.periodicCheck(ctx)
+		// Start periodic check using the cancelable context so Stop() cancels it.
+		go ts.periodicCheck(newCtx)
 	}
 	return ts
 }
@@ -201,6 +226,14 @@ func (ts *TokenSourceWithRefreshCheck) Token() (*oauth2.Token, error) {
 
 // Stop stops the periodic check.
 func (ts *TokenSourceWithRefreshCheck) Stop() {
-	ts.cancel()
-	close(ts.done)
+	if ts.cancel != nil {
+		ts.cancel()
+	}
+	// Close done non-blocking, protect against double close
+	select {
+	case <-ts.done:
+		// already closed / drained
+	default:
+		close(ts.done)
+	}
 }

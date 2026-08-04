@@ -7,7 +7,7 @@ import (
 type Context struct {
 	Host           string `validate:"required"       yaml:"host"`
 	Port           int    `validate:"required"       yaml:"port"`
-	User           string `                          yaml:"user"`
+	User           string `yaml:"user"`
 	PrivateKeyFile string `validate:"omitempty,file" yaml:"privateKeyFile"`
 	KnownHostsFile string `validate:"omitempty,file" yaml:"knownHostsFile"`
 
@@ -16,7 +16,7 @@ type Context struct {
 	GCloud *GCloud `yaml:"gcloud"`
 
 	Dirs  []Dir  `yaml:"dirs,omitempty"`
-	Files []File `yaml:"files,omitempty" validate:"dive,required"`
+	Files []File `validate:"dive,required" yaml:"files,omitempty"`
 }
 
 type GCloud struct {
@@ -39,7 +39,7 @@ type Dir struct {
 type File struct {
 	SourcePath  string `validate:"required"                yaml:"sourcePath"`
 	Path        string `validate:"required"                yaml:"path"`
-	Permissions string `                                   yaml:"permissions"`
+	Permissions string `yaml:"permissions"`
 	Direction   string `validate:"omitempty,oneof=up down" yaml:"direction"`
 }
 
