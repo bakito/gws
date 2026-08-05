@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/zalando/go-keyring"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 
@@ -34,6 +35,19 @@ func GetTokenFilePath() (string, error) {
 }
 
 func LoadToken() (*oauth2.Token, error) {
+	kr, err := keyring.Get("gws", "token")
+	if err == nil {
+		var storage TokenStorage
+		if err := yaml.Unmarshal([]byte(kr), &storage); err != nil {
+			return nil, err
+		}
+		return &storage.Token, nil
+	}
+	if !errors.Is(err, keyring.ErrNotFound) {
+		// Some other keyring error — fallthrough to file-based fallback
+		log.Logf("Keyring read error: %v; falling back to file storage", err)
+	}
+
 	tokenPath, err := GetTokenFilePath()
 	if err != nil {
 		return nil, err
@@ -57,23 +71,30 @@ func LoadToken() (*oauth2.Token, error) {
 }
 
 func SaveToken(token oauth2.Token) error {
-	tokenPath, err := GetTokenFilePath()
-	if err != nil {
-		return err
-	}
-
+	// Encode token to YAML once and reuse for both keyring and file storage
 	storage := TokenStorage{Token: token}
 
 	var buf bytes.Buffer
 	encoder := yaml.NewEncoder(&buf)
 	encoder.SetIndent(2)
 
-	err = encoder.Encode(storage)
+	err := encoder.Encode(storage)
 	if err != nil {
 		return err
 	}
 
+	err = keyring.Set("gws", "token", buf.String())
+	if err == nil {
+		log.Logf("🎟️ Stored token in OS keyring")
+		return nil
+	}
+	log.Logf("Keyring write error: %v; falling back to file storage", err)
+
 	log.Logf("🎟️ Got new Google Access Token (expires: %s)", token.Expiry.Format(time.RFC822))
+	tokenPath, err := GetTokenFilePath()
+	if err != nil {
+		return err
+	}
 	return os.WriteFile(tokenPath, buf.Bytes(), 0o600)
 }
 
