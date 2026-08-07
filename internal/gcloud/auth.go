@@ -230,6 +230,7 @@ func (ts *TokenSourceWithRefreshCheck) periodicCheck(ctx context.Context) {
 			if ts.lastToken == nil || ts.lastToken.AccessToken != token.AccessToken {
 				_ = ts.cfg.SetToken(*token)
 				ts.lastToken = token
+				log.Log("🔑 Refreshed OAuth2 token")
 			}
 		}
 	}
@@ -245,6 +246,7 @@ func (ts *TokenSourceWithRefreshCheck) Token() (*oauth2.Token, error) {
 	if ts.lastToken == nil || ts.lastToken.AccessToken != token.AccessToken {
 		_ = ts.cfg.SetToken(*token)
 		ts.lastToken = token
+		log.Log("🔑 Refreshed OAuth2 token")
 	}
 
 	return token, nil

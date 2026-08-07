@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"context"
 	"os"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 
@@ -21,10 +23,15 @@ var (
 )
 
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
+	if err := run(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func run() error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	return rootCmd.ExecuteContext(ctx)
 }
 
 func init() {

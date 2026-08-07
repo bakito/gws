@@ -1,34 +1,23 @@
 package cmd
 
 import (
-	"context"
-	"os"
-	"os/signal"
-
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/gcloud"
-	"github.com/bakito/gws/internal/types"
 )
 
 // startCmd represents the start command.
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a workstation",
-	RunE: func(_ *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := readConfig(args...)
 		if err != nil {
 			return err
 		}
 
-		return startWorkstation(cfg)
+		return gcloud.StartWorkstation(cmd.Context(), cfg)
 	},
-}
-
-func startWorkstation(cfg *types.Config) error {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-	return gcloud.StartWorkstation(ctx, cfg)
 }
 
 func init() {

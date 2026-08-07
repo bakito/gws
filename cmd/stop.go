@@ -1,10 +1,6 @@
 package cmd
 
 import (
-	"context"
-	"os"
-	"os/signal"
-
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/gcloud"
@@ -14,15 +10,13 @@ import (
 var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stop a workstation",
-	RunE: func(_ *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := readConfig(args...)
 		if err != nil {
 			return err
 		}
 
-		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-		defer stop()
-		return gcloud.StopWorkstation(ctx, cfg)
+		return gcloud.StopWorkstation(cmd.Context(), cfg)
 	},
 }
 

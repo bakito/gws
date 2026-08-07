@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
+	"github.com/bakito/gws/internal/gcloud"
 	"github.com/bakito/gws/internal/tunnel"
 )
 
@@ -22,15 +23,15 @@ var tunnelCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		cfg.TokenCheck = flagTokenCheck
 
 		if flagRestart {
-			if err := restartWorkstation(cfg); err != nil {
+			if err := gcloud.StopWorkstation(cmd.Context(), cfg); err != nil {
 				return err
 			}
-		} else {
-			if err := startWorkstation(cfg); err != nil {
-				return err
-			}
+		}
+		if err := gcloud.StartWorkstation(cmd.Context(), cfg); err != nil {
+			return err
 		}
 
 		m := tunnel.NewModel(cmd.Context(), cfg, flagLocalPort)
