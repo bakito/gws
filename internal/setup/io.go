@@ -32,6 +32,7 @@ func SaveConfig(m Model) error {
 	}
 
 	newCtx.GCloud.Project = m.Inputs[GcloudProject].Value()
+	newCtx.GCloud.Account = m.Inputs[GcloudAccount].Value()
 	newCtx.GCloud.Region = m.Inputs[GcloudRegion].Value()
 	newCtx.GCloud.Cluster = m.Inputs[GcloudCluster].Value()
 	newCtx.GCloud.Config = m.Inputs[GcloudConfig].Value()

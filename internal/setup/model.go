@@ -15,6 +15,7 @@ const (
 	PrivateKeyFile
 	KnownHostsFile
 	GcloudProject
+	GcloudAccount
 	GcloudRegion
 	GcloudCluster
 	GcloudConfig

@@ -124,7 +124,7 @@ func (m Model) validateAndSubmit() (tea.Model, tea.Cmd) {
 	}
 
 	for i := range m.Inputs {
-		if m.Inputs[i].Value() == "" && focusable(i) != KnownHostsFile {
+		if m.Inputs[i].Value() == "" && focusable(i) != KnownHostsFile && focusable(i) != GcloudAccount {
 			m.StatusMessage = fmt.Sprintf("Error: %s is a required field.", m.Inputs[i].Label)
 			return m, nil
 		}

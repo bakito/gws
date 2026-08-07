@@ -76,14 +76,26 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	// Use a per-request copy so we don't race other callers that may rely on oauthConfig
 	localOAuth := *oauthConfig
 	//nolint:revive // http is ok for a local callback
-	localOAuth.RedirectURL = fmt.Sprintf("http://%s/callback", net.JoinHostPort("localhost", strconv.Itoa(port)))
+	localOAuth.RedirectURL = fmt.Sprintf("http://%s/", net.JoinHostPort("127.0.0.1", strconv.Itoa(port)))
 
-	// Add PKCE to auth URL and request explicit consent so we reliably receive a refresh token.
-	authURL := localOAuth.AuthCodeURL("state", oauth2.AccessTypeOffline,
+	state := "state"
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err == nil {
+		state = base64.RawURLEncoding.EncodeToString(b)
+	}
+
+	options := []oauth2.AuthCodeOption{
+		oauth2.AccessTypeOffline,
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
-		oauth2.SetAuthURLParam("prompt", "consent"),
-	)
+	}
+	if sshContext := cfg.CurrentContext(); sshContext != nil && sshContext.GCloud != nil && sshContext.GCloud.Account != "" {
+		options = append(options, oauth2.SetAuthURLParam("login_hint", sshContext.GCloud.Account))
+	} else {
+		options = append(options, oauth2.SetAuthURLParam("prompt", "select_account"))
+	}
+
+	authURL := localOAuth.AuthCodeURL(state, options...)
 
 	// Open URL in browser
 	log.Log("Opening URL: " + authURL)
@@ -104,8 +116,13 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		Handler:           mux,
 	}
 
-	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
+		if query.Get("state") != state {
+			http.Error(w, "Invalid state", http.StatusBadRequest)
+			shutdownChan <- authResult{nil, errors.New("invalid state")}
+			return
+		}
 		code := query.Get("code")
 		if code == "" {
 			http.Error(w, "Missing code", http.StatusBadRequest)
@@ -130,7 +147,17 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 			log.Logf("Failed to persist token: %v", err)
 		}
 
-		fmt.Fprint(w, "Authentication successful! You can close this window.")
+		w.Header().Set("Content-Type", "text/html")
+		fmt.Fprint(w, `
+<html>
+<head><title>Authentication Successful</title></head>
+<body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+	<h1>Authentication Successful!</h1>
+	<p>You can now close this window and return to the tool.</p>
+	<script>window.onload = function() { setTimeout(function() { window.close(); }, 1000); }</script>
+</body>
+</html>
+`)
 		shutdownChan <- authResult{token, nil}
 	})
 

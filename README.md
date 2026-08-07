@@ -58,6 +58,7 @@ contexts:
      - '--profile=GWS'
     gcloud:
       project: my-project
+      account: user@example.com
       region: a-region
       cluster: my-cluster
       config: my-workstation-config
@@ -85,6 +86,7 @@ contexts:
     - `postConnectCommand`: Optional command and arguments to start after the tunnel is opened. The first item is the executable, and the remaining items are passed as arguments.
     - `gcloud`: The Google Cloud configuration.
       - `project`: The Google Cloud project.
+      - `account`: The Google Cloud account (email, optional).
       - `region`: The Google Cloud region.
       - `cluster`: The Google Cloud cluster.
       - `config`: The workstation configuration.

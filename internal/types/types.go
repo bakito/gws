@@ -21,6 +21,7 @@ type Context struct {
 
 type GCloud struct {
 	Project string `yaml:"project"`
+	Account string `yaml:"account,omitempty"`
 	Region  string `yaml:"region"`
 	Cluster string `yaml:"cluster"`
 	Config  string `yaml:"config"`
