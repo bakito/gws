@@ -24,8 +24,11 @@ var oauthConfig = &oauth2.Config{
 	ClientID:     clientID,
 	ClientSecret: clientSecret,
 	Scopes: []string{
+		"openid",
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/appengine.admin",
+		"https://www.googleapis.com/auth/compute",
 	},
 	Endpoint: google.Endpoint,
 }
@@ -81,19 +84,16 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		state = base64.RawURLEncoding.EncodeToString(b)
 	}
 
-	// Add PKCE to auth URL.
 	options := []oauth2.AuthCodeOption{
 		oauth2.AccessTypeOffline,
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 	}
-
-	prompt := "select_account"
 	if sshContext := cfg.CurrentContext(); sshContext != nil && sshContext.GCloud != nil && sshContext.GCloud.Account != "" {
-		prompt = "consent"
 		options = append(options, oauth2.SetAuthURLParam("login_hint", sshContext.GCloud.Account))
+	} else {
+		options = append(options, oauth2.SetAuthURLParam("prompt", "select_account"))
 	}
-	options = append(options, oauth2.SetAuthURLParam("prompt", prompt))
 
 	authURL := localOAuth.AuthCodeURL(state, options...)
 
@@ -147,7 +147,17 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 			log.Logf("Failed to persist token: %v", err)
 		}
 
-		fmt.Fprint(w, "Authentication successful! You can now close this window and return to the tool.")
+		w.Header().Set("Content-Type", "text/html")
+		fmt.Fprint(w, `
+<html>
+<head><title>Authentication Successful</title></head>
+<body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+	<h1>Authentication Successful!</h1>
+	<p>You can now close this window and return to the tool.</p>
+	<script>window.onload = function() { setTimeout(function() { window.close(); }, 1000); }</script>
+</body>
+</html>
+`)
 		shutdownChan <- authResult{token, nil}
 	})
 
