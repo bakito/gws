@@ -24,11 +24,8 @@ var oauthConfig = &oauth2.Config{
 	ClientID:     clientID,
 	ClientSecret: clientSecret,
 	Scopes: []string{
-		"openid",
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/cloud-platform",
-		"https://www.googleapis.com/auth/appengine.admin",
-		"https://www.googleapis.com/auth/compute",
 	},
 	Endpoint: google.Endpoint,
 }
@@ -76,13 +73,19 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	// Use a per-request copy so we don't race other callers that may rely on oauthConfig
 	localOAuth := *oauthConfig
 	//nolint:revive // http is ok for a local callback
-	localOAuth.RedirectURL = fmt.Sprintf("http://%s/callback", net.JoinHostPort("localhost", strconv.Itoa(port)))
+	localOAuth.RedirectURL = fmt.Sprintf("http://%s/", net.JoinHostPort("127.0.0.1", strconv.Itoa(port)))
 
-	// Add PKCE to auth URL and request explicit consent so we reliably receive a refresh token.
-	authURL := localOAuth.AuthCodeURL("state", oauth2.AccessTypeOffline,
+	state := "state"
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err == nil {
+		state = base64.RawURLEncoding.EncodeToString(b)
+	}
+
+	// Add PKCE to auth URL.
+	authURL := localOAuth.AuthCodeURL(state, oauth2.AccessTypeOffline,
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
-		oauth2.SetAuthURLParam("prompt", "consent"),
+		oauth2.SetAuthURLParam("prompt", "select_account"),
 	)
 
 	// Open URL in browser
@@ -104,8 +107,13 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		Handler:           mux,
 	}
 
-	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
+		if query.Get("state") != state {
+			http.Error(w, "Invalid state", http.StatusBadRequest)
+			shutdownChan <- authResult{nil, errors.New("invalid state")}
+			return
+		}
 		code := query.Get("code")
 		if code == "" {
 			http.Error(w, "Missing code", http.StatusBadRequest)
@@ -130,7 +138,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 			log.Logf("Failed to persist token: %v", err)
 		}
 
-		fmt.Fprint(w, "Authentication successful! You can close this window.")
+		fmt.Fprint(w, "Authentication successful! You can now close this window and return to the tool.")
 		shutdownChan <- authResult{token, nil}
 	})
 
