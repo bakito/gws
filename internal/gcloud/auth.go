@@ -86,12 +86,14 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		oauth2.AccessTypeOffline,
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
-		oauth2.SetAuthURLParam("prompt", "select_account"),
 	}
 
+	prompt := "select_account"
 	if sshContext := cfg.CurrentContext(); sshContext != nil && sshContext.GCloud != nil && sshContext.GCloud.Account != "" {
+		prompt = "consent"
 		options = append(options, oauth2.SetAuthURLParam("login_hint", sshContext.GCloud.Account))
 	}
+	options = append(options, oauth2.SetAuthURLParam("prompt", prompt))
 
 	authURL := localOAuth.AuthCodeURL(state, options...)
 
