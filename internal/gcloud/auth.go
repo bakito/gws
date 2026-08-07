@@ -82,11 +82,18 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	}
 
 	// Add PKCE to auth URL.
-	authURL := localOAuth.AuthCodeURL(state, oauth2.AccessTypeOffline,
+	options := []oauth2.AuthCodeOption{
+		oauth2.AccessTypeOffline,
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 		oauth2.SetAuthURLParam("prompt", "select_account"),
-	)
+	}
+
+	if sshContext := cfg.CurrentContext(); sshContext != nil && sshContext.GCloud != nil && sshContext.GCloud.Account != "" {
+		options = append(options, oauth2.SetAuthURLParam("login_hint", sshContext.GCloud.Account))
+	}
+
+	authURL := localOAuth.AuthCodeURL(state, options...)
 
 	// Open URL in browser
 	log.Log("Opening URL: " + authURL)

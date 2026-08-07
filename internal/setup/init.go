@@ -100,6 +100,9 @@ func InitialModel(cfg *types.Config) Model {
 		case GcloudProject:
 			m.Inputs[i].Label = "gcloud: Project ID"
 			t.SetValue(context.GCloud.Project)
+		case GcloudAccount:
+			m.Inputs[i].Label = "gcloud: Account (email, optional)"
+			t.SetValue(context.GCloud.Account)
 		case GcloudRegion:
 			m.Inputs[i].Label = "gcloud: Region"
 			t.SetValue(context.GCloud.Region)
