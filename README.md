@@ -71,6 +71,9 @@ contexts:
       path: /home/user/file
       permissions: "0644"
       direction: up
+chromeBrowser:
+  executablePath: C:\Program Files\Google\Chrome\Application\chrome.exe
+  profileDirectory: Profile X
 ```
 
 ### Configuration Options
@@ -99,3 +102,7 @@ contexts:
       - `path`: The path of the remote file.
       - `permissions`: The permissions of the remote file.
       - `direction`: The direction (up / down) the file is copied.
+- `sshTimeoutSeconds`: Optional SSH connection timeout in seconds (default: `30`).
+- `chromeBrowser`: Optional Chrome browser configuration.
+  - `executablePath`: The path to the Chrome executable.
+  - `profileDirectory`: The Chrome profile directory to use. (check profile dir by opening `chrome://version` in chrome)

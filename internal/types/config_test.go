@@ -71,6 +71,45 @@ func TestConfig_Validate(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "chrome executable missing",
+			config: &Config{
+				Contexts: map[string]*Context{
+					"context1": {Host: "localhost", Port: 8080, Files: []File{
+						{SourcePath: tmpFile.Name(), Path: "/path/to/dest"},
+					}},
+				},
+				ChromeBrowser: &ChromeBrowserConfig{ProfileDirectory: "foo"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "chrome profile missing",
+			config: &Config{
+				Contexts: map[string]*Context{
+					"context1": {Host: "localhost", Port: 8080, Files: []File{
+						{SourcePath: tmpFile.Name(), Path: "/path/to/dest"},
+					}},
+				},
+				ChromeBrowser: &ChromeBrowserConfig{ExecutablePath: tmpFile.Name()},
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid chrome config",
+			config: &Config{
+				Contexts: map[string]*Context{
+					"context1": {Host: "localhost", Port: 8080, Files: []File{
+						{SourcePath: tmpFile.Name(), Path: "/path/to/dest"},
+					}},
+				},
+				ChromeBrowser: &ChromeBrowserConfig{
+					ExecutablePath:   tmpFile.Name(),
+					ProfileDirectory: "foo",
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {

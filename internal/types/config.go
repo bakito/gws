@@ -32,6 +32,13 @@ type Config struct {
 	SSHTimeoutSeconds  int                  `yaml:"sshTimeoutSeconds,omitempty"`
 	currentContext     *Context
 	Token              *TokenStorage `yaml:"-"`
+
+	ChromeBrowser *ChromeBrowserConfig `yaml:"chromeBrowser,omitempty"`
+}
+
+type ChromeBrowserConfig struct {
+	ExecutablePath   string `validate:"required,file" yaml:"executablePath"`
+	ProfileDirectory string `validate:"required"      yaml:"profileDirectory"`
 }
 
 func (c *Config) Validate() error {

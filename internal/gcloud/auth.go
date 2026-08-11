@@ -99,7 +99,7 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 
 	// Open URL in browser
 	log.Log("Opening URL: " + authURL)
-	openBrowser(authURL)
+	openBrowser(ctx, cfg, authURL)
 
 	// Create a channel for shutdown signaling that can carry a token or an error.
 	type authResult struct {
@@ -150,9 +150,9 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 		w.Header().Set("Content-Type", "text/html")
 		fmt.Fprint(w, `
 <html>
-<head><title>Authentication Successful</title></head>
+<head><title>gws Google Authentication Successful</title></head>
 <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
-	<h1>Authentication Successful!</h1>
+	<h1>gws Google Authentication Successful!</h1>
 	<p>You can now close this window and return to the tool.</p>
 	<script>window.onload = function() { setTimeout(function() { window.close(); }, 1000); }</script>
 </body>
