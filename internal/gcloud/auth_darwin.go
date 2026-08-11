@@ -7,6 +7,6 @@ import (
 	"os/exec"
 )
 
-func openBrowser(authURL string) {
-	_ = exec.CommandContext(context.Background(), "open", authURL).Start()
+func openBrowser(ctx context.Context, _ *types.Config, authURL string) {
+	_ = exec.CommandContext(ctx, "open", authURL).Start()
 }

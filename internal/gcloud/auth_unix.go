@@ -7,14 +7,16 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/bakito/gws/internal/types"
 )
 
-func openBrowser(authURL string) {
+func openBrowser(ctx context.Context, cfg *types.Config, authURL string) {
 	var cmd *exec.Cmd
 	if IsWSL() {
-		cmd = windowsCmd(authURL)
+		cmd = windowsCmd(ctx, cfg, authURL)
 	} else {
-		cmd = exec.CommandContext(context.Background(), "xdg-open", authURL)
+		cmd = exec.CommandContext(ctx, "xdg-open", authURL)
 	}
 	_ = cmd.Start()
 }
