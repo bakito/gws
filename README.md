@@ -74,6 +74,8 @@ contexts:
 chromeBrowser:
   executablePath: C:\Program Files\Google\Chrome\Application\chrome.exe
   profileDirectory: Profile X
+jetbrainsGateway:
+  downloadDestination: C:\workspace\Jetbrains-Programs\JetBrainsClientDist
 ```
 
 ### Configuration Options
