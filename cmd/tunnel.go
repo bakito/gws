@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
+	"github.com/bakito/gws/internal/gateway"
 	"github.com/bakito/gws/internal/gcloud"
 	"github.com/bakito/gws/internal/tunnel"
 )
@@ -30,6 +31,11 @@ var tunnelCmd = &cobra.Command{
 				return err
 			}
 		}
+
+		if err := gateway.UpdateDownloadLocation(cmd.Context(), cfg); err != nil {
+			return err
+		}
+
 		if err := gcloud.StartWorkstation(cmd.Context(), cfg); err != nil {
 			return err
 		}
