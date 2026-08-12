@@ -45,7 +45,7 @@ func UpdateDownloadLocation(ctx context.Context, cfg *types.Config) error {
 
 	// Already configured correctly; don't write anything.
 	if err == nil && current == cfg.JetbrainsGateway.DownloadDestination {
-		log.Logf("Updating JetbrainsGateway DownloadDestination is correctly set in %q", fullKey)
+		log.Logf("JetbrainsGateway DownloadDestination is correctly set in %q", fullKey)
 		return nil
 	}
 
@@ -60,5 +60,4 @@ func UpdateDownloadLocation(ctx context.Context, cfg *types.Config) error {
 	}
 
 	return nil
-
 }
