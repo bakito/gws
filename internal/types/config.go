@@ -33,12 +33,17 @@ type Config struct {
 	currentContext     *Context
 	Token              *TokenStorage `yaml:"-"`
 
-	ChromeBrowser *ChromeBrowserConfig `yaml:"chromeBrowser,omitempty"`
+	ChromeBrowser    *ChromeBrowserConfig `yaml:"chromeBrowser,omitempty"`
+	JetbrainsGateway *GatewayConfig       `yaml:"jetbrainsGateway,omitempty"`
 }
 
 type ChromeBrowserConfig struct {
 	ExecutablePath   string `validate:"required,file" yaml:"executablePath"`
 	ProfileDirectory string `validate:"required"      yaml:"profileDirectory"`
+}
+
+type GatewayConfig struct {
+	DownloadDestination string `validate:"required" yaml:"downloadDestination"`
 }
 
 func (c *Config) Validate() error {
