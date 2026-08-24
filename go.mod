@@ -3,8 +3,8 @@ module github.com/bakito/gws
 go 1.26.6
 
 require (
-	charm.land/bubbles/v2 v2.1.1
-	charm.land/bubbletea/v2 v2.0.8
+	charm.land/bubbles/v2 v2.2.0
+	charm.land/bubbletea/v2 v2.0.9
 	charm.land/lipgloss/v2 v2.0.6
 	cloud.google.com/go/workstations v1.8.0
 	github.com/bramvdbogaerde/go-scp v1.6.1
