@@ -14,7 +14,7 @@ for /F %%a in ('echo prompt $E^|cmd') do set "ESC=%%a"
 :reconnect_loop
 ssh {{.User}}@{{.Host}} -p {{.Port}}{{ if .KnownHostsFile }} -o UserKnownHostsFile={{.KnownHostsFile}}{{ end }}
 set "SSH_EXIT=%errorlevel%"
-<nul set /p "=%ESC%[?1000l%ESC%[?1002l%ESC%[?1003l%ESC%[?1006l"
+<nul set /p "=%ESC%[?1000l%ESC%[?1002l%ESC%[?1003l%ESC%[?1006l%ESC%c"
 if %SSH_EXIT% == 0 goto end
 cls
 echo Disconnected. Reconnecting in %RETRY_SECONDS% seconds...
