@@ -8,7 +8,8 @@ REM It continuously attempts to establish an SSH connection and retries after a 
 REM The number of seconds to wait before retrying the connection.
 set "RETRY_SECONDS=3"
 
-REM Prepare escape sequence for zellij reset
+REM Prepare escape sequence for zellij mouse reset
+REM https://github.com/zellij-org/zellij/issues/4371
 for /F %%a in ('echo prompt $E^|cmd') do set "ESC=%%a"
 
 :reconnect_loop
