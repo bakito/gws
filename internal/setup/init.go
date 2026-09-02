@@ -87,7 +87,7 @@ func InitialModel(cfg *types.Config) Model {
 			if context.PrivateKeyFile != "" {
 				t.SetValue(context.PrivateKeyFile)
 			} else if userHomeDir != "" {
-				t.SetValue(filepath.Join(userHomeDir, ".ssh", "id_ecdsa"))
+				t.SetValue(filepath.Join(userHomeDir, ".ssh", "id_ed25519"))
 			}
 		case KnownHostsFile:
 			m.Inputs[i].Label = "Known Hosts File (optional)"
@@ -113,7 +113,7 @@ func InitialModel(cfg *types.Config) Model {
 			m.Inputs[i].Label = "gcloud: Config"
 			t.SetValue(context.GCloud.Config)
 		case GcloudName:
-			m.Inputs[i].Label = "gcloud: Workstation ID"
+			m.Inputs[i].Label = "gcloud: Workstation ID/Name"
 			t.SetValue(context.GCloud.Name)
 		default:
 			// This should not be reached as maxFocusable defines the number of inputs.
