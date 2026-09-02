@@ -94,13 +94,13 @@ func TCPTunnelWithPassphrase(ctx context.Context, cfg *types.Config, port int) e
 	if sshContext.KnownHostsFile != "" {
 		go func() {
 			// Get host key by connecting to the address
-			knownHost, err := ssh.GetHostKey(sshAddress, cfg.SSHTimeout())
+			knownHostLines, err := ssh.GetHostKey(sshAddress, cfg.SSHTimeout())
 			if err != nil {
 				log.Logf("🚨 Error getting host key: %v", err)
 				return
 			}
 
-			updateKnownHosts(sshContext, knownHost, p)
+			updateKnownHosts(sshContext, knownHostLines)
 		}()
 	}
 
@@ -128,11 +128,7 @@ func postConnectCommand(ctx context.Context, sshContext *types.Context) {
 	}
 }
 
-func updateKnownHosts(
-	sshContext *types.Context,
-	knownHost string,
-	port int,
-) {
+func updateKnownHosts(sshContext *types.Context, knownHostLines []string) {
 	if sshContext.KnownHostsFile == "" {
 		return
 	}
@@ -144,22 +140,30 @@ func updateKnownHosts(
 	}
 
 	lines := strings.Split(string(f), "\n")
-	found := false
 	changed := false
-	linePrefix := fmt.Sprintf("[%s]:%d", sshContext.Host, port)
-	for i, line := range lines {
-		if strings.HasPrefix(line, linePrefix) {
-			if line != knownHost {
-				lines[i] = knownHost
-				changed = true
-			}
-			found = true
-			break
+
+	for _, newLine := range knownHostLines {
+		if newLine == "" {
+			continue
 		}
-	}
-	if !found {
-		lines = append(lines, knownHost)
-		changed = true
+		parts := strings.SplitN(newLine, " ", 2)
+		prefix := parts[0]
+
+		found := false
+		for i, line := range lines {
+			if strings.HasPrefix(line, prefix) {
+				if line != newLine {
+					lines[i] = newLine
+					changed = true
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			lines = append(lines, newLine)
+			changed = true
+		}
 	}
 
 	if changed {
@@ -168,7 +172,7 @@ func updateKnownHosts(
 			log.Logf("🚨 Error writing known_hosts file: %v", err)
 			return
 		}
-		log.Logf("📝 KnownHosts file %s updated for %s", sshContext.KnownHostsFile, linePrefix)
+		log.Logf("📝 KnownHosts file %s updated", sshContext.KnownHostsFile)
 	}
 }
 
