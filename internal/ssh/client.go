@@ -40,10 +40,17 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 	clientConfig := &ssh.ClientConfig{
 		User: user,
 		Auth: auths,
-		HostKeyCallback: func(_ string, remote net.Addr, key ssh.PublicKey) error {
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 			// #nosec G106: Insecure, as we always get a new cert with gcloud
 			if tcpAddr, ok := remote.(*net.TCPAddr); ok {
-				knownHostsEntry = formatHostKey(tcpAddr, key)
+				knownHostsEntry = formatHostKey(tcpAddr.IP.String(), tcpAddr.Port, key)
+				host, _, err := net.SplitHostPort(hostname)
+				if err != nil {
+					host = hostname
+				}
+				if host == "localhost" {
+					knownHostsEntry += "\n" + formatHostKey(host, tcpAddr.Port, key)
+				}
 			}
 			return nil
 		},
@@ -75,18 +82,18 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 	}, nil
 }
 
-func formatHostKey(tcpAddr *net.TCPAddr, key ssh.PublicKey) string {
+func formatHostKey(host string, port int, key ssh.PublicKey) string {
 	return fmt.Sprintf(
 		"[%s]:%d %s %s",
-		tcpAddr.IP,
-		tcpAddr.Port,
+		host,
+		port,
 		key.Type(),
 		base64.StdEncoding.EncodeToString(key.Marshal()),
 	)
 }
 
 // GetHostKey fetches the host public key without authenticating.
-func GetHostKey(addr string, timeout time.Duration) (string, error) {
+func GetHostKey(addr string, timeout time.Duration) ([]string, error) {
 	var hostKey ssh.PublicKey
 
 	config := &ssh.ClientConfig{
@@ -102,7 +109,7 @@ func GetHostKey(addr string, timeout time.Duration) (string, error) {
 	dialer := net.Dialer{Timeout: timeout}
 	conn, err := dialer.Dial("tcp", addr)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer conn.Close()
 
@@ -114,14 +121,21 @@ func GetHostKey(addr string, timeout time.Duration) (string, error) {
 	}
 
 	if hostKey == nil {
-		return "", errors.New("failed to extract host key")
+		return nil, errors.New("failed to extract host key")
 	}
 	tcpAddr, ok := conn.RemoteAddr().(*net.TCPAddr)
 	if !ok {
-		return "", errors.New("failed to extract tcp address")
+		return nil, errors.New("failed to extract tcp address")
 	}
 
-	return formatHostKey(tcpAddr, hostKey), nil
+	var lines []string
+	lines = append(lines, formatHostKey(tcpAddr.IP.String(), tcpAddr.Port, hostKey))
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		host = addr
+	}
+	lines = append(lines, formatHostKey(host, tcpAddr.Port, hostKey))
+	return lines, nil
 }
 
 func clientWithTimeout(addr string, timeout time.Duration, clientConfig *ssh.ClientConfig) (*ssh.Client, error) {
