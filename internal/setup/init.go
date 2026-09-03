@@ -12,12 +12,23 @@ import (
 )
 
 func InitialModel(cfg *types.Config) Model {
+	fi := textinput.New()
+	fi.Placeholder = "Filter..."
+	fi.SetWidth(100)
+	fi.Focus()
+
 	m := Model{
-		Inputs: make([]Input, maxFocusable-1),
-		Config: cfg,
-		Styles: DefaultStyles(),
-		Help:   "tab: next field / up: prev field / esc: quit / enter: confirm",
+		Inputs:      make([]Input, maxFocusable-1),
+		Config:      cfg,
+		Styles:      DefaultStyles(),
+		Help:        "tab: next field / up: prev field / esc: quit / enter: confirm",
+		Step:        stepLogin,
+		FilterInput: fi,
+		LogChan:     make(chan string, 10),
 	}
+	fis := m.FilterInput.Styles()
+	fis.Cursor.Color = m.Styles.InputFocused.GetForeground()
+	m.FilterInput.SetStyles(fis)
 
 	configDir, userHomeDir := types.DefaultConfigDir()
 
@@ -73,6 +84,8 @@ func InitialModel(cfg *types.Config) Model {
 			t.CharLimit = 5
 			if context.Port > 0 {
 				t.SetValue(strconv.Itoa(context.Port))
+			} else {
+				t.SetValue("22022")
 			}
 		case User:
 			m.Inputs[i].Label = "Cloud Workstation User"

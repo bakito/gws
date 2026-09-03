@@ -2,11 +2,15 @@ package gcloud
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	workstations "cloud.google.com/go/workstations/apiv1"
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
+	"google.golang.org/api/cloudresourcemanager/v1"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 
 	"github.com/bakito/gws/internal/log"
@@ -137,6 +141,143 @@ func setup(ctx context.Context, cfg *types.Config) (*types.Context, *workstation
 		return nil, nil, nil, err
 	}
 	return sshContext, c, ws, err
+}
+
+type Project struct {
+	ID   string
+	Name string
+}
+
+func ListProjects(ctx context.Context, cfg *types.Config) ([]Project, error) {
+	tokenSource, err := Login(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	svc, err := cloudresourcemanager.NewService(ctx, option.WithTokenSource(tokenSource))
+	if err != nil {
+		return nil, err
+	}
+
+	var projects []Project
+	err = svc.Projects.List().Pages(ctx, func(response *cloudresourcemanager.ListProjectsResponse) error {
+		for _, p := range response.Projects {
+			if p.LifecycleState == "ACTIVE" {
+				projects = append(projects, Project{ID: p.ProjectId, Name: p.Name})
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return projects, nil
+}
+
+type Workstation struct {
+	Project string
+	Region  string
+	Cluster string
+	Config  string
+	Name    string
+}
+
+func ListWorkstations(ctx context.Context, cfg *types.Config, project string) ([]Workstation, error) {
+	tokenSource, err := Login(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := workstations.NewClient(ctx, option.WithTokenSource(tokenSource))
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
+	var workstationsList []Workstation
+
+	// Try to list usable workstations in the project using wildcards.
+	it := c.ListUsableWorkstations(ctx, &workstationspb.ListUsableWorkstationsRequest{
+		Parent: fmt.Sprintf("projects/%s/locations/-/workstationClusters/-/workstationConfigs/-", project),
+	})
+	for {
+		ws, err := it.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			log.Logf("Warning: ListUsableWorkstations failed, trying nested list: %v", err)
+			return listWorkstationsNested(ctx, c, project)
+		}
+
+		workstationsList = append(workstationsList, parseWorkstationName(ws.GetName()))
+	}
+
+	return workstationsList, nil
+}
+
+func listWorkstationsNested(ctx context.Context, c *workstations.Client, project string) ([]Workstation, error) {
+	var workstationsList []Workstation
+
+	// 1. List all clusters in the project across all locations
+	clusterIt := c.ListWorkstationClusters(ctx, &workstationspb.ListWorkstationClustersRequest{
+		Parent: fmt.Sprintf("projects/%s/locations/-", project),
+	})
+	for {
+		cluster, err := clusterIt.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to list workstation clusters: %w", err)
+		}
+
+		// 2. List configs in this cluster
+		configIt := c.ListWorkstationConfigs(ctx, &workstationspb.ListWorkstationConfigsRequest{
+			Parent: cluster.GetName(),
+		})
+		for {
+			config, err := configIt.Next()
+			if errors.Is(err, iterator.Done) {
+				break
+			}
+			if err != nil {
+				continue
+			}
+
+			// 3. List workstations in this config
+			wsIt := c.ListWorkstations(ctx, &workstationspb.ListWorkstationsRequest{
+				Parent: config.GetName(),
+			})
+			for {
+				ws, err := wsIt.Next()
+				if errors.Is(err, iterator.Done) {
+					break
+				}
+				if err != nil {
+					continue
+				}
+				workstationsList = append(workstationsList, parseWorkstationName(ws.GetName()))
+			}
+		}
+	}
+
+	return workstationsList, nil
+}
+
+func parseWorkstationName(name string) Workstation {
+	// projects/{project}/locations/{location}/workstationClusters/{cluster}/workstationConfigs/{config}/workstations/{workstation}
+	parts := strings.Split(name, "/")
+	if len(parts) >= 10 {
+		return Workstation{
+			Project: parts[1],
+			Region:  parts[3],
+			Cluster: parts[5],
+			Config:  parts[7],
+			Name:    parts[9],
+		}
+	}
+	return Workstation{}
 }
 
 func StopWorkstation(ctx context.Context, cfg *types.Config) error {

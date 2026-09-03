@@ -41,6 +41,7 @@ var tunnelCmd = &cobra.Command{
 		}
 
 		m := tunnel.NewModel(cmd.Context(), cfg, flagLocalPort)
+
 		p := tea.NewProgram(m)
 		_, err = p.Run()
 		return err
