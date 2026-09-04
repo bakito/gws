@@ -26,6 +26,7 @@ func main() {
 	err = tmpl.Execute(os.Stdout, map[string]any{
 		"ClientID":     varsDefault["CLOUDSDK_CLIENT_ID"],
 		"ClientSecret": varsDefault["CLOUDSDK_CLIENT_NOTSOSECRET"],
+		"ClientAgent":  varsDefault["CLOUDSDK_CLIENT_NOTSOSECRET"],
 	})
 	if err != nil {
 		fmt.Println("Error processing template file:", err)
@@ -34,7 +35,7 @@ func main() {
 
 func readPythonFile(name string, keys ...string) (map[string]string, error) {
 	// Open the file
-	file, err := os.Open(name) // Replace with your actual file name
+	file, err := os.Open(name) // Replace it with your actual file name
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return nil, err

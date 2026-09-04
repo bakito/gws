@@ -20,15 +20,14 @@ import (
 	"github.com/bakito/gws/internal/types"
 )
 
+const userAgent = "google-cloud-sdk"
+
 var oauthConfig = &oauth2.Config{
 	ClientID:     clientID,
 	ClientSecret: clientSecret,
 	Scopes: []string{
-		"openid",
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/cloud-platform",
-		"https://www.googleapis.com/auth/appengine.admin",
-		"https://www.googleapis.com/auth/compute",
 	},
 	Endpoint: google.Endpoint,
 }
@@ -51,6 +50,14 @@ func generatePKCE() (codeVerifier, codeChallenge string, err error) {
 }
 
 func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
+	httpClient := &http.Client{
+		Transport: &userAgentTransport{
+			base: http.DefaultTransport,
+			ua:   userAgent,
+		},
+	}
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
+
 	existingToken := cfg.Token.Token
 
 	// Try refreshing the token
@@ -183,6 +190,16 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	}
 
 	return newTokenSourceWithRefreshCheck(ctx, res.token, cfg), nil
+}
+
+type userAgentTransport struct {
+	base http.RoundTripper
+	ua   string
+}
+
+func (t *userAgentTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("User-Agent", t.ua)
+	return t.base.RoundTrip(req)
 }
 
 type TokenSourceWithRefreshCheck struct {

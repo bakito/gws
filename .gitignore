@@ -9,3 +9,5 @@ coverage.out
 
 # generated file
 internal/gcloud/auth_config.go
+
+testdata/auth
