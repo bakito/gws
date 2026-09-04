@@ -36,7 +36,7 @@ func run() error {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&flagContext, "ctx", "", "The context to be used")
-	rootCmd.PersistentFlags().StringVarP(&flagConfig, "config", "c", types.ConfigFileName, "The config file to be used")
+	rootCmd.PersistentFlags().StringVar(&flagConfig, "config", types.ConfigFileName, "The config file to be used")
 }
 
 func readConfig(args ...string) (*types.Config, error) {

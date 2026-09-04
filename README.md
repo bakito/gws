@@ -32,7 +32,7 @@ go install github.com/bakito/gws@latest
 
 ### Global Flags
 
-- `--config, -c`: Path to the configuration file (default: `~/.config/gws/config.yaml`).
+- `--config`: Path to the configuration file (default: `~/.config/gws/config.yaml`).
 - `--ctx`: The context to use.
 
 ## Configuration
