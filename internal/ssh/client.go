@@ -2,7 +2,6 @@ package ssh
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -13,6 +12,7 @@ import (
 	"github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
+	"golang.org/x/crypto/ssh/knownhosts"
 
 	"github.com/bakito/gws/internal/env"
 	"github.com/bakito/gws/internal/log"
@@ -83,13 +83,8 @@ func NewClientWithPassphrase(addr, user, privateKeyFile string, timeout time.Dur
 }
 
 func formatHostKey(host string, port int, key ssh.PublicKey) string {
-	return fmt.Sprintf(
-		"[%s]:%d %s %s",
-		host,
-		port,
-		key.Type(),
-		base64.StdEncoding.EncodeToString(key.Marshal()),
-	)
+	addr := knownhosts.Normalize(net.JoinHostPort(host, strconv.Itoa(port)))
+	return knownhosts.Line([]string{addr}, key)
 }
 
 // GetHostKey fetches the host public key without authenticating.
