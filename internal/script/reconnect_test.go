@@ -130,12 +130,12 @@ goto reconnect_loop
 		t.Run(tt.name, func(t *testing.T) {
 			_ = tt.cfg.SwitchContext(tt.cfg.CurrentContextName, false)
 
-			got, err := WindowsReconnectSSH(tt.cfg, tt.fileName)
+			_, content, err := WindowsReconnectSSH(tt.cfg, tt.fileName)
 			if err != nil {
 				t.Fatalf("WindowsReconnectSSH() error = %v", err)
 			}
 
-			normalizedGot := strings.ReplaceAll(got, "\r\n", "\n")
+			normalizedGot := strings.ReplaceAll(string(content), "\r\n", "\n")
 			normalizedWant := strings.ReplaceAll(tt.want, "\r\n", "\n")
 
 			if normalizedGot != normalizedWant {
@@ -147,6 +147,139 @@ goto reconnect_loop
 					Context:  3,
 				})
 				t.Errorf("WindowsReconnectSSH() mismatch:\n%s", Colorize(diff))
+			}
+		})
+	}
+}
+
+func TestUnixReconnectSSH(t *testing.T) {
+	tests := []struct {
+		name     string
+		fileName string
+		cfg      *types.Config
+		want     string
+	}{
+		{
+			name: "Basic Configuration",
+			cfg: &types.Config{
+				CurrentContextName: "test-context",
+				Contexts: map[string]*types.Context{
+					"test-context": {
+						Host: "example.com",
+						Port: 22,
+						User: "user",
+					},
+				},
+			},
+			want: `#!/bin/bash
+# gws-ssh-with-reconnect-test-context.sh
+
+# This script automatically reconnects to an SSH server when the connection drops.
+# It continuously attempts to establish an SSH connection and retries after a specified delay if disconnected.
+
+# The number of seconds to wait before retrying the connection.
+RETRY_SECONDS=3
+
+while true; do
+    ssh user@example.com -p 22
+    if [ $? -eq 0 ]; then
+        break
+    fi
+    clear
+    echo "Disconnected. Reconnecting in $RETRY_SECONDS seconds..."
+    sleep $RETRY_SECONDS
+    clear
+done`,
+		},
+		{
+			name: "With KnownHostsFile",
+			cfg: &types.Config{
+				CurrentContextName: "test-context-known-hosts",
+				Contexts: map[string]*types.Context{
+					"test-context-known-hosts": {
+						Host:           "example.com",
+						Port:           22,
+						User:           "user",
+						KnownHostsFile: "known_hosts_path",
+					},
+				},
+			},
+			want: `#!/bin/bash
+# gws-ssh-with-reconnect-test-context-known-hosts.sh
+
+# This script automatically reconnects to an SSH server when the connection drops.
+# It continuously attempts to establish an SSH connection and retries after a specified delay if disconnected.
+
+# The number of seconds to wait before retrying the connection.
+RETRY_SECONDS=3
+
+while true; do
+    ssh user@example.com -p 22 -o UserKnownHostsFile=known_hosts_path
+    if [ $? -eq 0 ]; then
+        break
+    fi
+    clear
+    echo "Disconnected. Reconnecting in $RETRY_SECONDS seconds..."
+    sleep $RETRY_SECONDS
+    clear
+done`,
+		},
+		{
+			name:     "With CustomFileName",
+			fileName: "/tmp/custom_file_name.sh",
+			cfg: &types.Config{
+				CurrentContextName: "test-context-known-hosts",
+				Contexts: map[string]*types.Context{
+					"test-context-known-hosts": {
+						Host: "example.com",
+						Port: 22,
+						User: "user",
+					},
+				},
+			},
+			want: `#!/bin/bash
+# custom_file_name.sh
+
+# This script automatically reconnects to an SSH server when the connection drops.
+# It continuously attempts to establish an SSH connection and retries after a specified delay if disconnected.
+
+# The number of seconds to wait before retrying the connection.
+RETRY_SECONDS=3
+
+while true; do
+    ssh user@example.com -p 22
+    if [ $? -eq 0 ]; then
+        break
+    fi
+    clear
+    echo "Disconnected. Reconnecting in $RETRY_SECONDS seconds..."
+    sleep $RETRY_SECONDS
+    clear
+done`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_ = tt.cfg.SwitchContext(tt.cfg.CurrentContextName, false)
+
+			_, content, err := UnixReconnectSSH(tt.cfg, tt.fileName)
+			if err != nil {
+				t.Fatalf("UnixReconnectSSH() error = %v", err)
+			}
+
+			normalizedGot := strings.ReplaceAll(string(content), "\r\n", "\n")
+			normalizedWant := strings.ReplaceAll(tt.want, "\r\n", "\n")
+
+			if normalizedGot != normalizedWant {
+				diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+					A:        difflib.SplitLines(normalizedWant),
+					B:        difflib.SplitLines(normalizedGot),
+					FromFile: "want",
+					ToFile:   "got",
+					Context:  3,
+				})
+				t.Errorf("UnixReconnectSSH() mismatch:\n%s", Colorize(diff))
 			}
 		})
 	}

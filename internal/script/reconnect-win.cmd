@@ -1,4 +1,4 @@
-REM {{ if .FileName }}{{.FileName}}{{ else }}gws-ssh-with-reconnect-{{.Name}}.cmd{{ end }}
+REM {{.FileName}}
 @echo off
 setlocal
 
