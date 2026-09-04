@@ -30,7 +30,7 @@ func InitialModel(cfg *types.Config) Model {
 	fis.Cursor.Color = m.Styles.InputFocused.GetForeground()
 	m.FilterInput.SetStyles(fis)
 
-	configDir, userHomeDir := types.DefaultConfigDir()
+	configDir, _, userHomeDir := types.DefaultConfigPaths()
 
 	if m.Config.FilePath == "" {
 		m.Config.FilePath = configDir

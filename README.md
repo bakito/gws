@@ -30,6 +30,7 @@ go install github.com/bakito/gws@latest
 - `gws ctx [context]`: Switch the current context. If no context is provided, an interactive selection is shown.
   - `--current`: Print the current active context.
 - `gws scripts win-reconnect-ssh`: Generate a Windows SSH reconnect script.
+- `gws scripts bash-reconnect-ssh`: Generate a Bash SSH reconnect script.
 
 ### Global Flags
 
@@ -106,7 +107,9 @@ jetbrainsGateway:
       - `permissions`: The permissions of the remote file.
       - `direction`: The direction (up / down) the file is copied.
 - `sshTimeoutSeconds`: Optional SSH connection timeout in seconds (default: `30`).
-- `startTimeoutSeconds`: Optional workstation start timeout in seconds (default: `100`).
+- `startTimeoutSeconds`: Optional workstation start timeout in seconds (default: `300`).
 - `chromeBrowser`: Optional Chrome browser configuration.
   - `executablePath`: The path to the Chrome executable.
   - `profileDirectory`: The Chrome profile directory to use. (check profile dir by opening `chrome://version` in chrome)
+- `jetbrainsGateway`: Optional JetBrains Gateway configuration.
+  - `downloadDestination`: The directory where JetBrains programs are downloaded.

@@ -183,7 +183,7 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 
 	if file == "" {
 		// Try new location first
-		newConfigPath, _ := DefaultConfigDir()
+		newConfigPath, _, _ := DefaultConfigPaths()
 		if _, err := os.Stat(newConfigPath); err == nil {
 			file = newConfigPath
 		}
@@ -198,11 +198,12 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 	return abs, data, err
 }
 
-func DefaultConfigDir() (newConfigPath, userHomeDir string) {
+func DefaultConfigPaths() (newConfigPath, configDir, userHomeDir string) {
 	userHomeDir, _ = os.UserHomeDir()
 
 	newConfigPath = filepath.Join(userHomeDir, ConfigDir, ConfigFileName)
-	return newConfigPath, userHomeDir
+	configDir = filepath.Join(userHomeDir, ConfigDir)
+	return newConfigPath, configDir, userHomeDir
 }
 
 func (c *Config) SwitchContext(newContext string, force bool) error {

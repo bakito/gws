@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/script"
+	"github.com/bakito/gws/internal/types"
 )
 
 // scriptsCmd represents the generate scripts command.
@@ -15,39 +17,80 @@ var (
 		Use:   "scripts",
 		Short: "Generate complementary scripts",
 	}
-	flagOutput string
+	flagOutput        string
+	flagSaveToDefault bool
 )
 
 func init() {
 	rootCmd.AddCommand(scriptsCmd)
 	scriptsCmd.PersistentFlags().StringVarP(&flagOutput, "output", "o", "", "Output file (default stdout)")
-	scriptsCmd.AddCommand(scriptsReconnectCmd)
+	scriptsCmd.PersistentFlags().
+		BoolVarP(&flagSaveToDefault, "save", "s", false, "Save the script to the default config location")
+	scriptsCmd.AddCommand(scriptsWinReconnectCmd)
+	scriptsCmd.AddCommand(scriptsUnixReconnectCmd)
 }
 
-// scriptsReconnectCmd represents the start command.
-var scriptsReconnectCmd = &cobra.Command{
+func runReconnectScript(
+	cmd *cobra.Command,
+	args []string,
+	generate func(*types.Config, string) (string, []byte, error),
+	logMsg string,
+	perm os.FileMode,
+) error {
+	if flagOutput == "" || flagSaveToDefault {
+		log.SetLogger(log.Null)
+	}
+	cfg, err := readConfig(args...)
+	if err != nil {
+		return err
+	}
+
+	name, s, err := generate(cfg, flagOutput)
+	if err != nil {
+		return err
+	}
+
+	outputPath := flagOutput
+	if flagSaveToDefault {
+		_, configDir, _ := types.DefaultConfigPaths()
+		outputPath = filepath.Join(configDir, name)
+	}
+
+	if outputPath != "" {
+		cmd.Printf(logMsg, cfg.CurrentContextName, outputPath)
+		return os.WriteFile(outputPath, s, perm)
+	}
+	_, _ = cmd.OutOrStdout().Write(s)
+
+	return nil
+}
+
+// scriptsWinReconnectCmd represents the start command.
+var scriptsWinReconnectCmd = &cobra.Command{
 	Use:   "win-reconnect-ssh",
 	Short: "Generate Windows ssh reconnect script",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if flagOutput == "" {
-			log.SetLogger(log.Null)
-		}
-		cfg, err := readConfig(args...)
-		if err != nil {
-			return err
-		}
+		return runReconnectScript(
+			cmd,
+			args,
+			script.WindowsReconnectSSH,
+			"💾 Writing SSH reconnect script for context %q on Windows to %q\n",
+			0o644,
+		)
+	},
+}
 
-		s, err := script.WindowsReconnectSSH(cfg, flagOutput)
-		if err != nil {
-			return err
-		}
-
-		if flagOutput != "" {
-			cmd.Printf("💾 Writing SSH reconnect script for context %q on Windows to %q\n", cfg.CurrentContextName, flagOutput)
-			return os.WriteFile(flagOutput, []byte(s), 0o644)
-		}
-		cmd.Println(s)
-
-		return nil
+// scriptsUnixReconnectCmd represents the start command.
+var scriptsUnixReconnectCmd = &cobra.Command{
+	Use:   "bash-reconnect-ssh",
+	Short: "Generate bash ssh reconnect script",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runReconnectScript(
+			cmd,
+			args,
+			script.UnixReconnectSSH,
+			"💾 Writing SSH bash reconnect script for context %q to %q\n",
+			0o755,
+		)
 	},
 }
