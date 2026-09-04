@@ -1,9 +1,15 @@
 package cmd
 
 import (
+	"context"
+
+	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/gcloud"
+	"github.com/bakito/gws/internal/log"
+	"github.com/bakito/gws/internal/spinner"
+	"github.com/bakito/gws/internal/tui"
 )
 
 // restartCmd represents the restart command.
@@ -16,10 +22,24 @@ var restartCmd = &cobra.Command{
 			return err
 		}
 
-		if err := gcloud.StopWorkstation(cmd.Context(), cfg); err != nil {
-			return err
+		spinner.Disable()
+		m := tui.NewModel(cmd.Context(), cfg, ">_ GWS Restart", func(ctx context.Context) error {
+			if err := gcloud.StopWorkstation(ctx, cfg); err != nil {
+				return err
+			}
+			return gcloud.StartWorkstation(ctx, cfg)
+		})
+		m.AutoQuit = true
+
+		p := tea.NewProgram(m)
+		resModel, err := p.Run()
+		if err == nil {
+			log.SetLogger(log.Stdout)
+			if tm, ok := resModel.(*tui.Model); ok {
+				log.Log(tm.LastLog())
+			}
 		}
-		return gcloud.StartWorkstation(cmd.Context(), cfg)
+		return err
 	},
 }
 

@@ -111,7 +111,6 @@ func (c *Config) Load(fileName string) error {
 	if err != nil {
 		return err
 	}
-	log.Logf("Using config: %s", file)
 
 	err = yaml.Unmarshal(data, c)
 	if err != nil {
@@ -175,17 +174,9 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 
 	if file == "" {
 		// Try new location first
-		newConfigPath, userHomeDir := DefaultConfigDir()
+		newConfigPath, _ := DefaultConfigDir()
 		if _, err := os.Stat(newConfigPath); err == nil {
 			file = newConfigPath
-		} else {
-			// Fallback to the legacy location for backward compatibility
-			legacyPath := filepath.Join(userHomeDir, ".gws.yaml")
-			if _, err := os.Stat(legacyPath); err != nil {
-				return "", nil, fmt.Errorf("%w: config file not found", os.ErrNotExist)
-			}
-			file = legacyPath
-			log.Logf("⚠️  Using legacy config location. Consider moving to: %s", newConfigPath)
 		}
 	}
 

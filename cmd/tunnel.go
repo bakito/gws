@@ -1,12 +1,17 @@
 package cmd
 
 import (
+	"context"
+	"strconv"
+
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/gateway"
 	"github.com/bakito/gws/internal/gcloud"
-	"github.com/bakito/gws/internal/tunnel"
+	"github.com/bakito/gws/internal/log"
+	"github.com/bakito/gws/internal/spinner"
+	"github.com/bakito/gws/internal/tui"
 )
 
 var (
@@ -26,21 +31,31 @@ var tunnelCmd = &cobra.Command{
 		}
 		cfg.TokenCheck = flagTokenCheck
 
-		if flagRestart {
-			if err := gcloud.StopWorkstation(cmd.Context(), cfg); err != nil {
+		spinner.Disable()
+		m := tui.NewModel(cmd.Context(), cfg, ">_ GWS Tunnel", func(ctx context.Context) error {
+			if flagRestart {
+				if err := gcloud.StopWorkstation(ctx, cfg); err != nil {
+					return err
+				}
+			}
+
+			if err := gateway.UpdateDownloadLocation(ctx, cfg); err != nil {
 				return err
 			}
-		}
 
-		if err := gateway.UpdateDownloadLocation(cmd.Context(), cfg); err != nil {
-			return err
-		}
+			if err := gcloud.StartWorkstation(ctx, cfg); err != nil {
+				return err
+			}
 
-		if err := gcloud.StartWorkstation(cmd.Context(), cfg); err != nil {
-			return err
-		}
+			log.Log(tui.StopSpinner)
+			return gcloud.TCPTunnelWithPassphrase(ctx, cfg, flagLocalPort)
+		})
 
-		m := tunnel.NewModel(cmd.Context(), cfg, flagLocalPort)
+		port := flagLocalPort
+		if port == 0 {
+			port = cfg.CurrentContext().Port
+		}
+		m.AddHeader("Local Port", strconv.Itoa(port))
 
 		p := tea.NewProgram(m)
 		_, err = p.Run()
