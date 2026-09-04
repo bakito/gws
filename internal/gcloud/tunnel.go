@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -139,35 +140,36 @@ func updateKnownHosts(sshContext *types.Context, knownHostLines []string) {
 		return
 	}
 
-	lines := strings.Split(string(f), "\n")
-	changed := false
+	newHostPrefix := make([]string, len(knownHostLines))
+	for i, line := range knownHostLines {
+		parts := strings.SplitN(line, " ", 2)
+		newHostPrefix[i] = parts[0]
+	}
 
-	for _, newLine := range knownHostLines {
-		if newLine == "" {
+	currentLines := strings.Split(string(f), "\n")
+	newLines := append([]string{}, knownHostLines...)
+
+	for _, line := range currentLines {
+		if strings.TrimSpace(line) == "" {
+			// we want to remove empty lines from the file
 			continue
 		}
-		parts := strings.SplitN(newLine, " ", 2)
-		prefix := parts[0]
 
 		found := false
-		for i, line := range lines {
+		for _, prefix := range newHostPrefix {
 			if strings.HasPrefix(line, prefix) {
-				if line != newLine {
-					lines[i] = newLine
-					changed = true
-				}
 				found = true
-				break
 			}
 		}
 		if !found {
-			lines = append(lines, newLine)
-			changed = true
+			newLines = append(newLines, line)
 		}
 	}
 
-	if changed {
-		err = os.WriteFile(sshContext.KnownHostsFile, []byte(strings.Join(lines, "\n")), 0o644)
+	slices.Sort(newLines)
+	newLines = slices.Compact(newLines)
+	if !slices.Equal(currentLines, newLines) {
+		err = os.WriteFile(sshContext.KnownHostsFile, []byte(strings.Join(newLines, "\n")), 0o644)
 		if err != nil {
 			log.Logf("🚨 Error writing known_hosts file: %v", err)
 			return

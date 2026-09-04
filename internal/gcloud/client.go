@@ -18,11 +18,7 @@ import (
 	"github.com/bakito/gws/internal/types"
 )
 
-var (
-	pollInterval    = 10 * time.Second
-	maxPollAttempts = 25
-	defaultTimeout  = pollInterval * time.Duration(maxPollAttempts)
-)
+var pollInterval = 10 * time.Second
 
 func StartWorkstation(ctx context.Context, cfg *types.Config, boostConfig string) error {
 	sshContext, c, ws, err := setup(ctx, cfg)
@@ -32,10 +28,7 @@ func StartWorkstation(ctx context.Context, cfg *types.Config, boostConfig string
 	defer c.Close()
 
 	start := time.Now()
-	timeout := defaultTimeout
-	if cfg != nil && cfg.StartTimeout() > 0 {
-		timeout = cfg.StartTimeout()
-	}
+	timeout := cfg.StartTimeout()
 
 	switch ws.GetState() {
 	case workstationspb.Workstation_STATE_STOPPED:
@@ -44,14 +37,15 @@ func StartWorkstation(ctx context.Context, cfg *types.Config, boostConfig string
 			log.Logf("🚀 Starting with boost config: %s", boostConfig)
 			swr.BoostConfig = boostConfig
 		}
-		_, err := c.StartWorkstation(ctx, swr)
+		op, err := c.StartWorkstation(ctx, swr)
 		if err != nil {
 			log.Logf("Error starting workstation: %v", err)
 			return err
 		}
 		spinny := spinner.Start(fmt.Sprintf("Waiting for workstation %s to start...", sshContext.GCloud.Name))
 		defer spinny.Stop() // reset the terminal in case of a panic
-		err = waitForWorkstationRunning(ctx, c, ws, timeout)
+
+		_, err = op.Wait(context.Background()) // create a new ctx to not cancel the start command against google
 		spinny.Stop()
 		if err != nil {
 			log.Logf("Error waiting for workstation to start: %v", err)

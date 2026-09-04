@@ -133,12 +133,12 @@ func TestConfig_StartTimeout(t *testing.T) {
 		{
 			name:     "nil config returns default 100s",
 			config:   nil,
-			expected: 0 * time.Second,
+			expected: defaultStartTimeoutSeconds * time.Second,
 		},
 		{
 			name:     "empty config returns default 100s",
 			config:   &Config{},
-			expected: 0 * time.Second,
+			expected: defaultStartTimeoutSeconds * time.Second,
 		},
 		{
 			name: "StartTimeoutSeconds on Config",
