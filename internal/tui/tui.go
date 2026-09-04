@@ -192,10 +192,7 @@ func (m *Model) View() tea.View {
 		if m.Err != nil {
 			reservedHeight += 2
 		}
-		availableHeight := m.Height - reservedHeight
-		if availableHeight < 5 {
-			availableHeight = 5
-		}
+		availableHeight := max(m.Height-reservedHeight, 5)
 
 		if len(m.Logs) > availableHeight {
 			start = len(m.Logs) - availableHeight
