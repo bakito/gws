@@ -41,7 +41,7 @@ func StartWorkstation(ctx context.Context, cfg *types.Config, boostConfig string
 	case workstationspb.Workstation_STATE_STOPPED:
 		swr := &workstationspb.StartWorkstationRequest{Name: ws.GetName()}
 		if boostConfig != "" {
-			log.Logf("Starting with boost config: %s", boostConfig)
+			log.Logf("🚀 Starting with boost config: %s", boostConfig)
 			swr.BoostConfig = boostConfig
 		}
 		_, err := c.StartWorkstation(ctx, swr)
