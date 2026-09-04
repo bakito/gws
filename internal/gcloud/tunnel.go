@@ -2,6 +2,9 @@ package gcloud
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -18,6 +21,7 @@ import (
 	workstations "cloud.google.com/go/workstations/apiv1"
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
 	"github.com/gorilla/websocket"
+	"golang.org/x/crypto/ssh/knownhosts"
 
 	"github.com/bakito/gws/internal/log"
 	"github.com/bakito/gws/internal/ssh"
@@ -140,27 +144,54 @@ func updateKnownHosts(sshContext *types.Context, knownHostLines []string) {
 		return
 	}
 
-	newHostPrefix := make([]string, len(knownHostLines))
-	for i, line := range knownHostLines {
+	var newLines []string
+	var newHostAddresses []string
+	for _, line := range knownHostLines {
 		parts := strings.SplitN(line, " ", 2)
-		newHostPrefix[i] = parts[0]
+		if len(parts) == 2 {
+			newHostAddresses = append(newHostAddresses, parts[0])
+			newLines = append(newLines, knownhosts.HashHostname(parts[0])+" "+parts[1])
+		}
 	}
 
 	currentLines := strings.Split(string(f), "\n")
-	newLines := append([]string{}, knownHostLines...)
-
 	for _, line := range currentLines {
-		if strings.TrimSpace(line) == "" {
+		line = strings.TrimSpace(line)
+		if line == "" {
 			// we want to remove empty lines from the file
 			continue
 		}
 
 		found := false
-		for _, prefix := range newHostPrefix {
-			if strings.HasPrefix(line, prefix) {
-				found = true
+		parts := strings.SplitN(line, " ", 2)
+		hostPart := parts[0]
+		hosts := strings.SplitSeq(hostPart, ",")
+
+		for h := range hosts {
+			for _, addr := range newHostAddresses {
+				if h == addr {
+					found = true
+					break
+				}
+				if strings.HasPrefix(h, "|1|") {
+					subParts := strings.Split(h, "|")
+					if len(subParts) == 4 {
+						salt, _ := base64.StdEncoding.DecodeString(subParts[2])
+						hash, _ := base64.StdEncoding.DecodeString(subParts[3])
+						mac := hmac.New(sha1.New, salt)
+						_, _ = mac.Write([]byte(addr))
+						if hmac.Equal(mac.Sum(nil), hash) {
+							found = true
+							break
+						}
+					}
+				}
+			}
+			if found {
+				break
 			}
 		}
+
 		if !found {
 			newLines = append(newLines, line)
 		}
