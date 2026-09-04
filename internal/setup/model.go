@@ -5,6 +5,7 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	"charm.land/lipgloss/v2"
 
+	"github.com/bakito/gws/internal/gcloud"
 	"github.com/bakito/gws/internal/types"
 )
 
@@ -26,7 +27,17 @@ const (
 
 type focusable int
 
+type step int
+
+const (
+	stepLogin step = iota
+	stepProject
+	stepConfig
+	stepForm
+)
+
 type Model struct {
+	Step             step
 	Inputs           []Input
 	Focused          focusable
 	Aborted          bool
@@ -39,7 +50,26 @@ type Model struct {
 	FilePickerField  focusable
 	Width            int
 	Height           int
+
+	LoginDone     bool
+	ListCursor    int
+	FilterInput   textinput.Model
+	Projects      []gcloud.Project
+	Workstations  []gcloud.Workstation
+	FilteredItems []listItem
+
+	Logs    []string
+	LogChan chan string
 }
+
+type listItem struct {
+	title string
+	value any
+}
+
+type (
+	logMsg string
+)
 
 type Input struct {
 	textinput.Model

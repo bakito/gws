@@ -13,6 +13,10 @@ func SetLogger(l Logger) {
 	}
 }
 
+func GetLogger() Logger {
+	return logger
+}
+
 var logger = Stdout
 
 func Log(s string) {
