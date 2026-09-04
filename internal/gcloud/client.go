@@ -20,7 +20,7 @@ import (
 
 var (
 	pollInterval    = 10 * time.Second
-	maxPollAttempts = 10
+	maxPollAttempts = 25
 	defaultTimeout  = pollInterval * time.Duration(maxPollAttempts)
 )
 
@@ -288,6 +288,22 @@ func parseWorkstationName(name string) Workstation {
 		}
 	}
 	return Workstation{}
+}
+
+func StopAllWorkstations(ctx context.Context, cfg *types.Config) error {
+	var errs []error
+	currContext := cfg.CurrentContextName
+	defer func() { _ = cfg.SwitchContext(currContext, true) }()
+	for name := range cfg.Contexts {
+		if err := cfg.SwitchContext(name, true); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if err := StopWorkstation(ctx, cfg); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }
 
 func StopWorkstation(ctx context.Context, cfg *types.Config) error {
