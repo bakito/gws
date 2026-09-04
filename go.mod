@@ -8,7 +8,7 @@ require (
 	charm.land/lipgloss/v2 v2.0.6
 	cloud.google.com/go/workstations v1.8.0
 	github.com/bramvdbogaerde/go-scp v1.6.1
-	github.com/go-playground/validator/v10 v10.30.3
+	github.com/go-playground/validator/v10 v10.30.4
 	github.com/gorilla/websocket v1.5.3
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
@@ -19,6 +19,7 @@ require (
 	golang.org/x/sys v0.47.0
 	golang.org/x/term v0.45.0
 	google.golang.org/api v0.297.0
+	google.golang.org/grpc v1.83.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -74,6 +75,5 @@ require (
 	google.golang.org/genproto v0.0.0-20260715232425-e75dac1f907d // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260831171406-18b4a7587f8a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260831171406-18b4a7587f8a // indirect
-	google.golang.org/grpc v1.83.2 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
