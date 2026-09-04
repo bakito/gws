@@ -336,3 +336,44 @@ func StopWorkstation(ctx context.Context, cfg *types.Config) error {
 	}
 	return nil
 }
+
+type WorkstationState struct {
+	Context string
+	Name    string
+	State   workstationspb.Workstation_State
+	Uptime  *time.Duration
+}
+
+func GetWorkstationStates(ctx context.Context, cfg *types.Config) ([]WorkstationState, error) {
+	var states []WorkstationState
+	curr := cfg.CurrentContextName
+	defer func() { _ = cfg.UseContext(curr) }()
+	for name, ctxCfg := range cfg.Contexts {
+		if ctxCfg.GCloud == nil {
+			continue
+		}
+		_ = cfg.UseContext(name)
+		_, c, ws, err := setup(ctx, cfg)
+		if err != nil {
+			states = append(states, WorkstationState{
+				Context: name,
+				Name:    ctxCfg.GCloud.Name,
+				State:   workstationspb.Workstation_STATE_UNSPECIFIED,
+			})
+			continue
+		}
+		var uptime *time.Duration
+		if ws.GetState() == workstationspb.Workstation_STATE_RUNNING && ws.GetStartTime() != nil {
+			u := time.Since(ws.GetStartTime().AsTime()).Round(time.Second)
+			uptime = &u
+		}
+		states = append(states, WorkstationState{
+			Context: name,
+			Name:    ctxCfg.GCloud.Name,
+			State:   ws.GetState(),
+			Uptime:  uptime,
+		})
+		c.Close()
+	}
+	return states, nil
+}

@@ -221,6 +221,14 @@ func (c *Config) SwitchContext(newContext string, force bool) error {
 	return nil
 }
 
+func (c *Config) UseContext(contextName string) error {
+	if _, ok := c.Contexts[contextName]; !ok {
+		return fmt.Errorf("context with name %q not defined", contextName)
+	}
+	c.currentContext = c.Contexts[contextName]
+	return nil
+}
+
 func (c *Config) save() error {
 	var buf bytes.Buffer
 	encoder := yaml.NewEncoder(&buf)

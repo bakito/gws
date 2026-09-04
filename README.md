@@ -22,6 +22,7 @@ go install github.com/bakito/gws@latest
 - `gws start [context]`: Start the workstation for the given or current context.
 - `gws stop [context]`: Stop the workstation for the given or current context.
 - `gws restart [context]`: Restart the workstation for the given or current context.
+- `gws status`: List all configured workstations with their state.
 - `gws up`: Uploads files and directories to the workstation as defined in the context configuration.
 - `gws down`: Download files and directories from the workstation as defined in the context configuration.
 - `gws tunnel [context]`: Create an SSH tunnel to the workstation.
