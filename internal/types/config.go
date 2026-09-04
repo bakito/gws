@@ -21,6 +21,9 @@ const (
 	ConfigDir      = ".config/gws"
 	DirectionUp    = "up"
 	DirectionDown  = "down"
+
+	defaultSSHTimeoutSeconds   = 30
+	defaultStartTimeoutSeconds = 300
 )
 
 type Config struct {
@@ -160,14 +163,14 @@ func (c *Config) applyDefaults() {
 
 func (c *Config) SSHTimeout() time.Duration {
 	if c == nil || c.SSHTimeoutSeconds <= 0 {
-		return 30 * time.Second
+		return defaultSSHTimeoutSeconds * time.Second
 	}
 	return time.Duration(c.SSHTimeoutSeconds) * time.Second
 }
 
 func (c *Config) StartTimeout() time.Duration {
-	if c == nil || c.StartTimeoutSeconds < 0 {
-		return 0 * time.Second
+	if c == nil || c.StartTimeoutSeconds <= 0 {
+		return defaultStartTimeoutSeconds * time.Second
 	}
 	return time.Duration(c.StartTimeoutSeconds) * time.Second
 }

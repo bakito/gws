@@ -38,6 +38,17 @@ func Test_updateKnownHostsWithGetHostKey(t *testing.T) {
 			wantContent:    "[host1]:2222 ssh-rsa AAAAB3Nza...key1",
 		},
 		{
+			name: "empty line removed",
+			args: args{
+				sshContext: &types.Context{Host: "host1", KnownHostsFile: knownHostsFile},
+				port:       2222,
+				timeout:    time.Second,
+				hostKey:    []string{"[host1]:2222 ssh-rsa AAAAB3Nza...key1"},
+			},
+			initialContent: "  \n",
+			wantContent:    "[host1]:2222 ssh-rsa AAAAB3Nza...key1",
+		},
+		{
 			name: "New host added to existing file",
 			args: args{
 				sshContext: &types.Context{Host: "host2", KnownHostsFile: knownHostsFile},
@@ -107,7 +118,7 @@ func Test_updateKnownHostsWithGetHostKey(t *testing.T) {
 			content, _ := os.ReadFile(knownHostsFile)
 			got := strings.TrimSpace(string(content))
 			if got != tt.wantContent {
-				t.Errorf("updateKnownHostsWithGetHostKey() gotContent = %v, want %v", got, tt.wantContent)
+				t.Errorf("updateKnownHostsWithGetHostKey()\ngot:\n%v\n\nwant:\n%v", got, tt.wantContent)
 			}
 		})
 	}
