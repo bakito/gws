@@ -1,4 +1,4 @@
-package tunnel
+package tui
 
 import (
 	"charm.land/lipgloss/v2"

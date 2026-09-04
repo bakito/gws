@@ -18,13 +18,13 @@ import (
 	"github.com/bakito/gws/internal/types"
 )
 
-const (
+var (
 	pollInterval    = 10 * time.Second
 	maxPollAttempts = 10
-	defaultTimeout  = pollInterval * maxPollAttempts
+	defaultTimeout  = pollInterval * time.Duration(maxPollAttempts)
 )
 
-func StartWorkstation(ctx context.Context, cfg *types.Config) error {
+func StartWorkstation(ctx context.Context, cfg *types.Config, boostConfig string) error {
 	sshContext, c, ws, err := setup(ctx, cfg)
 	if err != nil {
 		return err
@@ -32,17 +32,26 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 	defer c.Close()
 
 	start := time.Now()
+	timeout := defaultTimeout
+	if cfg != nil && cfg.StartTimeout() > 0 {
+		timeout = cfg.StartTimeout()
+	}
 
 	switch ws.GetState() {
 	case workstationspb.Workstation_STATE_STOPPED:
-		op, err := c.StartWorkstation(ctx, &workstationspb.StartWorkstationRequest{Name: ws.GetName()})
+		swr := &workstationspb.StartWorkstationRequest{Name: ws.GetName()}
+		if boostConfig != "" {
+			log.Logf("Starting with boost config: %s", boostConfig)
+			swr.BoostConfig = boostConfig
+		}
+		_, err := c.StartWorkstation(ctx, swr)
 		if err != nil {
 			log.Logf("Error starting workstation: %v", err)
 			return err
 		}
 		spinny := spinner.Start(fmt.Sprintf("Waiting for workstation %s to start...", sshContext.GCloud.Name))
 		defer spinny.Stop() // reset the terminal in case of a panic
-		_, err = op.Wait(ctx)
+		err = waitForWorkstationRunning(ctx, c, ws, timeout)
 		spinny.Stop()
 		if err != nil {
 			log.Logf("Error waiting for workstation to start: %v", err)
@@ -55,10 +64,11 @@ func StartWorkstation(ctx context.Context, cfg *types.Config) error {
 		spinny := spinner.Start(fmt.Sprintf("Workstation %s is already starting ...", sshContext.GCloud.Name))
 		defer spinny.Stop() // reset the terminal in case of a panic
 
-		err = waitForWorkstationRunning(ctx, c, ws, defaultTimeout)
+		err = waitForWorkstationRunning(ctx, c, ws, timeout)
 		spinny.Stop()
 
 		if err != nil {
+			log.Logf("Error waiting for workstation to start: %v", err)
 			return err
 		}
 

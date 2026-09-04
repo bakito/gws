@@ -24,14 +24,15 @@ const (
 )
 
 type Config struct {
-	Contexts           map[string]*Context  `validate:"required,dive,required"  yaml:"contexts"`
-	CurrentContextName string               `yaml:"currentContext"`
-	FilePath           string               `yaml:"-"`
-	TokenCheck         bool                 `yaml:"-"`
-	FilePatches        map[string]FilePatch `yaml:"filePatches,omitempty"`
-	SSHTimeoutSeconds  int                  `yaml:"sshTimeoutSeconds,omitempty"`
-	currentContext     *Context
-	Token              *TokenStorage `yaml:"-"`
+	Contexts            map[string]*Context  `validate:"required,dive,required"    yaml:"contexts"`
+	CurrentContextName  string               `yaml:"currentContext"`
+	FilePath            string               `yaml:"-"`
+	TokenCheck          bool                 `yaml:"-"`
+	FilePatches         map[string]FilePatch `yaml:"filePatches,omitempty"`
+	SSHTimeoutSeconds   int                  `yaml:"sshTimeoutSeconds,omitempty"`
+	StartTimeoutSeconds int                  `yaml:"startTimeoutSeconds,omitempty"`
+	currentContext      *Context
+	Token               *TokenStorage `yaml:"-"`
 
 	ChromeBrowser    *ChromeBrowserConfig `yaml:"chromeBrowser,omitempty"`
 	JetbrainsGateway *GatewayConfig       `yaml:"jetbrainsGateway,omitempty"`
@@ -111,7 +112,6 @@ func (c *Config) Load(fileName string) error {
 	if err != nil {
 		return err
 	}
-	log.Logf("Using config: %s", file)
 
 	err = yaml.Unmarshal(data, c)
 	if err != nil {
@@ -159,10 +159,17 @@ func (c *Config) applyDefaults() {
 }
 
 func (c *Config) SSHTimeout() time.Duration {
-	if c.SSHTimeoutSeconds <= 0 {
+	if c == nil || c.SSHTimeoutSeconds <= 0 {
 		return 30 * time.Second
 	}
 	return time.Duration(c.SSHTimeoutSeconds) * time.Second
+}
+
+func (c *Config) StartTimeout() time.Duration {
+	if c == nil || c.StartTimeoutSeconds < 0 {
+		return 0 * time.Second
+	}
+	return time.Duration(c.StartTimeoutSeconds) * time.Second
 }
 
 func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) {
@@ -175,17 +182,9 @@ func ReadGWSFile(fileName string) (absoluteFile string, data []byte, err error) 
 
 	if file == "" {
 		// Try new location first
-		newConfigPath, userHomeDir := DefaultConfigDir()
+		newConfigPath, _ := DefaultConfigDir()
 		if _, err := os.Stat(newConfigPath); err == nil {
 			file = newConfigPath
-		} else {
-			// Fallback to the legacy location for backward compatibility
-			legacyPath := filepath.Join(userHomeDir, ".gws.yaml")
-			if _, err := os.Stat(legacyPath); err != nil {
-				return "", nil, fmt.Errorf("%w: config file not found", os.ErrNotExist)
-			}
-			file = legacyPath
-			log.Logf("⚠️  Using legacy config location. Consider moving to: %s", newConfigPath)
 		}
 	}
 

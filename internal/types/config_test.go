@@ -3,6 +3,7 @@ package types
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -118,6 +119,71 @@ func TestConfig_Validate(t *testing.T) {
 			err := validate.Struct(tt.config)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestConfig_StartTimeout(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   *Config
+		expected time.Duration
+	}{
+		{
+			name:     "nil config returns default 100s",
+			config:   nil,
+			expected: 0 * time.Second,
+		},
+		{
+			name:     "empty config returns default 100s",
+			config:   &Config{},
+			expected: 0 * time.Second,
+		},
+		{
+			name: "StartTimeoutSeconds on Config",
+			config: &Config{
+				StartTimeoutSeconds: 45,
+			},
+			expected: 45 * time.Second,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.config.StartTimeout()
+			if got != tt.expected {
+				t.Errorf("StartTimeout() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConfig_SSHTimeout(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   *Config
+		expected time.Duration
+	}{
+		{
+			name:     "default ssh timeout",
+			config:   &Config{},
+			expected: 30 * time.Second,
+		},
+		{
+			name: "custom ssh timeout",
+			config: &Config{
+				SSHTimeoutSeconds: 15,
+			},
+			expected: 15 * time.Second,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.config.SSHTimeout()
+			if got != tt.expected {
+				t.Errorf("SSHTimeout() = %v, want %v", got, tt.expected)
 			}
 		})
 	}

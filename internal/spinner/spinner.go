@@ -7,19 +7,29 @@ import (
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/bakito/gws/internal/log"
 )
 
-var spinners = []spinner.Spinner{
-	spinner.Line,
-	spinner.Dot,
-	spinner.MiniDot,
-	spinner.Jump,
-	spinner.Pulse,
-	spinner.Points,
-	spinner.Globe,
-	spinner.Moon,
-	spinner.Monkey,
-	spinner.Meter,
+var (
+	spinners = []spinner.Spinner{
+		spinner.Line,
+		spinner.Dot,
+		spinner.MiniDot,
+		spinner.Jump,
+		spinner.Pulse,
+		spinner.Points,
+		spinner.Globe,
+		spinner.Moon,
+		spinner.Monkey,
+		spinner.Meter,
+	}
+	disabled bool
+)
+
+// Disable disables the spinner.
+func Disable() {
+	disabled = true
 }
 
 // Spinner is a wrapper around a bubbletea program.
@@ -38,6 +48,10 @@ func (s *Spinner) Stop() {
 
 // Start starts a new spinner with the given title.
 func Start(title string, sp ...spinner.Spinner) *Spinner {
+	if disabled {
+		log.Log(title)
+		return &Spinner{done: make(chan struct{})}
+	}
 	s := spinner.New()
 	if len(sp) > 0 {
 		s.Spinner = sp[0]
