@@ -23,9 +23,6 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: Generate
-        run: make dummy-oauth-vars
-
       - name: Lint
         run: make lint
   test:
@@ -38,9 +35,6 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: "go.mod"
-
-      - name: Generate
-        run: make dummy-oauth-vars
 
       - name: Test
         run: make test
@@ -57,9 +51,6 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: "go.mod"
-
-      - name: Generate
-        run: make dummy-oauth-vars
 
       - name: Test Release
         run: make test-release

@@ -28,10 +28,5 @@ fmt: tb.golines tb.gofumpt
 build-win:
 	GOOS=windows GOARCH=amd64 go build -o gws.exe -ldflags="-s -w -X github.com/bakito/gws/version.Version=dev-$$(date +%Y%m%d-%H%M)" .
 
-generate: dummy-oauth-vars
-
-dummy-oauth-vars:
-	cd py && go run main.go > ../internal/gcloud/auth_config.go
-
 check-vulnerabilities:
 	go run golang.org/x/vuln/cmd/govulncheck@latest -show verbose,color ./...

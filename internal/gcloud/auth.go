@@ -20,7 +20,12 @@ import (
 	"github.com/bakito/gws/internal/types"
 )
 
-const userAgent = "google-cloud-sdk"
+const (
+	ClientID     = ""
+	ClientSecret = ""
+
+	userAgent = "google-cloud-sdk"
+)
 
 var oauthConfig = &oauth2.Config{
 	ClientID:     ClientID,
