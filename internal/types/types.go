@@ -43,10 +43,3 @@ type File struct {
 	Permissions string `yaml:"permissions"`
 	Direction   string `validate:"omitempty,oneof=up down" yaml:"direction"`
 }
-
-type FilePatch struct {
-	File     string `yaml:"file"`
-	Indent   string `yaml:"indent,omitempty"`
-	OldBlock string `yaml:"oldBlock,omitempty"`
-	NewBlock string `yaml:"newBlock,omitempty"`
-}
