@@ -20,7 +20,8 @@ release: tb.goreleaser tb.semver
 	$(TB_GORELEASER) --clean
 
 test-release: tb.goreleaser
-	$(TB_GORELEASER) --skip=publish --snapshot --clean
+	CLIENT_ID=test-client CLIENT_SECRET=test-secret \
+	  $(TB_GORELEASER) --skip=publish --snapshot --clean
 
 fmt: tb.golines tb.gofumpt
 	$(TB_GOLINES) --base-formatter="$(TB_GOFUMPT)" --max-len=120 --write-output .
