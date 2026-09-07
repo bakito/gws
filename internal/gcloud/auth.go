@@ -21,21 +21,23 @@ import (
 )
 
 const (
-	ClientID     = ""
-	ClientSecret = ""
-
 	userAgent = "google-cloud-sdk"
 )
 
-var oauthConfig = &oauth2.Config{
-	ClientID:     ClientID,
-	ClientSecret: ClientSecret,
-	Scopes: []string{
-		"https://www.googleapis.com/auth/userinfo.email",
-		"https://www.googleapis.com/auth/cloud-platform",
-	},
-	Endpoint: google.Endpoint,
-}
+var (
+	ClientID     = ""
+	ClientSecret = ""
+
+	oauthConfig = &oauth2.Config{
+		ClientID:     ClientID,
+		ClientSecret: ClientSecret,
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/cloud-platform",
+		},
+		Endpoint: google.Endpoint,
+	}
+)
 
 // Generate PKCE Code Verifier and SHA-256 Code Challenge.
 func generatePKCE() (codeVerifier, codeChallenge string, err error) {
