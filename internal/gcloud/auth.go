@@ -58,7 +58,10 @@ func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
 
-	existingToken := cfg.Token.Token
+	var existingToken oauth2.Token
+	if cfg.Token != nil {
+		existingToken = cfg.Token.Token
+	}
 
 	// Try refreshing the token
 	if existingToken.RefreshToken != "" {
