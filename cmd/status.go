@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"slices"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	"cloud.google.com/go/workstations/apiv1/workstationspb"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 
 	"github.com/bakito/gws/internal/gcloud"
@@ -26,6 +25,9 @@ var statusCmd = &cobra.Command{
 			return err
 		}
 
+		output, _ := cmd.Flags().GetString("output")
+		wide := output == "wide"
+
 		spinner.Disable()
 		log.SetLogger(log.Null)
 		states, err := gcloud.GetWorkstationStates(cmd.Context(), cfg)
@@ -38,12 +40,23 @@ var statusCmd = &cobra.Command{
 			return strings.Compare(a.Context, b.Context)
 		})
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "CONTEXT\tNAME\tSTATE\tUPTIME")
-		for _, s := range states {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", s.Context, s.Name, formatState(s.State), formatUptime(s.Uptime))
+		t := table.NewWriter()
+		t.SetStyle(table.StyleRounded)
+		t.SetOutputMirror(os.Stdout)
+		if wide {
+			t.AppendHeader(table.Row{"CONTEXT", "PROJECT", "CONFIG", "NAME", "STATE", "UPTIME"})
+		} else {
+			t.AppendHeader(table.Row{"CONTEXT", "NAME", "STATE", "UPTIME"})
 		}
-		return w.Flush()
+		for _, s := range states {
+			if wide {
+				t.AppendRow(table.Row{s.Context, s.Project, s.Config, s.Name, formatState(s.State), formatUptime(s.Uptime)})
+			} else {
+				t.AppendRow(table.Row{s.Context, s.Name, formatState(s.State), formatUptime(s.Uptime)})
+			}
+		}
+		t.Render()
+		return nil
 	},
 }
 
@@ -72,4 +85,5 @@ func formatUptime(u *time.Duration) string {
 
 func init() {
 	rootCmd.AddCommand(statusCmd)
+	statusCmd.Flags().StringP("output", "o", "", "Output format. One of: wide")
 }
