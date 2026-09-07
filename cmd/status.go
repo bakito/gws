@@ -10,9 +10,9 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/internal/gcloud"
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/spinner"
+	"github.com/bisonschweizag/gws-cli/internal/gcloud"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/spinner"
 )
 
 // statusCmd represents the status command.

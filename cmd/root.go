@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/internal/types"
-	"github.com/bakito/gws/version"
+	"github.com/bisonschweizag/gws-cli/internal/types"
+	"github.com/bisonschweizag/gws-cli/version"
 )
 
 // rootCmd represents the base command when called without any subcommands.

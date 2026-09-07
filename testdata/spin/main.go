@@ -4,7 +4,7 @@ import (
 	"time"
 
 	bs "charm.land/bubbles/v2/spinner"
-	"github.com/bakito/gws/internal/spinner"
+	"github.com/bisonschweizag/gws-cli/internal/spinner"
 )
 
 const spinDuration = 2 * time.Second

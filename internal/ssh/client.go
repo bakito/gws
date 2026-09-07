@@ -14,9 +14,9 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/knownhosts"
 
-	"github.com/bakito/gws/internal/env"
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/passwd"
+	"github.com/bisonschweizag/gws-cli/internal/env"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/passwd"
 )
 
 func NewClient(addr, user, privateKeyFile string, timeout time.Duration) (Client, error) {

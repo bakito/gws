@@ -11,7 +11,7 @@ import (
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 
-	"github.com/bakito/gws/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/log"
 )
 
 const TokenFileName = "token.yaml"

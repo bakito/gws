@@ -6,7 +6,7 @@ import (
 
 	"github.com/pmezard/go-difflib/difflib"
 
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 const (

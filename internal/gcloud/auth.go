@@ -16,8 +16,8 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 const (

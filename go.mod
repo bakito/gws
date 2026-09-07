@@ -1,4 +1,4 @@
-module github.com/bakito/gws
+module github.com/bisonschweizag/gws-cli
 
 go 1.27.1
 

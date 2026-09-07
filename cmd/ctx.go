@@ -9,7 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 var flagCurrent bool

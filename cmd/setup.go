@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/internal/setup"
+	"github.com/bisonschweizag/gws-cli/internal/setup"
 )
 
 var setupCmd = &cobra.Command{

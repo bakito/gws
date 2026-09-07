@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 func SaveConfig(m Model) error {

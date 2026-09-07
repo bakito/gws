@@ -1,6 +1,6 @@
 package main
 
-import "github.com/bakito/gws/cmd"
+import "github.com/bisonschweizag/gws-cli/cmd"
 
 func main() {
 	cmd.Execute()

@@ -9,9 +9,9 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/types"
-	"github.com/bakito/gws/version"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/types"
+	"github.com/bisonschweizag/gws-cli/version"
 )
 
 const (

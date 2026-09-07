@@ -5,8 +5,8 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	"charm.land/lipgloss/v2"
 
-	"github.com/bakito/gws/internal/gcloud"
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/gcloud"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 const (

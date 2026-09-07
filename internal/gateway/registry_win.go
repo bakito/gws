@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 	"golang.org/x/sys/windows/registry"
 )
 

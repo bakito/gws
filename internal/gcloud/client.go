@@ -13,9 +13,9 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/spinner"
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/spinner"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 var pollInterval = 10 * time.Second

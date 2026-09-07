@@ -23,9 +23,9 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/ssh/knownhosts"
 
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/ssh"
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/ssh"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 type tunnel struct {

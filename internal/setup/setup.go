@@ -5,8 +5,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 func Run(cfg *types.Config, context string) error {

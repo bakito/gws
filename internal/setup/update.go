@@ -11,8 +11,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/bakito/gws/internal/gcloud"
-	"github.com/bakito/gws/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/gcloud"
+	"github.com/bisonschweizag/gws-cli/internal/log"
 )
 
 type (

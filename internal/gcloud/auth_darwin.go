@@ -6,7 +6,7 @@ import (
 	"context"
 	"os/exec"
 
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 func openBrowser(ctx context.Context, _ *types.Config, authURL string) {

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 
 	_ "embed"
 )

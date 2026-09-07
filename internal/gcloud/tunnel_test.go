@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 func Test_updateKnownHostsWithGetHostKey(t *testing.T) {

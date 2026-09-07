@@ -5,7 +5,7 @@ package gateway
 import (
 	"context"
 
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 func UpdateDownloadLocation(_ context.Context, _ *types.Config) error {

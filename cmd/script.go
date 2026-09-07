@@ -6,9 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/script"
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/script"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 // scriptsCmd represents the generate scripts command.

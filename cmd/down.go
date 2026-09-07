@@ -3,9 +3,9 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/bakito/gws/internal/log"
-	"github.com/bakito/gws/internal/ssh"
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/ssh"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 // downCmd represents the down command.

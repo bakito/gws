@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
-	"github.com/bakito/gws/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/log"
 )
 
 type mockWorkstationsServer struct {

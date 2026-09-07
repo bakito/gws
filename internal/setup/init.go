@@ -8,7 +8,7 @@ import (
 	"charm.land/bubbles/v2/filepicker"
 	"charm.land/bubbles/v2/textinput"
 
-	"github.com/bakito/gws/internal/types"
+	"github.com/bisonschweizag/gws-cli/internal/types"
 )
 
 func InitialModel(cfg *types.Config) Model {

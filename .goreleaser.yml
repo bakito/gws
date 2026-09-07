@@ -6,9 +6,9 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -s -w
-      - -X github.com/bakito/gws/version.Version=v{{.Version}}
-      - -X github.com/bakito/gws/internal/gcloud.ClientID={{.Env.CLIENT_ID}}
-      - -X github.com/bakito/gws/internal/gcloud.ClientSecret={{.Env.CLIENT_SECRET}}
+      - -X github.com/bisonschweizag/gws-cli/version.Version=v{{.Version}}
+      - -X github.com/bisonschweizag/gws-cli/internal/gcloud.ClientID={{.Env.CLIENT_ID}}
+      - -X github.com/bisonschweizag/gws-cli/internal/gcloud.ClientSecret={{.Env.CLIENT_SECRET}}
     goos:
       - linux
       - windows

@@ -8,10 +8,10 @@ A command-line tool to manage Google Cloud Workstations.
 
 ## Installation
 
-You can install `gws` by downloading a binary from the [latest release]( https://github.com/bakito/gws/releases/tag/v0.2.0) or via go by using `go install`:
+You can install `gws` by downloading a binary from the [latest release]( https://github.com/bisonschweizag/gws-cli/releases/tag/v0.2.0) or via go by using `go install`:
 
 ```bash
-go install github.com/bakito/gws@latest
+go install github.com/bisonschweizag/gws-cli@latest
 ```
 
 ## Usage

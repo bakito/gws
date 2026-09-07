@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/bakito/gws/internal/log"
+	"github.com/bisonschweizag/gws-cli/internal/log"
 )
 
 func Prompt(prompt string) (string, error) {
