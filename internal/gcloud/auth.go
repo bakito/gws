@@ -23,8 +23,8 @@ import (
 const userAgent = "google-cloud-sdk"
 
 var oauthConfig = &oauth2.Config{
-	ClientID:     clientID,
-	ClientSecret: clientSecret,
+	ClientID:     ClientID,
+	ClientSecret: ClientSecret,
 	Scopes: []string{
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/cloud-platform",

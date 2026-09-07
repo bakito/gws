@@ -7,7 +7,4 @@ coverage.out
 .gws-token.json
 .gws.yaml
 
-# generated file
-internal/gcloud/auth_config.go
-
 testdata/auth
