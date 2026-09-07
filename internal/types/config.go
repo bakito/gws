@@ -104,6 +104,9 @@ func (c *Config) Validate() error {
 }
 
 func (c *Config) CurrentContext() *Context {
+	if c == nil {
+		return nil
+	}
 	return c.currentContext
 }
 
@@ -244,6 +247,9 @@ func (c *Config) save() error {
 }
 
 func (c *Config) SetToken(token oauth2.Token) error {
+	if c == nil {
+		return nil
+	}
 	if c.Token == nil {
 		c.Token = &TokenStorage{Token: token}
 	}

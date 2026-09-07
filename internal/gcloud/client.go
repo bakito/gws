@@ -114,7 +114,7 @@ func waitForWorkstationRunning(
 
 func setup(ctx context.Context, cfg *types.Config) (*types.Context, *workstations.Client, *workstationspb.Workstation, error) {
 	sshContext := cfg.CurrentContext()
-	if sshContext.GCloud == nil {
+	if sshContext == nil || sshContext.GCloud == nil {
 		log.Log("No gcloud config found")
 		return nil, nil, nil, nil
 	}

@@ -8,7 +8,8 @@ import (
 )
 
 func windowsCmd(ctx context.Context, cfg *types.Config, authURL string) *exec.Cmd {
-	if cfg.ChromeBrowser != nil && cfg.ChromeBrowser.ExecutablePath != "" && cfg.ChromeBrowser.ProfileDirectory != "" {
+	if cfg != nil && cfg.ChromeBrowser != nil && cfg.ChromeBrowser.ExecutablePath != "" &&
+		cfg.ChromeBrowser.ProfileDirectory != "" {
 		return exec.CommandContext(ctx, cfg.ChromeBrowser.ExecutablePath,
 			"--profile-directory="+cfg.ChromeBrowser.ProfileDirectory,
 			authURL,

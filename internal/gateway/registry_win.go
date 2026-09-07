@@ -18,7 +18,7 @@ const (
 )
 
 func UpdateDownloadLocation(ctx context.Context, cfg *types.Config) error {
-	if cfg.JetbrainsGateway == nil || cfg.JetbrainsGateway.DownloadDestination == "" {
+	if cfg == nil || cfg.JetbrainsGateway == nil || cfg.JetbrainsGateway.DownloadDestination == "" {
 		return nil
 	}
 

@@ -50,6 +50,10 @@ func generatePKCE() (codeVerifier, codeChallenge string, err error) {
 }
 
 func Login(ctx context.Context, cfg *types.Config) (oauth2.TokenSource, error) {
+	if cfg == nil {
+		return nil, errors.New("cfg must be provided")
+	}
+
 	httpClient := &http.Client{
 		Transport: &userAgentTransport{
 			base: http.DefaultTransport,
