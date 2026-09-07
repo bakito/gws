@@ -333,6 +333,8 @@ func StopWorkstation(ctx context.Context, cfg *types.Config) error {
 
 type WorkstationState struct {
 	Context string
+	Project string
+	Config  string
 	Name    string
 	State   workstationspb.Workstation_State
 	Uptime  *time.Duration
@@ -351,6 +353,8 @@ func GetWorkstationStates(ctx context.Context, cfg *types.Config) ([]Workstation
 		if err != nil {
 			states = append(states, WorkstationState{
 				Context: name,
+				Project: ctxCfg.GCloud.Project,
+				Config:  ctxCfg.GCloud.Config,
 				Name:    ctxCfg.GCloud.Name,
 				State:   workstationspb.Workstation_STATE_UNSPECIFIED,
 			})
@@ -363,6 +367,8 @@ func GetWorkstationStates(ctx context.Context, cfg *types.Config) ([]Workstation
 		}
 		states = append(states, WorkstationState{
 			Context: name,
+			Project: ctxCfg.GCloud.Project,
+			Config:  ctxCfg.GCloud.Config,
 			Name:    ctxCfg.GCloud.Name,
 			State:   ws.GetState(),
 			Uptime:  uptime,
