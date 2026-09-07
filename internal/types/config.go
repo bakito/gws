@@ -25,13 +25,12 @@ const (
 )
 
 type Config struct {
-	Contexts            map[string]*Context  `validate:"required,dive,required"    yaml:"contexts"`
-	CurrentContextName  string               `yaml:"currentContext"`
-	FilePath            string               `yaml:"-"`
-	TokenCheck          bool                 `yaml:"-"`
-	FilePatches         map[string]FilePatch `yaml:"filePatches,omitempty"`
-	SSHTimeoutSeconds   int                  `yaml:"sshTimeoutSeconds,omitempty"`
-	StartTimeoutSeconds int                  `yaml:"startTimeoutSeconds,omitempty"`
+	Contexts            map[string]*Context `validate:"required,dive,required"    yaml:"contexts"`
+	CurrentContextName  string              `yaml:"currentContext"`
+	FilePath            string              `yaml:"-"`
+	TokenCheck          bool                `yaml:"-"`
+	SSHTimeoutSeconds   int                 `yaml:"sshTimeoutSeconds,omitempty"`
+	StartTimeoutSeconds int                 `yaml:"startTimeoutSeconds,omitempty"`
 	currentContext      *Context
 	Token               *TokenStorage `yaml:"-"`
 
