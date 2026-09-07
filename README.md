@@ -1,4 +1,4 @@
-# gws - Google Cloud Workstation Utils
+# gws - Google Cloud Workstation CLI
 
 A command-line tool to manage Google Cloud Workstations.
 
