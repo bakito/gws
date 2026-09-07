@@ -150,10 +150,10 @@ func updateKnownHosts(sshContext *types.Context, knownHostLines []string) {
 		parts := strings.SplitN(line, " ", 2)
 		if len(parts) == 2 {
 			newHostAddresses = append(newHostAddresses, parts[0])
-			newLines = append(newLines, knownhosts.HashHostname(parts[0])+" "+parts[1])
 		}
 	}
 
+	satisfied := make([]bool, len(knownHostLines))
 	currentLines := strings.Split(string(f), "\n")
 	for _, line := range currentLines {
 		line = strings.TrimSpace(line)
@@ -162,44 +162,70 @@ func updateKnownHosts(sshContext *types.Context, knownHostLines []string) {
 			continue
 		}
 
-		found := false
+		matched := false
+		keep := false
 		parts := strings.SplitN(line, " ", 2)
-		hostPart := parts[0]
-		hosts := strings.SplitSeq(hostPart, ",")
+		if len(parts) == 2 {
+			hostPart := parts[0]
+			keyPart := parts[1]
+			hosts := strings.SplitSeq(hostPart, ",")
 
-		for h := range hosts {
-			for _, addr := range newHostAddresses {
-				if h == addr {
-					found = true
-					break
-				}
-				if strings.HasPrefix(h, "|1|") {
-					subParts := strings.Split(h, "|")
-					if len(subParts) == 4 {
-						salt, _ := base64.StdEncoding.DecodeString(subParts[2])
-						hash, _ := base64.StdEncoding.DecodeString(subParts[3])
-						mac := hmac.New(sha1.New, salt)
-						_, _ = mac.Write([]byte(addr))
-						if hmac.Equal(mac.Sum(nil), hash) {
-							found = true
-							break
+			for h := range hosts {
+				for i, addr := range newHostAddresses {
+					hostMatch := false
+					if h == addr {
+						hostMatch = true
+					} else if strings.HasPrefix(h, "|1|") {
+						subParts := strings.Split(h, "|")
+						if len(subParts) == 4 {
+							salt, _ := base64.StdEncoding.DecodeString(subParts[2])
+							hash, _ := base64.StdEncoding.DecodeString(subParts[3])
+							mac := hmac.New(sha1.New, salt)
+							_, _ = mac.Write([]byte(addr))
+							if hmac.Equal(mac.Sum(nil), hash) {
+								hostMatch = true
+							}
+						}
+					}
+
+					if hostMatch {
+						matched = true
+						newParts := strings.SplitN(knownHostLines[i], " ", 2)
+						if len(newParts) == 2 && newParts[1] == keyPart {
+							satisfied[i] = true
+							keep = true
 						}
 					}
 				}
 			}
-			if found {
-				break
-			}
 		}
 
-		if !found {
+		if !matched || keep {
 			newLines = append(newLines, line)
+		}
+	}
+
+	for i, line := range knownHostLines {
+		if !satisfied[i] {
+			parts := strings.SplitN(line, " ", 2)
+			if len(parts) == 2 {
+				newLines = append(newLines, knownhosts.HashHostname(parts[0])+" "+parts[1])
+			}
 		}
 	}
 
 	slices.Sort(newLines)
 	newLines = slices.Compact(newLines)
-	if !slices.Equal(currentLines, newLines) {
+
+	var filteredCurrentLines []string
+	for _, line := range currentLines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			filteredCurrentLines = append(filteredCurrentLines, line)
+		}
+	}
+
+	if !slices.Equal(filteredCurrentLines, newLines) {
 		err = os.WriteFile(sshContext.KnownHostsFile, []byte(strings.Join(newLines, "\n")), 0o644)
 		if err != nil {
 			log.Logf("🚨 Error writing known_hosts file: %v", err)

@@ -138,6 +138,19 @@ func Test_updateKnownHostsWithGetHostKey(t *testing.T) {
 			) + " ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEDommg1NSIETRXFu6W0WongUTpVIBX2EbfifqcD7rvs",
 			wantContent: "[host1]:2222 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGfIKnaLsbnn6B3ty0PaOYwhGs+WHmL9R6KRBge3ktB7",
 		},
+		{
+			name: "Existing hashed host key same, salt preserved",
+			args: args{
+				sshContext: &types.Context{Host: "host1", KnownHostsFile: knownHostsFile},
+				port:       2222,
+				timeout:    time.Second,
+				hostKey: []string{
+					"[host1]:2222 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEDommg1NSIETRXFu6W0WongUTpVIBX2EbfifqcD7rvs",
+				},
+			},
+			initialContent: "|1|4xwzUkKFmnx9DMq/llELNhEsIkM=|sXfOGajfTzuClVT3s4ftdt2hkv8= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEDommg1NSIETRXFu6W0WongUTpVIBX2EbfifqcD7rvs",
+			wantContent:    "|1|4xwzUkKFmnx9DMq/llELNhEsIkM=|sXfOGajfTzuClVT3s4ftdt2hkv8= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEDommg1NSIETRXFu6W0WongUTpVIBX2EbfifqcD7rvs",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -150,6 +163,13 @@ func Test_updateKnownHostsWithGetHostKey(t *testing.T) {
 			content, _ := os.ReadFile(knownHostsFile)
 			gotLines := strings.Split(strings.TrimSpace(string(content)), "\n")
 			wantLines := strings.Split(strings.TrimSpace(tt.wantContent), "\n")
+
+			if tt.name == "Existing hashed host key same, salt preserved" {
+				if strings.TrimSpace(string(content)) != strings.TrimSpace(tt.wantContent) {
+					t.Errorf("salt not preserved: got %q, want %q", string(content), tt.wantContent)
+				}
+				return
+			}
 
 			if len(gotLines) != len(wantLines) {
 				if tt.wantContent == "" && len(gotLines) == 1 && gotLines[0] == "" {
