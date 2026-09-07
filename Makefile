@@ -28,13 +28,6 @@ fmt: tb.golines tb.gofumpt
 build-win:
 	GOOS=windows GOARCH=amd64 go build -o gws.exe -ldflags="-s -w -X github.com/bakito/gws/version.Version=dev-$$(date +%Y%m%d-%H%M)" .
 
-extract-oauth-vars:
-	docker build -t auth_config.go --no-cache py
-	docker create --name auth_config auth_config.go true
-	docker cp auth_config:/auth_config.go internal/gcloud/auth_config.go
-	docker rm auth_config
-	docker rmi auth_config.go
-
 generate: dummy-oauth-vars
 
 dummy-oauth-vars:
